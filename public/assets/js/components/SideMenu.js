@@ -1,6 +1,6 @@
 import { store, confirm } from '../store.js';
 import { t } from '../i18n.js';
-import { toggleGroup, reorderGroups, deleteGroup, resyncGroup, openModal, clearSelection } from '../actions.js';
+import { toggleGroup, reorderGroups, deleteGroup, resyncGroup, openModal, clearSelection, savePrefs } from '../actions.js';
 import MiniCalendar from './MiniCalendar.js';
 
 const { ref, computed } = Vue;
@@ -52,7 +52,8 @@ export default {
     }
     function onDragEnd() { dragId.value = null; dropTarget.value = null; }
 
-    return { store, t, entries, selectedUsers, clearSelection, label, kindLabel, hint, toggleGroup, remove, resyncGroup, openModal, dragId, dropTarget, onDragStart, onDragOver, onDrop, onDragEnd };
+    function toggleVacation() { savePrefs({ vacation_collapsed: !store.prefs.vacation_collapsed }).catch(() => {}); }
+    return { store, t, entries, selectedUsers, clearSelection, toggleVacation, label, kindLabel, hint, toggleGroup, remove, resyncGroup, openModal, dragId, dropTarget, onDragStart, onDragOver, onDrop, onDragEnd };
   },
   template: `
     <aside class="sidebar">
@@ -93,10 +94,14 @@ export default {
             <button type="button" class="btn sm success" :disabled="!store.selected.length" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
           </div>
         </div>
-        <div class="menu-section vacation" v-if="store.prefs.vacation_enabled">
-          <div class="findtime-head"><h2>{{ t('Vacation calendar') }}</h2></div>
-          <div class="findtime-body"><span class="muted hint">{{ t('See when your colleagues are on vacation.') }}</span></div>
-          <div class="row"><span class="grow"></span><button type="button" class="btn sm warm" @click="openModal('vacation')"><icon name="sun" :size="14"></icon>{{ t('Open vacation calendar') }}</button></div>
+        <div class="menu-section vacation" :class="{ collapsed: store.prefs.vacation_collapsed }" v-if="store.prefs.vacation_enabled">
+          <div class="findtime-head"><h2>{{ t('Vacation calendar') }}</h2>
+            <button type="button" class="expand" @click="toggleVacation" :title="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.vacation_collapsed ? 'false' : 'true'"><icon :name="store.prefs.vacation_collapsed ? 'chevrons-down' : 'chevrons-up'" :size="14"></icon></button>
+          </div>
+          <template v-if="!store.prefs.vacation_collapsed">
+            <div class="findtime-body"><span class="muted hint">{{ t('See when your colleagues are on vacation.') }}</span></div>
+            <div class="row"><span class="grow"></span><button type="button" class="btn sm warm" @click="openModal('vacation')"><icon name="sun" :size="14"></icon>{{ t('Open vacation calendar') }}</button></div>
+          </template>
         </div>
         <mini-calendar></mini-calendar>
       </div>

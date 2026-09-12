@@ -172,6 +172,8 @@ const da = {
   'Vacation calendar': 'Feriekalender',
   'Show the “Vacation calendar” section in the menu': 'Vis sektionen “Feriekalender” i menuen',
   'Open vacation calendar': 'Vis feriekalender',
+  'Expand': 'Udvid',
+  'Collapse': 'Minimér',
   'See when your colleagues are on vacation.': 'Se, hvornår dine kolleger holder ferie.',
   'On vacation today': 'På ferie i dag',
   'Nobody is on vacation today': 'Ingen er på ferie i dag',
