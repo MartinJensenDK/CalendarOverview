@@ -94,6 +94,15 @@ export default {
     }
     function up() { dragging = null; }
 
+    // Hover tooltip: "x of y free" for the slot under the cursor.
+    const hov = ref(null);
+    function hover(e, day, m) {
+      const free = freeCount(day, m, m + form.slot);
+      hov.value = { x: e.clientX, y: e.clientY, label: `${weekday(day, 'short')} ${dayLabel(day)} · ${minutesToHhmm(m)}–${minutesToHhmm(m + form.slot)}`, text: t('{free} of {total} free', { free, total: users.value.length }) };
+    }
+    function unhover() { hov.value = null; }
+    const hovStyle = computed(() => hov.value ? { left: `${Math.min(hov.value.x + 14, window.innerWidth - 220)}px`, top: `${hov.value.y + 18}px` } : {});
+
     // The next three windows of the chosen length where everyone is free.
     const suggestions = computed(() => {
       if (!users.value.length || !days.value.length) return [];
@@ -134,7 +143,7 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, hov, hover, unhover, hovStyle, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -170,17 +179,18 @@ export default {
           <a class="btn primary" :href="outlookUrl" target="_blank" rel="noopener"><icon name="external"></icon>{{ t('Open in Outlook') }}</a>
         </div>
       </div>
-      <div class="heat-wrap" @mouseup="up" @mouseleave="up">
+      <div class="heat-wrap" @mouseup="up" @mouseleave="up(); unhover()">
         <div class="heat" :style="{ '--hdays': days.length }" v-if="data">
           <div class="hh"></div>
           <div v-for="d in days" :key="d" class="hh" :class="{ weekend: isWeekend(d) }"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span></div>
           <template v-for="m in slots" :key="m">
             <div class="ht">{{ m % 60 === 0 ? minutesToHhmm(m) : '' }}</div>
-            <div v-for="d in days" :key="d + m" class="hc" :class="{ hour: m % 60 === 0, weekend: isWeekend(d), sel: isSel(d, m) }" :style="cellStyle(d, m)" @mousedown.prevent="down(d, m)" @mouseenter="enter(d, m)" :title="d + ' ' + minutesToHhmm(m)"></div>
+            <div v-for="d in days" :key="d + m" class="hc" :class="{ hour: m % 60 === 0, weekend: isWeekend(d), sel: isSel(d, m) }" :style="cellStyle(d, m)" @mousedown.prevent="down(d, m)" @mouseenter="enter(d, m); hover($event, d, m)" @mousemove="hover($event, d, m)"></div>
           </template>
         </div>
         <div v-else style="padding:40px;text-align:center" class="muted">…</div>
       </div>
+      <div class="tooltip" v-if="hov" :style="hovStyle"><span class="time">{{ hov.label }}</span><span class="sub">{{ hov.text }}</span></div>
       <div class="heat-legend"><span>{{ t('nobody free') }}</span><span class="bar"></span><span>{{ t('everyone free') }}</span></div>
       <template #foot>
         <span class="grow"></span>

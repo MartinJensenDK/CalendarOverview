@@ -168,6 +168,8 @@ const cells = w.document.querySelectorAll('.heat .hc');
 assert(cells.length === 7 * 18, `heatmap cells for 7 days x 18 slots (got ${cells.length})`);
 cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick();
 assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/0/deeplink/compose'), 'slot selection shows Outlook link');
+cells[3].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
+assert([...w.document.querySelectorAll('.tooltip')].some((el) => /of 2 free/.test(el.textContent)), 'hovering a heatmap cell shows "x of y free"');
 const sugg = w.document.querySelectorAll('.suggest-btn');
 assert(sugg.length === 3, `three suggested times when everyone is free (got ${sugg.length})`);
 sugg[1].click(); await tick();
