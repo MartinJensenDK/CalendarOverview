@@ -14,6 +14,8 @@ export default {
   name: 'HeatmapModal',
   props: { ids: { type: Array, required: true } },
   setup(props) {
+    const ids = ref([...props.ids]);
+    const addingMore = ref(false);
     const form = reactive({ from: todayYmd(), to: addDays(todayYmd(), 7), slot: store.prefs.heatmap_slot || 30, workOnly: true, showWeekends: !!store.prefs.show_weekends, duration: 60, subject: '' });
     const data = ref(null);
     const loading = ref(false);
@@ -23,7 +25,7 @@ export default {
     async function load() {
       loading.value = true;
       try {
-        data.value = await api.get('/api/availability', { users: props.ids, from: form.from, to: form.to, tz: store.tz });
+        data.value = await api.get('/api/availability', { users: ids.value, from: form.from, to: form.to, tz: store.tz });
       } catch (e) {
         toast(e.message || t('Something went wrong'), 'danger');
       } finally { loading.value = false; }
@@ -36,6 +38,13 @@ export default {
       load();
     });
     function preset(days) { form.to = addDays(form.from, days); }
+    function addPerson(u) {
+      if (ids.value.includes(u.id)) return;
+      ids.value.push(u.id);
+      if (!store.selected.includes(u.id)) store.selected.push(u.id);
+      addingMore.value = false;
+      load();
+    }
 
     const days = computed(() => (data.value ? data.value.days.filter((d) => form.showWeekends || !isWeekend(d)) : []));
     const range = computed(() => {
@@ -143,7 +152,7 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, hov, hover, unhover, hovStyle, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, ids, addingMore, addPerson, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, hov, hover, unhover, hovStyle, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -160,6 +169,11 @@ export default {
         <span class="grow"></span>
         <span class="avatars row" style="gap:0"><img v-for="u in users.slice(0, 8)" :key="u.id" class="avatar sm" :src="u.photo_url" :title="u.name" alt="" style="margin-left:-6px;border:2px solid var(--surface)"></span>
         <span class="muted" style="font-size:12px">{{ t('{n} people', { n: users.length }) }}</span>
+        <button type="button" class="btn ghost sm" @click="addingMore = !addingMore"><icon name="plus" :size="14"></icon>{{ t('Add more') }}</button>
+      </div>
+      <div class="row" style="margin:-4px 0 10px" v-if="addingMore">
+        <div style="flex:1;max-width:360px"><user-picker endpoint="/api/directory/users" :placeholder="t('Add a person')" :exclude="ids" @pick="addPerson"></user-picker></div>
+        <button type="button" class="btn ghost sm" @click="addingMore = false">{{ t('Cancel') }}</button>
       </div>
       <div class="suggest" v-if="data">
         <div class="field-label">{{ t('Next 3 times when everyone is free') }}</div>

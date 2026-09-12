@@ -170,6 +170,12 @@ cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await 
 assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/0/deeplink/compose'), 'slot selection shows Outlook link');
 cells[3].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
 assert([...w.document.querySelectorAll('.tooltip')].some((el) => /of 2 free/.test(el.textContent)), 'hovering a heatmap cell shows "x of y free"');
+[...w.document.querySelectorAll('.heat-toolbar .btn')].find((b) => b.textContent.includes('Add more')).click(); await tick();
+assert(w.document.querySelector('.modal .picker input'), 'Add more reveals a person picker');
+const pickerInput = w.document.querySelector('.modal .picker input');
+pickerInput.dispatchEvent(new w.Event('focus')); await tick(250);
+w.document.querySelector('.modal .picker .opt').dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick(120);
+assert(store.selected.includes('x1') && calls.some((c) => c.includes('/api/availability') && c.includes('x1')), 'picked person is added to the search');
 const sugg = w.document.querySelectorAll('.suggest-btn');
 assert(sugg.length === 3, `three suggested times when everyone is free (got ${sugg.length})`);
 sugg[1].click(); await tick();
