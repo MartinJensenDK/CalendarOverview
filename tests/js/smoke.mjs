@@ -53,6 +53,7 @@ const overview = {
 };
 const availability = { from: '2026-09-14', to: '2026-09-19', days: days.slice(0, 5), fetched_at: '', users: overview.users.slice(0, 2) };
 
+const defaultPrefs = { ...me.preferences };
 const calls = [];
 globalThis.fetch = async (url, opts = {}) => {
   calls.push(`${opts.method || 'GET'} ${url}`);
@@ -61,7 +62,7 @@ globalThis.fetch = async (url, opts = {}) => {
   if (path === '/api/me') body = me;
   else if (path === '/api/overview') body = overview;
   else if (path === '/api/availability') body = availability;
-  else if (path === '/api/settings/reset') body = { preferences: { ...me.preferences }, menu: null };
+  else if (path === '/api/settings/reset') body = { preferences: { ...defaultPrefs }, menu: null };
   else if (path === '/api/settings') body = { preferences: { ...me.preferences, ...JSON.parse(opts.body) }, menu: null };
   else if (path === '/api/directory/users') body = { users: [member('x1', 'Xenia Search', 'Analyst')] };
   else if (path === '/api/groups') body = { menu: me.menu };
@@ -129,7 +130,7 @@ assert(w.document.querySelectorAll('.grid .name .pick').length === 3, 'each over
 w.document.querySelectorAll('.grid .name .pick')[0].click(); await tick();
 assert(store.selected.length === 1, 'checkbox selects without double toggling');
 w.document.querySelectorAll('.grid .name .txt b')[1].click(); await tick();
-assert(store.selected.length === 2 && w.document.querySelector('.findtime').textContent.includes('2 selected') && !w.document.querySelector('.findtime .btn.primary').disabled, 'find-time section in the menu shows the selection');
+assert(store.selected.length === 2 && w.document.querySelector('.findtime').textContent.includes('2 selected') && !w.document.querySelector('.findtime .btn.success').disabled, 'find-time section in the menu shows the selection');
 
 // Mini calendar in the menu footer
 assert(w.document.querySelector('.minical'), 'mini calendar rendered');
@@ -152,6 +153,7 @@ store.prefs.find_time_enabled = false; await tick();
 assert(!w.document.querySelector('.findtime') && w.document.querySelectorAll('.grid .name .pick').length === 0, 'find-time section and row checkboxes hidden when disabled');
 store.prefs.find_time_enabled = true; await tick();
 assert(w.document.querySelector('.findtime') && w.document.querySelectorAll('.grid .name .pick').length === 3, 'find-time section returns when enabled');
+assert(w.document.querySelector('.findtime .btn.success'), 'find-time button uses the green success style');
 openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
 const cells = w.document.querySelectorAll('.heat .hc');
 assert(cells.length === 5 * 18, `heatmap cells for 5 days x 18 slots (got ${cells.length})`);

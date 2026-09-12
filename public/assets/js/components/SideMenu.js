@@ -84,7 +84,7 @@ export default {
           <div class="row">
             <button type="button" class="btn sm ghost" :disabled="!store.selected.length" @click="clearSelection">{{ t('Clear') }}</button>
             <span class="grow"></span>
-            <button type="button" class="btn sm primary" :disabled="!store.selected.length" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
+            <button type="button" class="btn sm success" :disabled="!store.selected.length" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
           </div>
         </div>
         <mini-calendar></mini-calendar>
