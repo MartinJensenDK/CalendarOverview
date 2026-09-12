@@ -208,6 +208,8 @@ const da = {
   '{free} of {total} free for the whole meeting ({time})': '{free} af {total} ledige i hele mødet ({time})',
   'New group with this person': 'Ny gruppe med denne person',
   '{name} added to {group}': '{name} er tilføjet til {group}',
+  'Member of {groups}': 'Medlem af {groups}',
+  'In {groups}': 'I {groups}',
   'Tip: just start typing anywhere to look someone up.': 'Tip: begynd bare at skrive hvor som helst for at slå en person op.',
   'Select everyone on this page': 'Vælg alle på denne side',
   'Clear selection': 'Fjern alle markeringer',

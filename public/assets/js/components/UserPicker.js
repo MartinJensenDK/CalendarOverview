@@ -1,6 +1,7 @@
 // Typeahead against /api/directory/users, /api/directory/managers or /api/entra/groups.
 import { api } from '../api.js';
 import { t } from '../i18n.js';
+import { store } from '../store.js';
 
 const { ref, watch } = Vue;
 
@@ -55,9 +56,11 @@ export default {
       else if (e.key === 'Enter') { e.preventDefault(); pick(results.value[active.value]); }
       else if (e.key === 'Escape') { e.stopPropagation(); open.value = false; }
     }
+    // Groups a person is already in, shown so it is clear they may join more than one.
+    function inGroups(r) { return store.menu.filter((g) => g.kind === 'group' && g.type === 'manual' && (g.manual_members || []).some((m) => m.id === r.id)).map((g) => g.name); }
     function onFocus() { if (!results.value.length) search(); else open.value = true; }
     function onBlur() { setTimeout(() => { open.value = false; }, 150); }
-    return { q, results, open, active, loading, pick, onKey, onFocus, onBlur, t };
+    return { q, results, open, active, loading, pick, onKey, onFocus, onBlur, inGroups, t };
   },
   template: `
     <div class="picker">
@@ -68,6 +71,7 @@ export default {
           <img v-if="kind === 'users'" class="avatar sm" :src="r.photo_url" alt="">
           <span v-else class="avatar sm" style="display:grid;place-items:center;font-size:11px;font-weight:600">{{ r.kind === 'm365' ? 'M' : r.kind === 'security' ? 'S' : 'D' }}</span>
           <span class="txt"><b>{{ r.name }}</b><small>{{ kind === 'users' ? [r.title, r.department].filter(Boolean).join(' · ') || r.email : (r.description || r.mail || r.id) }}</small></span>
+          <em class="in-groups" v-if="kind === 'users' && inGroups(r).length">{{ t('In {groups}', { groups: inGroups(r).join(', ') }) }}</em>
         </div>
       </div>
     </div>`,

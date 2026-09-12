@@ -100,6 +100,7 @@ export default {
 
     const manualGroups = computed(() => store.menu.filter((g) => g.kind === 'group' && g.type === 'manual'));
     const alreadyIn = computed(() => person.value ? manualGroups.value.filter((g) => (g.manual_members || []).some((m) => m.id === person.value.id)).map((g) => g.id) : []);
+    const memberOf = computed(() => manualGroups.value.filter((g) => alreadyIn.value.includes(g.id)).map((g) => g.name));
     async function addToGroup() {
       const g = manualGroups.value.find((x) => String(x.id) === String(groupId.value));
       if (!g || !person.value) return;
@@ -112,6 +113,7 @@ export default {
         });
         store.menu = data.menu;
         toast(t('{name} added to {group}', { name: person.value.name, group: g.name }));
+        groupId.value = ''; // ready for the next group: a person may belong to several
         loadOverview();
       } catch (e) {
         toast(e.message || t('Something went wrong'), 'danger');
@@ -119,7 +121,7 @@ export default {
     }
     function newGroup() { const p = person.value; closeModal(); openModal('group', { presetMembers: [p] }); }
 
-    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, groupId, adding, addToGroup, newGroup, closeModal, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
+    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, memberOf, groupId, adding, addToGroup, newGroup, closeModal, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
   },
   template: `
     <modal :title="t('Look up a person')" width="640px" dismissable @close="closeModal">
@@ -150,6 +152,7 @@ export default {
           </select>
           <button type="button" class="btn primary sm" :disabled="!groupId || adding" @click="addToGroup"><icon name="plus" :size="14"></icon>{{ t('Add') }}</button>
           <button type="button" class="btn sm ghost" @click="newGroup">{{ t('New group with this person') }}</button>
+          <span class="muted lookup-memberof" v-if="memberOf.length">{{ t('Member of {groups}', { groups: memberOf.join(', ') }) }}</span>
         </div>
         <div class="lookup-add" v-else>
           <button type="button" class="btn primary sm" @click="newGroup"><icon name="plus" :size="14"></icon>{{ t('New group with this person') }}</button>
