@@ -1,0 +1,204 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Group;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Tests\Support\Fixtures;
+use Tests\TestCase;
+
+class ApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_me_returns_menu_with_my_team(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+
+        $data = $this->actingAs($user)->getJson('/api/me')->assertOk()->json();
+        $this->assertSame('me-0001', $data['user']['id']);
+        $this->assertSame('my_team', $data['menu'][0]['id']);
+        $names = array_column($data['menu'][0]['members'], 'name');
+        $this->assertSame(['Test Person', 'Paula Peer', 'Peter Peer'], $names);
+        $this->assertCount(4, $data['color_rules']);
+        $this->assertSame(50, $data['preferences']['page_size']);
+    }
+
+    public function test_settings_are_saved_and_validated(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['theme' => 'dark', 'locale' => 'da', 'days' => 14, 'row_height' => 'lg'])->assertOk()
+            ->assertJsonPath('preferences.theme', 'dark')->assertJsonPath('preferences.days', 14);
+        $this->assertSame('da', $user->fresh()->pref('locale'));
+        $this->actingAs($user)->putJson('/api/settings', ['page_size' => 33])->assertStatus(422);
+        $this->actingAs($user)->putJson('/api/settings', ['theme' => 'blue'])->assertStatus(422);
+    }
+
+    public function test_enabling_demo_seeds_150_users_and_pages_50(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
+        $this->assertDatabaseCount('directory_users', 151);
+
+        $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk()->json();
+        $this->assertSame(151, $data['total']); // me + 150 demo users
+        $this->assertCount(50, $data['users']);
+        $this->assertCount(7, $data['days']);
+        $this->assertSame(50, $data['per_page']);
+        $demoRow = collect($data['users'])->first(fn ($u) => $u['is_demo']);
+        $this->assertNotEmpty($demoRow['items']);
+        $first = $demoRow['items'][0];
+        $this->assertArrayHasKey('st', $first);
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $first['s']);
+
+        $page2 = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&page=2&per_page=100')->assertOk()->json();
+        $this->assertCount(51, $page2['users']);
+    }
+
+    public function test_demo_schedule_is_deterministic(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true, 'my_team_visible' => false]);
+        $a = $this->actingAs($user)->getJson('/api/overview?from=2026-10-05&days=5')->json('users.0.items');
+        $b = $this->actingAs($user)->getJson('/api/overview?from=2026-10-05&days=5')->json('users.0.items');
+        $this->assertSame($a, $b);
+    }
+
+    public function test_groups_crud_with_manager_based_members(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+
+        $created = $this->actingAs($user)->postJson('/api/groups', [
+            'name' => 'Sales', 'type' => 'manual', 'members' => ['other-0001'], 'managers' => ['mgr-0001'],
+        ])->assertCreated()->json('group');
+        $this->assertSame(['Test Person', 'Otto Other', 'Paula Peer', 'Peter Peer'], array_column($created['members'], 'name'));
+
+        $groupId = $created['id'];
+        $this->actingAs($user)->postJson("/api/groups/{$groupId}/toggle")->assertOk()->assertJsonPath('group.visible', false);
+        $this->assertFalse(Group::find($groupId)->visible);
+
+        $this->actingAs($user)->putJson("/api/groups/{$groupId}", ['name' => 'Sales EU', 'type' => 'manual', 'members' => [], 'managers' => []])->assertOk()
+            ->assertJsonPath('group.name', 'Sales EU')->assertJsonPath('group.members', []);
+
+        $this->actingAs($user)->postJson('/api/groups', ['name' => '', 'type' => 'manual'])->assertStatus(422);
+        $this->actingAs($user)->postJson('/api/groups', ['name' => 'X', 'type' => 'entra'])->assertStatus(422);
+
+        $other = Fixtures::user(['entra_id' => 'other-9', 'email' => 'o@example.com']);
+        $this->actingAs($other)->deleteJson("/api/groups/{$groupId}")->assertNotFound();
+        $this->actingAs($user)->deleteJson("/api/groups/{$groupId}")->assertOk();
+        $this->assertDatabaseMissing('groups', ['id' => $groupId]);
+    }
+
+    public function test_entra_group_members_are_synced_from_graph(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        Http::fake([
+            'graph.microsoft.com/v1.0/groups/g-1/transitiveMembers/*' => Http::response(['value' => [['id' => 'peer-0001'], ['id' => 'other-0001'], ['id' => 'unknown-1']]]),
+        ]);
+
+        $group = $this->actingAs($user)->postJson('/api/groups', ['name' => 'Board', 'type' => 'entra', 'entra_group_id' => 'g-1', 'entra_group_name' => 'Board'])
+            ->assertCreated()->json('group');
+        $this->assertSame(['Otto Other', 'Peter Peer'], array_column($group['members'], 'name'));
+        $this->assertNotNull($group['members_synced_at']);
+    }
+
+    public function test_color_rules_crud_and_validation(): void
+    {
+        $user = Fixtures::user();
+        $rules = $this->actingAs($user)->postJson('/api/color-rules', ['name' => 'Doctor', 'field' => 'subject', 'operator' => 'contains', 'value' => 'doctor', 'color' => '#123456'])
+            ->assertCreated()->json('color_rules');
+        $this->assertCount(5, $rules);
+        $this->assertSame('Doctor', end($rules)['name']);
+
+        $this->actingAs($user)->postJson('/api/color-rules', ['name' => 'Bad', 'field' => 'subject', 'operator' => 'regex', 'value' => '(', 'color' => '#123456'])->assertStatus(422);
+        $this->actingAs($user)->postJson('/api/color-rules', ['name' => 'Bad', 'field' => 'status', 'operator' => 'is', 'value' => 'nope', 'color' => '#123456'])->assertStatus(422);
+        $this->actingAs($user)->postJson('/api/color-rules', ['name' => 'Bad', 'field' => 'subject', 'operator' => 'contains', 'value' => 'x', 'color' => 'red'])->assertStatus(422);
+
+        $ids = array_reverse(array_column($rules, 'id'));
+        $reordered = $this->actingAs($user)->postJson('/api/color-rules/reorder', ['ids' => $ids])->assertOk()->json('color_rules');
+        $this->assertSame('Doctor', $reordered[0]['name']);
+
+        $this->actingAs($user)->postJson('/api/color-rules/reset')->assertOk()->assertJsonCount(4, 'color_rules');
+    }
+
+    public function test_overview_fetches_schedules_from_graph_and_caches_them(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        Http::fake([
+            'graph.microsoft.com/v1.0/me/calendar/getSchedule' => Http::response(Fixtures::scheduleResponse([
+                'peter@example.com' => [Fixtures::item('2026-09-14T09:00:00', '2026-09-14T10:30:00', 'busy', 'Team sync')],
+                'paula@example.com' => [Fixtures::item('2026-09-15T00:00:00', '2026-09-16T00:00:00', 'oof', 'Vacation')],
+                'test@example.com' => [],
+            ])),
+            'graph.microsoft.com/v1.0/me/calendarView*' => Http::response(['value' => [[
+                'subject' => 'Secret', 'showAs' => 'busy', 'isAllDay' => false, 'sensitivity' => 'private',
+                'start' => ['dateTime' => '2026-09-14T13:00:00.0000000', 'timeZone' => 'Europe/Copenhagen'],
+                'end' => ['dateTime' => '2026-09-14T14:00:00.0000000', 'timeZone' => 'Europe/Copenhagen'],
+            ]]]),
+            'graph.microsoft.com/v1.0/$batch' => Http::response(['responses' => []]),
+        ]);
+
+        $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk()->json();
+        $byName = collect($data['users'])->keyBy('name');
+        $peter = $byName['Peter Peer']['items'][0];
+        $this->assertSame('2026-09-14T07:00:00Z', $peter['s']);
+        $this->assertSame('Team sync', $peter['sub']);
+        $this->assertFalse($peter['ad']);
+        $paula = $byName['Paula Peer']['items'][0];
+        $this->assertTrue($paula['ad']);
+        $this->assertSame('oof', $paula['st']);
+        $me = $byName['Test Person']['items'][0];
+        $this->assertTrue($me['pr']);
+        $this->assertNull($me['sub']);
+        $this->assertTrue($byName['Test Person']['is_me']);
+
+        Http::assertSentCount(3);
+        $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk();
+        Http::assertSentCount(3); // served from cache
+
+        $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen&refresh=1')->assertOk();
+        $this->assertGreaterThan(3, count(Http::recorded()));
+    }
+
+    public function test_availability_endpoint_validates_range(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true]);
+        $this->actingAs($user)->getJson('/api/availability?users[]=demo-001&from=2026-09-14&to=2026-09-13')->assertStatus(422);
+        $data = $this->actingAs($user)->getJson('/api/availability?users[]=demo-001&users[]=demo-002&from=2026-09-14&to=2026-09-19&tz=Europe/Copenhagen')->assertOk()->json();
+        $this->assertCount(2, $data['users']);
+        $this->assertCount(5, $data['days']);
+    }
+
+    public function test_photo_endpoint_returns_avatar_svg_when_no_photo(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->get('/api/photos/me-0001')->assertOk()->assertHeader('Content-Type', 'image/svg+xml')->assertSee('TP', false);
+        $this->actingAs($user)->get('/api/photos/nobody')->assertOk()->assertSee('?', false);
+    }
+
+    public function test_app_shell_renders_for_signed_in_user(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['theme' => 'dark', 'locale' => 'da']);
+        $html = $this->actingAs($user)->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('data-theme="dark"', $html);
+        $this->assertStringContainsString('window.__APP__', $html);
+        $this->assertStringContainsString('assets/js/app.js', $html);
+        $this->assertStringContainsString('"locale":"da"', $html);
+    }
+
+    public function test_directory_search_and_managers(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $this->actingAs($user)->getJson('/api/directory/users?q=peer')->assertOk()->assertJsonCount(2, 'users');
+        $managers = $this->actingAs($user)->getJson('/api/directory/managers')->assertOk()->json('users');
+        $this->assertSame(['Mona Manager'], array_column($managers, 'name'));
+    }
+}
