@@ -85,13 +85,6 @@ export default {
             </div>
           </div>
           <div class="inline-seg row" style="justify-content:space-between">
-            <span class="muted" style="font-size:12px">{{ t('Language') }}</span>
-            <div class="seg">
-              <button type="button" :class="{ active: store.prefs.locale === 'en' }" @click="pick({ locale: 'en' })">EN</button>
-              <button type="button" :class="{ active: store.prefs.locale === 'da' }" @click="pick({ locale: 'da' })">DA</button>
-            </div>
-          </div>
-          <div class="inline-seg row" style="justify-content:space-between">
             <span class="muted" style="font-size:12px">{{ t('Row height') }}</span>
             <div class="seg">
               <button type="button" v-for="h in store.options.row_heights" :key="h" :class="{ active: store.prefs.row_height === h }" @click="pick({ row_height: h })">{{ h === 'sm' ? 'S' : h === 'md' ? 'M' : 'L' }}</button>

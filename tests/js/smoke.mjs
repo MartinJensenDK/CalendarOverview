@@ -283,6 +283,7 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
 
 // Danish
 store.prefs.locale = 'da'; await tick();
+assert(![...w.document.querySelectorAll('.topbar .seg button')].some(b => /^(EN|DA)$/.test(b.textContent.trim())), 'language switch removed from the profile menu');
 assert(html().includes('Kalenderoversigt') && html().includes('Mit team'), 'Danish translation applied');
 assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
 
