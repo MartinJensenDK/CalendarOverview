@@ -15,7 +15,11 @@ class DirectoryController extends Controller
     {
         $user = $request->user();
         $directory->syncIfStale($user);
-        $users = $directory->search((string) $request->query('q', ''), (bool) $user->pref('demo_enabled'), 25);
+        // Demo people are searchable only while demo data is on; the person lookup also
+        // hides them when the Demo team is hidden in the menu.
+        $includeDemo = (bool) $user->pref('demo_enabled')
+            && ($request->query('context') !== 'lookup' || (bool) $user->pref('demo_visible'));
+        $users = $directory->search((string) $request->query('q', ''), $includeDemo, 25);
 
         return response()->json(['users' => $users->map->toSummary()->values()]);
     }

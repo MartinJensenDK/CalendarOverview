@@ -356,6 +356,22 @@ class ApiTest extends TestCase
         $user = Fixtures::user();
         Fixtures::team();
         $this->actingAs($user)->getJson('/api/directory/users?q=peer')->assertOk()->assertJsonCount(2, 'users');
+    }
+
+    public function test_demo_people_leave_the_lookup_when_demo_is_off_or_hidden(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
+        $this->assertGreaterThan(0, count($this->actingAs($user)->getJson('/api/directory/users?q=demo.example&context=lookup')->json('users')));
+
+        $this->actingAs($user)->putJson('/api/settings', ['demo_visible' => false])->assertOk();
+        $this->actingAs($user)->getJson('/api/directory/users?q=demo.example&context=lookup')->assertOk()->assertJsonCount(0, 'users');
+        $this->assertGreaterThan(0, count($this->actingAs($user)->getJson('/api/directory/users?q=demo.example')->json('users'))); // group pickers still offer them
+
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => false, 'demo_visible' => true])->assertOk();
+        $this->actingAs($user)->getJson('/api/directory/users?q=demo.example&context=lookup')->assertOk()->assertJsonCount(0, 'users');
+        $this->actingAs($user)->getJson('/api/directory/users?q=demo.example')->assertOk()->assertJsonCount(0, 'users');
         $managers = $this->actingAs($user)->getJson('/api/directory/managers')->assertOk()->json('users');
         $this->assertSame(['Mona Manager'], array_column($managers, 'name'));
     }

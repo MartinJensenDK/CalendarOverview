@@ -32,7 +32,7 @@ export default {
       const mine = ++seq;
       searching.value = true;
       try {
-        const data = await api.get('/api/directory/users', { q: q.value });
+        const data = await api.get('/api/directory/users', { q: q.value, context: 'lookup' });
         if (mine !== seq) return;
         results.value = data.users;
         active.value = 0;
