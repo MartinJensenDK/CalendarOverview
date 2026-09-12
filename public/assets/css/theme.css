@@ -601,7 +601,9 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .lookup-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .lookup-head .txt b { font-family: var(--font-display); font-size: 18px; }
 .lookup-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border-radius: var(--radius); background: var(--surface-2); margin-bottom: 12px; }
-.lookup-days { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.lookup-range { font-size: 12px; margin: 0 2px 6px; }
+.lookup-days { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: auto; max-height: min(440px, 52vh); overscroll-behavior: contain; }
+.lookup-more { display: flex; justify-content: center; padding: 8px; font-size: 12px; }
 .lookup-day { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
 .lookup-day:last-child { border-bottom: 0; }
 .lookup-day.weekend { background: var(--surface-2); }

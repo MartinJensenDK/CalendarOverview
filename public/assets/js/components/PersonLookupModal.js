@@ -1,10 +1,10 @@
 // Quick person lookup: opens when you start typing anywhere. Shows the person's
-// calendar for the current overview range and can add them to a manual group.
+// calendar for the next 30 days (30 more each time you scroll to the end) and can add them to a manual group.
 import { api } from '../api.js';
 import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, openModal, loadOverview } from '../actions.js';
-import { addDays, parseYmd, weekday, dayLabel, timeLabel, isWeekend, ymd } from '../util/date.js';
+import { addDays, parseYmd, weekday, dayLabel, timeLabel, isWeekend, ymd, todayYmd } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
 import { hoursFor } from '../util/hours.js';
 import { minutesToHhmm } from '../util/date.js';
@@ -52,23 +52,54 @@ export default {
       search();
     });
 
-    const range = computed(() => ({ from: store.from, to: addDays(store.from, store.prefs.days) }));
+    // The calendar starts today and grows in 30-day windows as you scroll; the window itself stays the same size.
+    const WINDOW = 30;
+    const from = todayYmd();
+    const to = ref(addDays(from, WINDOW));
+    const loadingMore = ref(false);
+    const daysEl = ref(null);
     const days = computed(() => {
       const out = [];
-      for (let d = range.value.from; d < range.value.to; d = addDays(d, 1)) if (store.prefs.show_weekends || !isWeekend(d)) out.push(d);
+      for (let d = from; d < to.value; d = addDays(d, 1)) if (store.prefs.show_weekends || !isWeekend(d)) out.push(d);
       return out;
     });
+    const shownDays = computed(() => Math.round((parseYmd(to.value) - parseYmd(from)) / 86400000));
 
+    async function fetchWindow(u, f, tEnd) {
+      const data = await api.get('/api/availability', { users: [u.id], from: f, to: tEnd, tz: store.tz });
+      return data.users[0] || { items: [], work: [] };
+    }
     async function pick(u) {
       person.value = u;
       results.value = [];
+      schedule.value = null;
+      to.value = addDays(from, WINDOW);
       loadingSchedule.value = true;
       try {
-        const data = await api.get('/api/availability', { users: [u.id], from: range.value.from, to: range.value.to, tz: store.tz });
-        schedule.value = data.users[0] || { items: [] };
+        schedule.value = await fetchWindow(u, from, to.value);
       } catch (e) {
         toast(e.message || t('Something went wrong'), 'danger');
       } finally { loadingSchedule.value = false; }
+    }
+    async function loadMore() {
+      const u = person.value;
+      if (!u || !schedule.value || schedule.value.error || loadingSchedule.value || loadingMore.value) return;
+      const f = to.value;
+      const next = addDays(f, WINDOW);
+      loadingMore.value = true;
+      try {
+        const more = await fetchWindow(u, f, next);
+        if (person.value !== u || !schedule.value) return;
+        schedule.value.items = [...(schedule.value.items || []), ...(more.items || [])];
+        schedule.value.work = [...(schedule.value.work || []), ...(more.work || [])];
+        to.value = next;
+      } catch (e) {
+        toast(e.message || t('Something went wrong'), 'danger');
+      } finally { loadingMore.value = false; }
+    }
+    function onScroll(e) {
+      const el = e.target;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) loadMore();
     }
     // Working hours and location for the day, from the person's plan in Microsoft 365.
     function hoursOn(day) {
@@ -124,7 +155,7 @@ export default {
     }
     function newGroup() { const p = person.value; closeModal(); openModal('group', { presetMembers: [p] }); }
 
-    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, memberOf, groupId, adding, addToGroup, newGroup, close, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
+    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, loadingMore, loadMore, onScroll, daysEl, shownDays, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, memberOf, groupId, adding, addToGroup, newGroup, close, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
   },
   template: `
     <modal :title="t('Look up a person')" width="640px" dismissable @close="close">
@@ -161,7 +192,8 @@ export default {
           <button type="button" class="btn primary sm" @click="newGroup"><icon name="plus" :size="14"></icon>{{ t('New group with this person') }}</button>
         </div>
 
-        <div class="lookup-days" v-if="!loadingSchedule && schedule">
+        <div class="lookup-range muted" v-if="!loadingSchedule && schedule && !schedule.error">{{ t('Next {n} days from today', { n: shownDays }) }}</div>
+        <div class="lookup-days" v-if="!loadingSchedule && schedule" ref="daysEl" @scroll="onScroll">
           <div v-if="schedule.error" class="callout warn">{{ t('No access to this calendar') }}</div>
           <div v-for="d in days" :key="d" class="lookup-day" :class="{ weekend: isWeekend(d), today: d === todayYmd }">
             <div class="lookup-date"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
@@ -170,6 +202,10 @@ export default {
               <span v-if="!itemsFor(d).length" class="muted free">{{ t('free') }}</span>
               <span v-for="it in itemsFor(d)" :key="it.key" class="lookup-item" :class="it.st" :style="it.style" :title="it.loc || ''"><span class="mono">{{ it.time }}</span> {{ it.label }}</span>
             </div>
+          </div>
+          <div class="lookup-more" v-if="!schedule.error">
+            <span v-if="loadingMore" class="muted">{{ t('Loading more…') }}</span>
+            <button v-else type="button" class="btn ghost sm" @click="loadMore">{{ t('Show {n} more days', { n: 30 }) }}</button>
           </div>
         </div>
         <div v-else class="muted" style="padding:16px 4px">…</div>

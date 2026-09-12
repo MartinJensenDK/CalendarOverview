@@ -426,8 +426,22 @@ closeModal(); await tick();
 w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'x', bubbles: true })); await tick(250);
 assert(w.document.activeElement === w.document.querySelector('.lookup-search input'), 'search field keeps focus after results arrive');
 w.document.querySelector('.lookup-row').click(); await tick(120);
-assert(w.document.querySelectorAll('.lookup-date .hours').length === 5 && w.document.querySelector('.lookup-date .hours .loc[title="Office"]') && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.lookup-date .hours').textContent), 'lookup shows working hours and location per day');
-assert(w.document.querySelector('.lookup-person') && w.document.querySelectorAll('.lookup-day').length === store.prefs.days, `selecting a person shows their calendar for the overview range (${w.document.querySelectorAll('.lookup-day').length} days)`);
+{ // The calendar covers the next 30 days from today, in a scroll box, and grows by 30 days at the end
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const inWindow = (n) => availability.users[0].work.filter((x) => { const d = new Date(x.s); return d >= t0 && d < new Date(t0.getTime() + n * 86400000); }).length;
+  assert(w.document.querySelectorAll('.lookup-date .hours').length === inWindow(30) && (inWindow(30) === 0 || (w.document.querySelector('.lookup-date .hours .loc[title="Office"]') && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.lookup-date .hours').textContent))), 'lookup shows working hours and location per day');
+  const lastCall = () => calls.filter((c) => c.includes('/api/availability')).pop();
+  const pad = (n) => String(n).padStart(2, '0');
+  const ymdLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const plus = (n) => ymdLocal(new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + n));
+  assert(w.document.querySelector('.lookup-person') && w.document.querySelectorAll('.lookup-day').length === 30 && lastCall().includes('from=' + plus(0)) && lastCall().includes('to=' + plus(30)) && html().includes('Next 30 days from today'), `selecting a person shows the next 30 days (${w.document.querySelectorAll('.lookup-day').length} days)`);
+  const box = w.document.querySelector('.lookup-days');
+  assert(box.getAttribute('class').includes('lookup-days') && w.document.querySelector('.lookup-more .btn'), 'day list is its own scroll box with a "more" control at the end');
+  box.dispatchEvent(new w.Event('scroll')); await tick(120);
+  assert(w.document.querySelectorAll('.lookup-day').length === 60 && lastCall().includes('from=' + plus(30)) && lastCall().includes('to=' + plus(60)) && html().includes('Next 60 days from today'), 'scrolling to the end loads 30 more days');
+  w.document.querySelector('.lookup-more .btn').click(); await tick(120);
+  assert(w.document.querySelectorAll('.lookup-day').length === 90 && lastCall().includes('from=' + plus(60)), 'the button loads the next 30 days too');
+}
 assert([...w.document.querySelectorAll('.lookup-add option')].some((o) => o.textContent.includes('Sales')), 'manual groups offered for adding the person');
 { const sel = w.document.querySelector('.lookup-add select'); sel.value = '7'; sel.dispatchEvent(new w.Event('change', { bubbles: true })); await tick();
   let sent = null; const origFetch = globalThis.fetch;
