@@ -10,8 +10,21 @@ const MAX_DAYS = 366; // the server splits this into Graph-sized windows
 
 const BUSY = new Set(['busy', 'oof', 'tentative', 'unknown']);
 
+// The hover tooltip lives in its own component: it reads the hover ref itself, so
+// mouse movement re-renders only this small element, never the thousands of cells.
+const HeatTip = {
+  props: { state: { type: Object, required: true } },
+  setup(props) {
+    const hov = computed(() => props.state.hov.value);
+    const style = computed(() => hov.value ? { left: `${Math.min(hov.value.x + 14, window.innerWidth - 220)}px`, top: `${hov.value.y + 18}px` } : {});
+    return { hov, style };
+  },
+  template: `<div class="tooltip" v-if="hov" :style="style"><span class="time">{{ hov.label }}</span><span class="sub">{{ hov.text }}</span><span class="loc" v-if="hov.meeting">{{ hov.meeting }}</span></div>`,
+};
+
 export default {
   name: 'HeatmapModal',
+  components: { HeatTip },
   props: { ids: { type: Array, required: true } },
   setup(props) {
     const ids = ref([...props.ids]);
@@ -109,10 +122,21 @@ export default {
       const rgb = p < 0.5 ? mix(STOPS[0], STOPS[1], p * 2) : mix(STOPS[1], STOPS[2], (p - 0.5) * 2);
       return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`;
     }
-    function cellStyle(day, m) {
-      const total = users.value.length || 1;
-      return { background: heatColor(freeCount(day, m, m + form.slot) / total) };
-    }
+    // Free count and colour for every cell, computed once per data/setting change.
+    // Rendering and hovering only look values up here instead of re-counting.
+    const cellIndex = computed(() => {
+      const map = new Map();
+      const total = users.value.length;
+      const slot = form.slot;
+      for (const d of days.value) {
+        for (const m of slots.value) {
+          const free = freeCount(d, m, m + slot);
+          map.set(`${d}|${m}`, { free, total, background: heatColor(free / (total || 1)) });
+        }
+      }
+      return map;
+    });
+    function cell(day, m) { return cellIndex.value.get(`${day}|${m}`); }
     function isSel(day, m) { return sel.value && sel.value.day === day && m >= sel.value.start && m < sel.value.end; }
     function down(day, m) { dragging = { day, anchor: m }; sel.value = { day, start: m, end: m + form.slot }; }
     function enter(day, m) {
@@ -125,7 +149,8 @@ export default {
     // Hover tooltip: "x of y free" for the slot under the cursor.
     const hov = ref(null);
     function hover(e, day, m) {
-      const free = freeCount(day, m, m + form.slot);
+      const c = cell(day, m);
+      const free = c ? c.free : 0;
       const total = users.value.length;
       let meeting = null;
       if (form.duration > form.slot && m + form.duration <= range.value.end) {
@@ -134,7 +159,7 @@ export default {
       hov.value = { x: e.clientX, y: e.clientY, label: `${weekday(day, 'short')} ${dayLabel(day)} · ${minutesToHhmm(m)}–${minutesToHhmm(m + form.slot)}`, text: t('{free} of {total} free', { free, total }), meeting };
     }
     function unhover() { hov.value = null; }
-    const hovStyle = computed(() => hov.value ? { left: `${Math.min(hov.value.x + 14, window.innerWidth - 220)}px`, top: `${hov.value.y + 18}px` } : {});
+    const tip = { hov }; // plain wrapper: the template passes the ref itself, without tracking it
 
     // The next three windows of the chosen length where the most people are free
     // (everyone, when possible; otherwise the best attendance in the period).
@@ -184,7 +209,7 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, hov, hover, unhover, hovStyle, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -231,12 +256,12 @@ export default {
           <div v-for="d in days" :key="d" class="hh" :class="{ weekend: isWeekend(d) }"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span></div>
           <template v-for="m in slots" :key="m">
             <div class="ht">{{ m % 60 === 0 ? minutesToHhmm(m) : '' }}</div>
-            <div v-for="d in days" :key="d + m" class="hc" :class="{ hour: m % 60 === 0, weekend: isWeekend(d), sel: isSel(d, m) }" :style="cellStyle(d, m)" @mousedown.prevent="down(d, m)" @mouseenter="enter(d, m); hover($event, d, m)" @mousemove="hover($event, d, m)"></div>
+            <div v-for="d in days" :key="d + m" v-memo="[cell(d, m), isSel(d, m)]" class="hc" :class="{ hour: m % 60 === 0, weekend: isWeekend(d), sel: isSel(d, m) }" :style="{ background: cell(d, m).background }" @mousedown.prevent="down(d, m)" @mouseenter="enter(d, m); hover($event, d, m)" @mousemove="hover($event, d, m)"></div>
           </template>
         </div>
         <div v-else style="padding:40px;text-align:center" class="muted">…</div>
       </div>
-      <div class="tooltip" v-if="hov" :style="hovStyle"><span class="time">{{ hov.label }}</span><span class="sub">{{ hov.text }}</span><span class="loc" v-if="hov.meeting">{{ hov.meeting }}</span></div>
+      <heat-tip :state="tip"></heat-tip>
       <div class="heat-legend"><span>{{ t('nobody free') }}</span><span class="bar"></span><span>{{ t('everyone free') }}</span></div>
       <template #foot>
         <span class="grow"></span>

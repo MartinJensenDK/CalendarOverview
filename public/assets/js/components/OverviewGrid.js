@@ -45,7 +45,23 @@ export default {
       return `${((m - s.start) / s.len) * 100}%`;
     });
 
-    function blocksFor(user, day) {
+    // Blocks are built once per data change for every person and day, and looked up
+    // during rendering. Together with v-memo on the cells, a re-render (selection,
+    // search, the minute tick) touches only cells whose blocks actually changed.
+    const blockIndex = computed(() => {
+      const map = new Map();
+      if (!store.overview) return map;
+      for (const u of store.overview.users) {
+        for (const d of days.value) map.set(`${u.id}|${d}`, buildBlocks(u, d));
+      }
+      return map;
+    });
+    const NO_BLOCKS = [];
+    function blocksFor(user, day) { return blockIndex.value.get(`${user.id}|${day}`) || NO_BLOCKS; }
+    // Skip the fade-in when the grid is large; animating thousands of blocks costs more than it shows.
+    const bigGrid = computed(() => blockIndex.value.size > 600);
+
+    function buildBlocks(user, day) {
       const dayStart = parseYmd(day).getTime();
       const dayEnd = dayStart + 86400000;
       const s = strip.value;
@@ -105,7 +121,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -119,7 +135,7 @@ export default {
           <h3>{{ t('Nothing to show yet') }}</h3><p>{{ t('Show a group in the menu on the left, or create one with the people you want to follow.') }}</p>
           <button type="button" class="btn primary" @click="openModal('group')"><icon name="plus"></icon>{{ t('Create group') }}</button>
         </div></div>
-        <div v-else-if="store.overview" class="grid" :class="'rh-' + store.prefs.row_height" :style="{ '--days': days.length, ...bandStyle }">
+        <div v-else-if="store.overview" class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid }]" :style="{ '--days': days.length, ...bandStyle }">
           <div class="h corner">
             <label class="pick-all" v-if="store.prefs.find_time_enabled" :title="allState.all ? t('Clear selection') : t('Select everyone on this page')">
               <input type="checkbox" ref="allBox" :checked="allState.all" @change="toggleAll" :aria-label="allState.all ? t('Clear selection') : t('Select everyone on this page')">
@@ -136,7 +152,7 @@ export default {
               <img class="avatar" :src="u.photo_url" alt="" loading="lazy">
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
             </div>
-            <div v-for="d in days" :key="u.id + d" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
+            <div v-for="d in days" :key="u.id + d" v-memo="[blocksFor(u, d), d === today ? nowPct : null, u.error]" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
               <div class="band"></div>
               <div class="now" v-if="d === today && nowPct" :style="{ '--now-pct': nowPct }"></div>
               <div class="strip">
