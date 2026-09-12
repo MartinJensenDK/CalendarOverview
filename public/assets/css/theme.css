@@ -215,7 +215,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .menu .head { padding: 8px 6px 6px 10px; display: flex; align-items: center; gap: 8px; }
 .menu .head .who { flex: 1; min-width: 0; }
 .menu .head .who strong, .menu .head .who small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.menu .head .theme-toggle { flex: none; height: 30px; width: 30px; }
+.menu .head .theme-toggle, .menu .head .sync-dir { flex: none; height: 30px; width: 30px; }
+.menu .head .sync-dir.busy .icon { animation: spin 1s linear infinite; }
 .menu .head strong { display: block; font-weight: 600; }
 .menu .head small { color: var(--muted); }
 .menu .inline-seg { padding: 4px 10px 8px; }
@@ -664,3 +665,5 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
   .heat-detail ul { grid-template-columns: 1fr; }
   .card { padding: 22px; }
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }

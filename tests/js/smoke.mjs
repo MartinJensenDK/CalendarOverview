@@ -69,6 +69,7 @@ globalThis.fetch = async (url, opts = {}) => {
   else if (/^\/api\/groups\/\d+$/.test(path)) body = { menu: me.menu };
   else if (path === '/api/groups/reorder') body = { menu: [...me.menu].reverse() };
   else if (path === '/api/groups') body = { menu: me.menu };
+  else if (path === '/api/sync/directory') body = { directory: { ...me.directory, synced_at: '2026-09-14T07:00:00Z', user_count: 4 }, count: 4, menu: me.menu };
   else if (path === '/api/color-rules') body = { color_rules: me.color_rules };
   return { ok: true, status: 200, json: async () => body };
 };
@@ -303,6 +304,15 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
   assert(toggle && head.querySelector('.who strong') && head.children[0].classList.contains('who') && head.children[1] === toggle, 'theme toggle sits to the right of name and e-mail');
   assert(!w.document.querySelector('.topbar .menu [title="System"]') && w.document.querySelectorAll('.topbar .menu .theme-toggle').length === 1, 'only one theme button, no System option');
   assert(!w.document.querySelector('.topbar .menu .item.switch') && !w.document.querySelector('.topbar .menu input[type=checkbox]'), 'demo data switch removed from the profile menu');
+  { // Directory sync is an icon left of the theme toggle; its tooltip carries the old row's text
+    const sync = head.querySelector('.sync-dir');
+    assert(sync && sync.nextElementSibling === toggle && !html().includes('>Sync directory now<'), 'sync icon sits left of the theme toggle and the menu row is gone');
+    assert(/^Sync directory now — Directory: \d+ people, updated /.test(sync.getAttribute('title')), 'sync icon tooltip shows the directory info');
+    const before = calls.length;
+    sync.click(); await tick(60);
+    assert(calls.slice(before).some((c) => c === 'POST /api/sync/directory') && w.document.querySelector('.topbar .menu'), 'clicking the icon syncs and keeps the menu open');
+    assert(head.querySelector('.sync-dir').getAttribute('title').includes('4 people'), 'tooltip updates after the sync');
+  }
   assert(store.prefs.theme === 'system' || store.prefs.theme === 'light', 'theme still system/light before clicking');
   toggle.click(); await tick();
   assert(store.prefs.theme === 'dark' && w.document.documentElement.getAttribute('data-theme') === 'dark', 'clicking picks dark explicitly');

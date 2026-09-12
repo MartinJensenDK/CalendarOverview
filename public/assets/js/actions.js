@@ -128,8 +128,8 @@ export function goToday() {
 
 export async function syncDirectory() {
   const data = await api.post('/api/sync/directory');
-  store.directory = data.directory;
-  store.menu = data.menu;
+  if (data.directory) store.directory = data.directory;
+  if (data.menu) store.menu = data.menu;
   toast(t('Directory synced: {n} people', { n: data.count }));
   loadOverview();
 }

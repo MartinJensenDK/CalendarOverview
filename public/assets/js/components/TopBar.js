@@ -36,10 +36,17 @@ export default {
     function toggleTheme() { savePrefs({ theme: isDark.value ? 'light' : 'dark' }); }
     function toggleMenu() { savePrefs({ menu_collapsed: !store.prefs.menu_collapsed }); }
     function open(name) { profileOpen.value = false; openModal(name); }
-    async function sync() { profileOpen.value = false; try { await syncDirectory(); } catch (e) { /* toast shown by api */ } }
+    const syncing = ref(false);
+    async function sync() {
+      if (syncing.value) return;
+      syncing.value = true;
+      try { await syncDirectory(); } catch (e) { /* toast shown by api */ } finally { syncing.value = false; }
+    }
+    // The icon's tooltip carries what the old menu row said: action + directory size and last sync.
+    const syncTitle = computed(() => t('Sync directory now') + ' — ' + t('Directory: {n} people, updated {time}', { n: store.directory.user_count, time: store.directory.synced_at ? new Date(store.directory.synced_at).toLocaleString() : t('never') }));
     function onDate(e) { if (e.target.value) setFrom(e.target.value); }
 
-    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, logout, onDate, isDark, toggleTheme };
+    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, syncing, syncTitle, logout, onDate, isDark, toggleTheme };
   },
   template: `
     <header class="topbar">
@@ -79,6 +86,9 @@ export default {
         <div class="menu" v-if="profileOpen" role="menu">
           <div class="head" v-if="store.me">
             <div class="who"><strong>{{ store.me.name }}</strong><small>{{ store.me.email }}</small></div>
+            <button type="button" class="btn icon sync-dir" :class="{ busy: syncing }" :title="syncTitle" :aria-label="syncTitle" :disabled="syncing" @click="sync">
+              <icon name="users" :size="15"></icon>
+            </button>
             <button type="button" class="btn icon theme-toggle" :title="isDark ? t('Switch to light mode') : t('Switch to dark mode')" :aria-label="isDark ? t('Switch to light mode') : t('Switch to dark mode')" @click="toggleTheme">
               <icon :name="isDark ? 'sun' : 'moon'" :size="15"></icon>
             </button>
@@ -93,8 +103,6 @@ export default {
           <div class="sep"></div>
           <button type="button" class="item" @click="open('rules')"><icon name="palette"></icon><span class="grow">{{ t('Colour rules') }}</span></button>
           <button type="button" class="item" @click="open('settings')"><icon name="sliders"></icon><span class="grow">{{ t('Settings') }}</span></button>
-          <div class="sep"></div>
-          <button type="button" class="item" @click="sync"><icon name="refresh"></icon><span class="grow">{{ t('Sync directory now') }}<br><small class="muted">{{ t('Directory: {n} people, updated {time}', { n: store.directory.user_count, time: store.directory.synced_at ? new Date(store.directory.synced_at).toLocaleString() : t('never') }) }}</small></span></button>
           <div class="sep"></div>
           <button type="button" class="item" @click="logout"><icon name="logout"></icon><span class="grow">{{ t('Sign out') }}</span></button>
         </div>
