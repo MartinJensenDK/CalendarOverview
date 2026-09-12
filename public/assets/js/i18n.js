@@ -90,6 +90,8 @@ const da = {
   'Theme': 'Tema',
   'System': 'System',
   'Light': 'Lys',
+  'Switch to dark mode': 'Skift til mørk tilstand',
+  'Switch to light mode': 'Skift til lys tilstand',
   'Dark': 'Mørk',
   'Language': 'Sprog',
   'Overview': 'Oversigt',

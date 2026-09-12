@@ -43,11 +43,14 @@ export function confirm(opts) {
   return new Promise((resolve) => { store.confirm = { ...opts, resolve }; });
 }
 
+/** The mode actually shown: 'system' follows the OS until a mode is chosen explicitly. */
+export function effectiveTheme(theme) {
+  if (theme === 'system') return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return theme === 'dark' ? 'dark' : 'light';
+}
+
 export function applyTheme(theme) {
-  let mode = theme;
-  if (theme === 'system') {
-    mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
+  const mode = effectiveTheme(theme);
   document.documentElement.setAttribute('data-theme', mode);
   try { localStorage.setItem('theme', theme); } catch (e) { /* ignore */ }
 }

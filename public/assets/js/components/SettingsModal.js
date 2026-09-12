@@ -1,4 +1,4 @@
-import { store, confirm, toast } from '../store.js';
+import { store, confirm, toast, effectiveTheme } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, savePrefs, resetSettings } from '../actions.js';
 import { hoursFor } from '../util/hours.js';
@@ -41,15 +41,15 @@ export default {
       hoursOpen.value = true;
     }
     function hideHours() { hoursOpen.value = false; }
-    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel, locIcon, locLabel, hoursOpen, hoursStyle, showHours, hideHours };
+    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel, locIcon, locLabel, hoursOpen, hoursStyle, showHours, hideHours, effectiveTheme };
   },
   template: `
     <modal :title="t('Settings')" width="560px" @close="closeModal">
       <div class="field-label">{{ t('Appearance') }}</div>
       <div class="grid-2">
         <label class="field"><span>{{ t('Theme') }}</span>
-          <select class="select" :value="store.prefs.theme" @change="set({ theme: $event.target.value })">
-            <option value="system">{{ t('System') }}</option><option value="light">{{ t('Light') }}</option><option value="dark">{{ t('Dark') }}</option>
+          <select class="select" :value="effectiveTheme(store.prefs.theme)" @change="set({ theme: $event.target.value })">
+            <option value="light">{{ t('Light') }}</option><option value="dark">{{ t('Dark') }}</option>
           </select></label>
         <label class="field"><span>{{ t('Language') }}</span>
           <select class="select" :value="store.prefs.locale" @change="set({ locale: $event.target.value })"><option value="en">English</option><option value="da">Dansk</option></select></label>

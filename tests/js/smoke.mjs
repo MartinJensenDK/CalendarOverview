@@ -281,6 +281,22 @@ w.document.querySelector('.backdrop').dispatchEvent(new w.MouseEvent('mousedown'
 const answer = await p;
 assert(answer === false, 'confirm dialog closes on backdrop click');
 
+{ // One theme button next to name and e-mail; "system" is only the silent default (matchMedia mock = light)
+  const trigger = w.document.querySelector('.topbar .dropdown > button');
+  trigger.click(); await tick();
+  const head = w.document.querySelector('.topbar .menu .head');
+  const toggle = head && head.querySelector('.theme-toggle');
+  assert(toggle && head.querySelector('.who strong') && head.children[0].classList.contains('who') && head.children[1] === toggle, 'theme toggle sits to the right of name and e-mail');
+  assert(!w.document.querySelector('.topbar .menu [title="System"]') && w.document.querySelectorAll('.topbar .menu .theme-toggle').length === 1, 'only one theme button, no System option');
+  assert(store.prefs.theme === 'system' || store.prefs.theme === 'light', 'theme still system/light before clicking');
+  toggle.click(); await tick();
+  assert(store.prefs.theme === 'dark' && w.document.documentElement.getAttribute('data-theme') === 'dark', 'clicking picks dark explicitly');
+  w.document.querySelector('.topbar .menu .theme-toggle').click(); await tick();
+  assert(store.prefs.theme === 'light' && w.document.documentElement.getAttribute('data-theme') === 'light', 'clicking again picks light');
+  trigger.click(); await tick();
+  assert(!w.document.querySelector('.topbar .menu'), 'profile menu closed again');
+}
+
 // Danish
 store.prefs.locale = 'da'; await tick();
 assert(![...w.document.querySelectorAll('.topbar .seg button')].some(b => /^(EN|DA)$/.test(b.textContent.trim())), 'language switch removed from the profile menu');

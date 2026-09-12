@@ -1,4 +1,4 @@
-import { store } from '../store.js';
+import { store, effectiveTheme } from '../store.js';
 import { t } from '../i18n.js';
 import { rangeLabel, addDays, isoWeek, relativeTime } from '../util/date.js';
 import { shiftDays, goToday, setFrom, savePrefs, refreshFromGraph, openModal, syncDirectory, logout } from '../actions.js';
@@ -31,12 +31,15 @@ export default {
     onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick));
 
     function pick(patch) { savePrefs(patch); }
+    // One button: shows what you get by clicking. "system" is only the silent default until a mode is chosen.
+    const isDark = computed(() => effectiveTheme(store.prefs.theme) === 'dark');
+    function toggleTheme() { savePrefs({ theme: isDark.value ? 'light' : 'dark' }); }
     function toggleMenu() { savePrefs({ menu_collapsed: !store.prefs.menu_collapsed }); }
     function open(name) { profileOpen.value = false; openModal(name); }
     async function sync() { profileOpen.value = false; try { await syncDirectory(); } catch (e) { /* toast shown by api */ } }
     function onDate(e) { if (e.target.value) setFrom(e.target.value); }
 
-    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, logout, onDate };
+    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, logout, onDate, isDark, toggleTheme };
   },
   template: `
     <header class="topbar">
@@ -74,16 +77,13 @@ export default {
           <icon name="chevron-down" :size="14"></icon>
         </button>
         <div class="menu" v-if="profileOpen" role="menu">
-          <div class="head" v-if="store.me"><strong>{{ store.me.name }}</strong><small>{{ store.me.email }}</small></div>
-          <div class="sep"></div>
-          <div class="inline-seg row" style="justify-content:space-between">
-            <span class="muted" style="font-size:12px">{{ t('Theme') }}</span>
-            <div class="seg">
-              <button type="button" :class="{ active: store.prefs.theme === 'light' }" @click="pick({ theme: 'light' })" :title="t('Light')"><icon name="sun" :size="14"></icon></button>
-              <button type="button" :class="{ active: store.prefs.theme === 'dark' }" @click="pick({ theme: 'dark' })" :title="t('Dark')"><icon name="moon" :size="14"></icon></button>
-              <button type="button" :class="{ active: store.prefs.theme === 'system' }" @click="pick({ theme: 'system' })" :title="t('System')"><icon name="monitor" :size="14"></icon></button>
-            </div>
+          <div class="head" v-if="store.me">
+            <div class="who"><strong>{{ store.me.name }}</strong><small>{{ store.me.email }}</small></div>
+            <button type="button" class="btn icon theme-toggle" :title="isDark ? t('Switch to light mode') : t('Switch to dark mode')" :aria-label="isDark ? t('Switch to light mode') : t('Switch to dark mode')" @click="toggleTheme">
+              <icon :name="isDark ? 'sun' : 'moon'" :size="15"></icon>
+            </button>
           </div>
+          <div class="sep"></div>
           <div class="inline-seg row" style="justify-content:space-between">
             <span class="muted" style="font-size:12px">{{ t('Row height') }}</span>
             <div class="seg">
