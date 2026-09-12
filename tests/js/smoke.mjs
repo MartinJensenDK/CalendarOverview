@@ -61,6 +61,7 @@ globalThis.fetch = async (url, opts = {}) => {
   if (path === '/api/me') body = me;
   else if (path === '/api/overview') body = overview;
   else if (path === '/api/availability') body = availability;
+  else if (path === '/api/settings/reset') body = { preferences: { ...me.preferences }, menu: null };
   else if (path === '/api/settings') body = { preferences: { ...me.preferences, ...JSON.parse(opts.body) }, menu: null };
   else if (path === '/api/directory/users') body = { users: [member('x1', 'Xenia Search', 'Analyst')] };
   else if (path === '/api/groups') body = { menu: me.menu };
@@ -116,6 +117,10 @@ closeModal(); await tick();
 
 openModal('settings'); await tick();
 assert(html().includes('Rows per page'), 'settings modal renders');
+store.prefs.days = 14; w.document.querySelector('.modal-foot .btn.danger').click(); await tick();
+assert(w.document.querySelectorAll('.modal').length === 2 && html().includes('Reset all settings?'), 'reset asks for confirmation');
+[...w.document.querySelectorAll('.modal-foot .btn')].find((b) => b.className.includes('danger') && b.textContent.includes('Reset all settings') && b.closest('.modal') !== w.document.querySelector('.modal')).click(); await tick(60);
+assert(store.prefs.days === 7 && calls.some((c) => c === 'POST /api/settings/reset'), 'reset restores defaults via API');
 closeModal(); await tick();
 
 // Members are not listed in the menu; selection happens on the overview rows

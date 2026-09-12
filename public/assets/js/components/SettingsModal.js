@@ -1,12 +1,18 @@
-import { store } from '../store.js';
+import { store, confirm, toast } from '../store.js';
 import { t } from '../i18n.js';
-import { closeModal, savePrefs, syncPhotos } from '../actions.js';
+import { closeModal, savePrefs, syncPhotos, resetSettings } from '../actions.js';
 
 export default {
   name: 'SettingsModal',
   setup() {
     const set = (patch) => savePrefs(patch);
-    return { store, t, set, closeModal, syncPhotos };
+    async function reset() {
+      const ok = await confirm({ title: t('Reset all settings?'), text: t('Everything on this page goes back to the defaults. Your groups, colour rules and menu are kept.'), confirmLabel: t('Reset all settings'), danger: true });
+      if (!ok) return;
+      await resetSettings();
+      toast(t('Settings reset'));
+    }
+    return { store, t, set, closeModal, syncPhotos, reset };
   },
   template: `
     <modal :title="t('Settings')" width="560px" @close="closeModal">
@@ -43,8 +49,9 @@ export default {
       <label class="switch block" style="align-items:flex-start"><input type="checkbox" :checked="store.prefs.demo_enabled" @change="set({ demo_enabled: $event.target.checked })"><span class="track" style="margin-top:2px"></span><span>{{ t('Demo data') }}<br><small class="muted">{{ t('Show 150 fictional people with generated calendars. Handy for trying the app before your colleagues are in a group.') }}</small></span></label>
       <div class="row" style="margin-top:16px"><button type="button" class="btn sm" @click="syncPhotos"><icon name="image" :size="14"></icon>{{ t('Sync photos') }}</button><span class="muted" style="font-size:12px">{{ t('Version') }} {{ store.app.version }}</span></div>
       <template #foot>
-        <span class="modal-note">{{ t('Settings are saved to your account and follow you to other devices.') }}</span>
+        <button type="button" class="btn danger" @click="reset"><icon name="refresh" :size="14"></icon>{{ t('Reset all settings') }}</button>
         <span class="grow"></span>
+        <span class="modal-note">{{ t('Settings are saved to your account and follow you to other devices.') }}</span>
         <button type="button" class="btn primary" @click="closeModal">{{ t('Close') }}</button>
       </template>
     </modal>`,

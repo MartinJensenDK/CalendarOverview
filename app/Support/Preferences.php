@@ -18,6 +18,9 @@ class Preferences
 
     public const DAY_OPTIONS = [1, 3, 5, 7, 10, 14, 21, 31];
 
+    /** Keys shown on the Settings page; only these are touched by "Reset all settings". */
+    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'page_size', 'work_start', 'work_end', 'show_weekends', 'mini_months', 'show_week_numbers', 'find_time_enabled', 'demo_enabled'];
+
     public static function defaults(): array
     {
         return [

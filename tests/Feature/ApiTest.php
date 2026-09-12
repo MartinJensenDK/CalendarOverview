@@ -36,6 +36,21 @@ class ApiTest extends TestCase
         $this->actingAs($user)->putJson('/api/settings', ['theme' => 'blue'])->assertStatus(422);
     }
 
+    public function test_reset_only_touches_settings_page_preferences(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['theme' => 'dark', 'days' => 14, 'my_team_visible' => false, 'menu_collapsed' => true, 'demo_enabled' => true])->assertOk();
+        $this->actingAs($user)->postJson('/api/color-rules', ['name' => 'Keep me', 'field' => 'subject', 'operator' => 'contains', 'value' => 'x', 'color' => '#123456'])->assertCreated();
+
+        $prefs = $this->actingAs($user)->postJson('/api/settings/reset')->assertOk()->json('preferences');
+        $this->assertSame('system', $prefs['theme']);
+        $this->assertSame(7, $prefs['days']);
+        $this->assertFalse($prefs['demo_enabled']);
+        $this->assertFalse($prefs['my_team_visible']);
+        $this->assertTrue($prefs['menu_collapsed']);
+        $this->assertSame(5, $user->colorRules()->count());
+    }
+
     public function test_enabling_demo_seeds_150_users_and_pages_50(): void
     {
         $user = Fixtures::user();

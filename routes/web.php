@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('api')->group(function () {
         Route::get('/me', [Api\MeController::class, 'show']);
         Route::put('/settings', [Api\SettingsController::class, 'update']);
+        Route::post('/settings/reset', [Api\SettingsController::class, 'reset']);
 
         Route::get('/directory/users', [Api\DirectoryController::class, 'users']);
         Route::get('/directory/managers', [Api\DirectoryController::class, 'managers']);

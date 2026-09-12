@@ -72,6 +72,17 @@ export async function savePrefs(patch) {
   if (reload) loadOverview();
 }
 
+export async function resetSettings() {
+  const data = await api.post('/api/settings/reset');
+  store.prefs = data.preferences;
+  if (data.menu) store.menu = data.menu;
+  applyTheme(store.prefs.theme);
+  document.documentElement.lang = store.prefs.locale;
+  store.selected = [];
+  store.page = 1;
+  loadOverview();
+}
+
 export async function refreshMenu() {
   const data = await api.get('/api/groups');
   store.menu = data.menu;
