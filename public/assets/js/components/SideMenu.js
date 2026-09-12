@@ -1,6 +1,6 @@
 import { store, confirm } from '../store.js';
 import { t } from '../i18n.js';
-import { toggleGroup, reorderGroups, deleteGroup, resyncGroup, openModal } from '../actions.js';
+import { toggleGroup, reorderGroups, deleteGroup, resyncGroup, openModal, clearSelection } from '../actions.js';
 import MiniCalendar from './MiniCalendar.js';
 
 const { ref, computed } = Vue;
@@ -12,6 +12,12 @@ export default {
     const dragId = ref(null);
     const dropTarget = ref(null);
     const entries = computed(() => store.menu);
+    const selectedUsers = computed(() => {
+      const map = new Map();
+      store.menu.forEach((g) => g.members.forEach((m) => map.set(m.id, m)));
+      (store.overview ? store.overview.users : []).forEach((u) => map.set(u.id, u));
+      return store.selected.map((id) => map.get(id)).filter(Boolean);
+    });
 
     function label(entry) {
       if (entry.kind === 'builtin') return entry.type === 'demo' ? t('Demo team') : t('My team');
@@ -44,7 +50,7 @@ export default {
     }
     function onDragEnd() { dragId.value = null; dropTarget.value = null; }
 
-    return { store, t, entries, label, kindLabel, hint, toggleGroup, remove, resyncGroup, openModal, dragId, dropTarget, onDragStart, onDragOver, onDrop, onDragEnd };
+    return { store, t, entries, selectedUsers, clearSelection, label, kindLabel, hint, toggleGroup, remove, resyncGroup, openModal, dragId, dropTarget, onDragStart, onDragOver, onDrop, onDragEnd };
   },
   template: `
     <aside class="sidebar">
@@ -69,6 +75,18 @@ export default {
         </div>
       </div>
       <div class="sidebar-foot">
+        <div class="findtime">
+          <div class="findtime-head"><h2>{{ t('Find free time') }}</h2><span class="muted" v-if="store.selected.length">{{ t('{n} selected', { n: store.selected.length }) }}</span></div>
+          <div class="findtime-body">
+            <span class="avatars" v-if="selectedUsers.length"><img v-for="u in selectedUsers.slice(0, 8)" :key="u.id" class="avatar" :src="u.photo_url" :title="u.name" alt=""></span>
+            <span class="muted hint" v-else>{{ t('Select people in the overview to compare their availability.') }}</span>
+          </div>
+          <div class="row">
+            <button type="button" class="btn sm ghost" :disabled="!store.selected.length" @click="clearSelection">{{ t('Clear') }}</button>
+            <span class="grow"></span>
+            <button type="button" class="btn sm primary" :disabled="!store.selected.length" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
+          </div>
+        </div>
         <mini-calendar></mini-calendar>
       </div>
     </aside>`,

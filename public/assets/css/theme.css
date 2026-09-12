@@ -271,8 +271,15 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .selection-bar .avatars { display: flex; }
 .selection-bar .avatars .avatar { width: 22px; height: 22px; margin-left: -6px; border: 2px solid var(--accent-soft); }
 .selection-bar .avatars .avatar:first-child { margin-left: 0; }
-.selection-bar.floating { position: absolute; left: 50%; top: 54px; transform: translateX(-50%); z-index: 6; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2); padding: 8px 10px 8px 12px; min-width: 320px; }
-.selection-bar.floating .avatars .avatar { border-color: var(--surface); }
+.findtime { padding: 4px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.findtime-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.findtime-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+.findtime-head .muted { font-size: 12px; font-family: var(--font-mono); }
+.findtime-body { min-height: 28px; display: flex; align-items: center; margin-bottom: 8px; }
+.findtime-body .hint { font-size: 12px; line-height: 1.35; }
+.findtime .avatars { display: flex; }
+.findtime .avatars .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); }
+.findtime .avatars .avatar:first-child { margin-left: 0; }
 .menu-toggle { display: none; }
 
 /* --------------------------------------------------------------------------

@@ -124,7 +124,7 @@ assert(w.document.querySelectorAll('.grid .name .pick').length === 3, 'each over
 w.document.querySelectorAll('.grid .name .pick')[0].click(); await tick();
 assert(store.selected.length === 1, 'checkbox selects without double toggling');
 w.document.querySelectorAll('.grid .name .txt b')[1].click(); await tick();
-assert(store.selected.length === 2 && html().includes('2 selected') && html().includes('Find a time'), 'floating selection bar appears');
+assert(store.selected.length === 2 && w.document.querySelector('.findtime').textContent.includes('2 selected') && !w.document.querySelector('.findtime .btn.primary').disabled, 'find-time section in the menu shows the selection');
 
 // Mini calendar in the menu footer
 assert(w.document.querySelector('.minical'), 'mini calendar rendered');
