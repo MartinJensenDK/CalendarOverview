@@ -303,6 +303,42 @@ class ApiTest extends TestCase
         $this->actingAs($user)->getJson('/api/availability?users[]=peer-0001&from=2026-09-14&to=2027-09-16')->assertStatus(422);
     }
 
+    public function test_cached_calendar_details_are_never_shared_between_viewers(): void
+    {
+        $alice = Fixtures::user();
+        Fixtures::team();
+        Http::fake([
+            'graph.microsoft.com/v1.0/me/calendar/getSchedule' => Http::response(Fixtures::scheduleResponse([
+                'test@example.com' => [Fixtures::item('2026-09-14T09:00:00', '2026-09-14T10:00:00', 'busy')],
+                'peter@example.com' => [], 'paula@example.com' => [],
+            ])),
+            'graph.microsoft.com/v1.0/me/calendarView*' => Http::response(['value' => [[
+                'subject' => 'Salary talk', 'showAs' => 'busy', 'isAllDay' => false, 'sensitivity' => 'normal',
+                'start' => ['dateTime' => '2026-09-14T09:00:00.0000000', 'timeZone' => 'Europe/Copenhagen'],
+                'end' => ['dateTime' => '2026-09-14T10:00:00.0000000', 'timeZone' => 'Europe/Copenhagen'],
+                'location' => ['displayName' => 'Room 1'],
+            ]]]),
+            'graph.microsoft.com/v1.0/$batch' => Http::response(['responses' => []]),
+        ]);
+
+        // Alice sees her own appointment with its subject (from her calendarView).
+        $mine = $this->actingAs($alice)->getJson('/api/availability?users[]=me-0001&from=2026-09-14&to=2026-09-15&tz=Europe/Copenhagen')->assertOk()->json('users.0.items.0');
+        $this->assertSame('Salary talk', $mine['sub']);
+        $sent = count(Http::recorded());
+
+        // Bob asks for Alice right away: the answer must come from his own Graph call, never from Alice's cache.
+        $bob = Fixtures::user(['entra_id' => 'peer-0001', 'name' => 'Peter Peer', 'email' => 'peter@example.com']);
+        $theirs = $this->actingAs($bob)->getJson('/api/availability?users[]=me-0001&from=2026-09-14&to=2026-09-15&tz=Europe/Copenhagen')->assertOk()->json('users.0.items.0');
+        $this->assertGreaterThan($sent, count(Http::recorded()));
+        $this->assertSame('busy', $theirs['st']);
+        $this->assertNull($theirs['sub']);
+        $this->assertNull($theirs['loc']);
+
+        // Clearing Bob's cache leaves Alice's untouched.
+        $this->actingAs($bob)->postJson('/api/sync/schedule')->assertOk();
+        $this->assertDatabaseHas('schedule_items', ['viewer_id' => $alice->id, 'subject' => 'Salary talk']);
+    }
+
     public function test_availability_endpoint_validates_range(): void
     {
         $user = Fixtures::user();

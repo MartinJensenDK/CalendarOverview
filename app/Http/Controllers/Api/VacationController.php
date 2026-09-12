@@ -29,7 +29,7 @@ class VacationController extends Controller
         // Explicit start and end dates win; otherwise the current month plus the chosen span.
         $from = isset($data['from']) ? CarbonImmutable::parse($data['from'], $tz)->startOfDay() : CarbonImmutable::now($tz)->startOfMonth();
         $to = isset($data['to']) ? CarbonImmutable::parse($data['to'], $tz)->startOfDay()->addDay() : $from->addDays((int) ($data['days'] ?? 92));
-        abort_if($from->diffInDays($to) > config('calendar.max_days'), 422, 'Range too long');
+        abort_if($from->diffInDays($to, absolute: true) > config('calendar.max_days'), 422, 'Range too long');
 
         $user = $request->user();
         // A chosen set of menu entries wins; otherwise the same people as the overview.

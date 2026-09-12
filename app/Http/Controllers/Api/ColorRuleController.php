@@ -41,7 +41,7 @@ class ColorRuleController extends Controller
 
     public function reorder(Request $request): JsonResponse
     {
-        $data = $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['integer']]);
+        $data = $request->validate(['ids' => ['required', 'array', 'max:200'], 'ids.*' => ['integer']]);
         foreach (array_values($data['ids']) as $i => $id) {
             $request->user()->colorRules()->where('id', $id)->update(['sort_order' => $i]);
         }

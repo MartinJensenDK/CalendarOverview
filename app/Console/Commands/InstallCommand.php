@@ -17,6 +17,7 @@ class InstallCommand extends Command
         {--db-host=127.0.0.1} {--db-port=} {--db-name=} {--db-user=} {--db-pass=}
         {--tenant= : Microsoft Entra tenant id} {--client-id=} {--client-secret=}
         {--allowed-domains= : Comma separated e-mail domains allowed to sign in}
+        {--token : Only print the token that unlocks the web wizard at /setup}
         {--force : Run even when already installed}';
 
     protected $description = 'Interactive first-run setup: site name, database and Microsoft 365 settings';
@@ -25,6 +26,11 @@ class InstallCommand extends Command
     {
         if (Installer::isInstalled() && ! $this->option('force')) {
             $this->components->warn('Already installed. Use --force to run the setup again.');
+
+            return self::SUCCESS;
+        }
+        if ($this->option('token')) {
+            $this->components->info('Setup token for the web wizard (/setup): '.Installer::setupToken());
 
             return self::SUCCESS;
         }

@@ -57,7 +57,7 @@ class MicrosoftAuthController extends Controller
         if ($request->filled('error')) {
             return $this->fail($request->query('error_description') ?: $request->query('error'));
         }
-        if (! $stored || ! hash_equals($stored['state'], (string) $request->query('state', ''))) {
+        if (! is_array($stored) || ! isset($stored['state'], $stored['verifier']) || ! hash_equals((string) $stored['state'], (string) $request->query('state', ''))) {
             return $this->fail(__('The sign-in request expired. Please try again.'));
         }
         if (! $request->filled('code')) {
@@ -72,7 +72,8 @@ class MicrosoftAuthController extends Controller
 
         $claims = GraphTokenProvider::decodeIdToken($tokens['id_token'] ?? null);
         $tenant = config('calendar.tenant_id');
-        if ($tenant && ! in_array($tenant, ['common', 'organizations'], true) && isset($claims['tid']) && $claims['tid'] !== $tenant) {
+        if ($tenant && ! in_array($tenant, ['common', 'organizations'], true) && ($claims['tid'] ?? null) !== $tenant) {
+            // A pinned tenant is enforced on the id token's tid claim; a missing claim fails closed.
             return $this->fail(__('This account belongs to another organisation.'));
         }
 
@@ -127,7 +128,9 @@ class MicrosoftAuthController extends Controller
             }
         }
 
-        Auth::login($user, remember: true);
+        // No "remember me" cookie: the session itself lasts SESSION_LIFETIME, and the Microsoft
+        // session is revalidated on the way (see RevalidateMicrosoftSession).
+        Auth::login($user);
         $request->session()->regenerate();
 
         return redirect()->intended('/');
@@ -145,6 +148,8 @@ class MicrosoftAuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        // Drop the delegated tokens too, so nothing (not even the background sync) keeps acting as this user.
+        $request->user()?->forceFill(['access_token' => null, 'refresh_token' => null, 'token_expires_at' => null])->save();
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

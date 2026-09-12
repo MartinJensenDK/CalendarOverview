@@ -50,7 +50,7 @@ class EnvWriter
             $line = $key.'='.self::format($value);
             $pattern = '/^#?\s*'.preg_quote($key, '/').'=.*$/m';
             if (preg_match($pattern, $content)) {
-                $content = preg_replace($pattern, str_replace('\\', '\\\\', $line), $content, 1);
+                $content = preg_replace_callback($pattern, fn () => $line, $content, 1);
             } else {
                 $content = rtrim($content, "\r\n")."\n".$line."\n";
             }

@@ -55,5 +55,12 @@
   "Connected": "Forbundet",
   "Database connection failed: :message": "Databaseforbindelsen mislykkedes: :message",
   "The regular expression is invalid.": "Det regulære udtryk er ugyldigt.",
-  "Unknown status.": "Ukendt status."
+  "Unknown status.": "Ukendt status.",
+  "Unlock the setup": "Lås opsætningen op",
+  "This site has not been set up yet. To prove you run the server, paste the token from this file:": "Dette site er ikke sat op endnu. Indsæt tokenet fra denne fil for at vise, at du har adgang til serveren:",
+  "Print it with: php artisan calendar:install --token": "Vis det med: php artisan calendar:install --token",
+  "Setup token": "Opsætningstoken",
+  "Continue": "Fortsæt",
+  "That token does not match. Copy it from :path on the server.": "Tokenet passer ikke. Kopiér det fra :path på serveren.",
+  "Your Microsoft session has ended. Please sign in again.": "Din Microsoft-session er udløbet. Log ind igen."
 }

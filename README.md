@@ -35,7 +35,7 @@ cd team-calendar-overview
 2. **Database** – SQLite (default, nothing to configure) or MySQL / MariaDB / PostgreSQL
 3. **Microsoft 365** – tenant id, client id, client secret (can be added later)
 
-Prefer clicking? Skip `calendar:install`, point the web server at the app and open the site: the first visit shows the same wizard at `/setup` (it locks itself once the setup is complete).
+Prefer clicking? Skip `calendar:install`, point the web server at the app and open the site: the first visit shows the same wizard at `/setup`. The wizard is unlocked with a one-time token that only someone with access to the server can read (`storage/app/setup-token.txt`, or `php artisan calendar:install --token`), and it locks itself once the setup is complete.
 
 ### Web server
 
@@ -141,7 +141,16 @@ There is no frontend build: edit the files under `public/assets` and reload. An 
 - **"Consent needed" on rows:** an admin must grant consent for `User.Read.All` and `GroupMember.Read.All`, or the colleague's mailbox does not allow free/busy lookups.
 - **"No mailbox":** the person has no Exchange mailbox (e.g. a cloud-only account without a licence).
 - **Photos missing:** they are fetched lazily for the rows on screen; use *Settings → Sync photos* to force it.
-- **Reset the setup wizard:** delete `storage/app/installed.json`.
+- **Reset the setup wizard:** delete `storage/app/installed.json`; the next visit to `/setup` asks for the token in `storage/app/setup-token.txt` again.
+- **Behind a reverse proxy or load balancer:** set `TRUSTED_PROXIES` (comma-separated addresses/CIDRs, or `*`) so client addresses in rate limits are right. Links always use the scheme and host from `APP_URL`, and requests for any other host name are refused once installed.
+
+## Security notes
+
+- Sign-in uses the OAuth authorization-code flow with PKCE; the app only ever asks Microsoft Graph for read-only, delegated permissions.
+- Cached calendar data is stored per signed-in viewer. Nobody is ever shown more than their own Graph calls returned, even for colleagues that appear in several people's overviews.
+- Signing out deletes the stored Microsoft tokens; a session whose Microsoft session has been revoked (for example a disabled account) is ended at the next request, at the latest `CALENDAR_REVALIDATE_MINUTES` after the access token expired.
+- Sign-in, the setup wizard and the API are rate limited per client / per user. Requests that force a Microsoft Graph refresh and the manual sync actions have tighter limits.
+- The app sends `Strict-Transport-Security` (tune or disable with `HSTS_MAX_AGE`), `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` itself, so no web-server configuration is needed for them.
 
 ## License
 

@@ -36,7 +36,7 @@ class SyncController extends Controller
     {
         $user = $request->user();
         $ids = $groups->visibleUsers($user)->pluck('id')->all();
-        $schedules->forget($ids);
+        $schedules->forget($user, $ids);
 
         return response()->json(['cleared' => count($ids)]);
     }

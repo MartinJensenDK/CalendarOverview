@@ -12,7 +12,7 @@ class Fixtures
 {
     public static function user(array $attributes = []): User
     {
-        $user = User::create(array_merge([
+        $user = User::forceCreate(array_merge([
             'entra_id' => 'me-0001',
             'name' => 'Test Person',
             'email' => 'test@example.com',

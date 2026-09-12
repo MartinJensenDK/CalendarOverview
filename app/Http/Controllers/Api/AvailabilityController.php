@@ -24,7 +24,7 @@ class AvailabilityController extends Controller
         $tz = $data['tz'] ?? 'UTC';
         $from = CarbonImmutable::parse($data['from'], $tz)->startOfDay();
         $to = CarbonImmutable::parse($data['to'], $tz)->startOfDay();
-        abort_if($from->diffInDays($to) > config('calendar.max_days'), 422, 'Range too long');
+        abort_if($from->diffInDays($to, absolute: true) > config('calendar.max_days'), 422, 'Range too long');
 
         $users = DirectoryUser::whereIn('id', $data['users'])->get();
         if (! $request->user()->pref('demo_enabled')) {

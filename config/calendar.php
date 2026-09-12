@@ -38,5 +38,16 @@ return [
 
     'demo_user_count' => 150,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sessions and transport security
+    |--------------------------------------------------------------------------
+    */
+    // Refresh a signed-in user's Microsoft token when it has been expired for this long, so a
+    // disabled account loses access even when everything else is served from the cache.
+    'revalidate_minutes' => (int) env('CALENDAR_REVALIDATE_MINUTES', 60),
+    // Strict-Transport-Security max-age in seconds (0 disables the header; only sent over HTTPS).
+    'hsts_max_age' => (int) env('HSTS_MAX_AGE', 31536000),
+
     'version' => '1.5.9',
 ];

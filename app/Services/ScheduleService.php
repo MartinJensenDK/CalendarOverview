@@ -52,7 +52,7 @@ class ScheduleService
         }
 
         if ($realUsers->isNotEmpty()) {
-            $stale = $force ? $realUsers : $this->staleUsers($realUsers, $from, $to, $tz);
+            $stale = $force ? $realUsers : $this->staleUsers($actor, $realUsers, $from, $to, $tz);
             if ($stale->isNotEmpty()) {
                 try {
                     $errors = $this->refresh($actor, $stale, $from, $to, $tz);
@@ -66,10 +66,11 @@ class ScheduleService
                     }
                 }
             }
-            foreach ($this->cached($realUsers->pluck('id')->all(), $from, $to) as $id => $list) {
+            // Only what this viewer's own Graph calls returned is ever served back to them.
+            foreach ($this->cached($actor, $realUsers->pluck('id')->all(), $from, $to) as $id => $list) {
                 $items[$id] = $list;
             }
-            foreach ($this->cachedWorkHours($realUsers->pluck('id')->all(), $from, $to) as $id => $list) {
+            foreach ($this->cachedWorkHours($actor, $realUsers->pluck('id')->all(), $from, $to) as $id => $list) {
                 $work[$id] = $list;
             }
         }
@@ -82,13 +83,14 @@ class ScheduleService
         return ['items' => $items, 'work' => $work, 'errors' => $errors, 'fetched_at' => Carbon::now()->toIso8601String()];
     }
 
-    /** Users whose cache does not cover every day of the range within the TTL. */
-    private function staleUsers(Collection $users, CarbonImmutable $from, CarbonImmutable $to, string $tz): Collection
+    /** Users whose cache (for this viewer) does not cover every day of the range within the TTL. */
+    private function staleUsers(User $actor, Collection $users, CarbonImmutable $from, CarbonImmutable $to, string $tz): Collection
     {
         $days = $this->days($from, $to, $tz);
         $ttl = Carbon::now()->subMinutes(config('calendar.schedule_ttl_minutes'));
 
         $fresh = DB::table('schedule_freshness')
+            ->where('viewer_id', $actor->id)
             ->whereIn('directory_user_id', $users->pluck('id')->all())
             ->whereBetween('day', [$days[0], end($days)])
             ->where('fetched_at', '>=', $ttl)
@@ -173,7 +175,7 @@ class ScheduleService
 
         foreach ($responses as $key => $response) {
             if (! $response instanceof Response) {
-                Log::warning('getSchedule transport error', ['key' => $key, 'error' => (string) $response]);
+                Log::warning('getSchedule transport error', ['key' => $key, 'error' => $response instanceof \Throwable ? $response->getMessage() : gettype($response)]);
 
                 continue;
             }
@@ -238,7 +240,7 @@ class ScheduleService
             $hours[$me->id] = $ownPlan;
         }
 
-        $this->store($parsed, $hours, $from, $to, $tz);
+        $this->store($actor, $parsed, $hours, $from, $to, $tz);
 
         return $errors;
     }
@@ -400,21 +402,22 @@ class ScheduleService
         return in_array($status, self::STATUSES, true) ? $status : 'busy';
     }
 
-    private function store(array $parsed, array $hours, CarbonImmutable $from, CarbonImmutable $to, string $tz): void
+    private function store(User $actor, array $parsed, array $hours, CarbonImmutable $from, CarbonImmutable $to, string $tz): void
     {
         if ($parsed === [] && $hours === []) {
             return;
         }
         $now = Carbon::now();
         $days = $this->days($from, $to, $tz);
+        $viewer = $actor->id;
 
-        DB::transaction(function () use ($parsed, $hours, $from, $to, $now, $days) {
+        DB::transaction(function () use ($viewer, $parsed, $hours, $from, $to, $now, $days) {
             $ids = array_values(array_unique(array_merge(array_keys($parsed), array_keys($hours))));
-            ScheduleItem::whereIn('directory_user_id', $ids)
+            ScheduleItem::where('viewer_id', $viewer)->whereIn('directory_user_id', $ids)
                 ->where('end_utc', '>', $from->utc()->toDateTimeString())
                 ->where('start_utc', '<', $to->utc()->toDateTimeString())
                 ->delete();
-            WorkHour::whereIn('directory_user_id', $ids)
+            WorkHour::where('viewer_id', $viewer)->whereIn('directory_user_id', $ids)
                 ->where('end_utc', '>', $from->utc()->toDateTimeString())
                 ->where('start_utc', '<', $to->utc()->toDateTimeString())
                 ->delete();
@@ -422,7 +425,7 @@ class ScheduleService
             $whRows = [];
             foreach ($hours as $id => $list) {
                 foreach ($list as [$s, $e, $loc]) {
-                    $whRows[] = ['directory_user_id' => $id, 'start_utc' => $s->toDateTimeString(), 'end_utc' => $e->toDateTimeString(), 'location' => $loc];
+                    $whRows[] = ['viewer_id' => $viewer, 'directory_user_id' => $id, 'start_utc' => $s->toDateTimeString(), 'end_utc' => $e->toDateTimeString(), 'location' => $loc];
                 }
             }
             foreach (array_chunk($whRows, 500) as $chunk) {
@@ -433,6 +436,7 @@ class ScheduleService
             foreach ($parsed as $id => $items) {
                 foreach ($items as $item) {
                     $rows[] = [
+                        'viewer_id' => $viewer,
                         'directory_user_id' => $id,
                         'start_utc' => $item['start_utc']->toDateTimeString(),
                         'end_utc' => $item['end_utc']->toDateTimeString(),
@@ -451,20 +455,20 @@ class ScheduleService
             $fresh = [];
             foreach ($ids as $id) {
                 foreach ($days as $day) {
-                    $fresh[] = ['directory_user_id' => $id, 'day' => $day, 'fetched_at' => $now];
+                    $fresh[] = ['viewer_id' => $viewer, 'directory_user_id' => $id, 'day' => $day, 'fetched_at' => $now];
                 }
             }
             foreach (array_chunk($fresh, 500) as $chunk) {
-                DB::table('schedule_freshness')->upsert($chunk, ['directory_user_id', 'day'], ['fetched_at']);
+                DB::table('schedule_freshness')->upsert($chunk, ['viewer_id', 'directory_user_id', 'day'], ['fetched_at']);
             }
         });
     }
 
     /** @return array<string, list<array>> */
-    public function cached(array $ids, CarbonImmutable $from, CarbonImmutable $to): array
+    public function cached(User $actor, array $ids, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $out = [];
-        ScheduleItem::whereIn('directory_user_id', $ids)
+        ScheduleItem::where('viewer_id', $actor->id)->whereIn('directory_user_id', $ids)
             ->where('end_utc', '>', $from->utc()->toDateTimeString())
             ->where('start_utc', '<', $to->utc()->toDateTimeString())
             ->orderBy('start_utc')
@@ -477,10 +481,10 @@ class ScheduleService
     }
 
     /** @return array<string, list<array{s: string, e: string, loc: ?string}>> */
-    public function cachedWorkHours(array $ids, CarbonImmutable $from, CarbonImmutable $to): array
+    public function cachedWorkHours(User $actor, array $ids, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $out = [];
-        WorkHour::whereIn('directory_user_id', $ids)
+        WorkHour::where('viewer_id', $actor->id)->whereIn('directory_user_id', $ids)
             ->where('end_utc', '>', $from->utc()->toDateTimeString())
             ->where('start_utc', '<', $to->utc()->toDateTimeString())
             ->orderBy('start_utc')
@@ -510,11 +514,12 @@ class ScheduleService
         ];
     }
 
-    public function forget(array $ids): void
+    /** Drop this viewer's cached data for the given people. */
+    public function forget(User $actor, array $ids): void
     {
-        ScheduleItem::whereIn('directory_user_id', $ids)->delete();
-        WorkHour::whereIn('directory_user_id', $ids)->delete();
-        DB::table('schedule_freshness')->whereIn('directory_user_id', $ids)->delete();
+        ScheduleItem::where('viewer_id', $actor->id)->whereIn('directory_user_id', $ids)->delete();
+        WorkHour::where('viewer_id', $actor->id)->whereIn('directory_user_id', $ids)->delete();
+        DB::table('schedule_freshness')->where('viewer_id', $actor->id)->whereIn('directory_user_id', $ids)->delete();
     }
 
     /** Purge cached items older than a month to keep the table small. */

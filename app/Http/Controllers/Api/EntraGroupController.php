@@ -11,6 +11,7 @@ class EntraGroupController extends Controller
 {
     public function search(Request $request, GraphTokenProvider $tokens): JsonResponse
     {
+        $request->validate(['q' => ['nullable', 'string', 'max:100']]);
         $q = trim((string) $request->query('q', ''));
         $graph = $tokens->client($request->user());
         $query = ['$select' => 'id,displayName,description,mail,groupTypes,securityEnabled', '$top' => 20, '$count' => 'true', '$orderby' => 'displayName'];

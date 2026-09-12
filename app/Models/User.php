@@ -8,7 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    protected $guarded = [];
+    /** Tokens and identity are written with forceFill() only, never from request input. */
+    protected $fillable = ['entra_id', 'name', 'email', 'given_name', 'job_title', 'manager_entra_id', 'preferences', 'last_login_at', 'last_seen_at'];
 
     protected $hidden = ['access_token', 'refresh_token', 'remember_token'];
 
