@@ -23,7 +23,7 @@ export default {
       slot: p.heatmap_slot || 30,
       workOnly: p.heatmap_work_only !== false,
       showWeekends: p.heatmap_show_weekends !== false,
-      duration: p.heatmap_duration || 60,
+      duration: p.heatmap_duration || 30,
       subject: '',
     });
     // Remember the choices on the server (they follow the user to other devices).

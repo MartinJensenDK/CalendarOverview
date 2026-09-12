@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GroupRequest;
 use App\Models\Group;
 use App\Services\GroupResolver;
+use App\Support\Preferences;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,13 +79,19 @@ class GroupController extends Controller
 
     public function reorder(Request $request): JsonResponse
     {
-        $data = $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['integer']]);
+        // ids may mix group ids and the built-in keys "my_team" / "demo_team".
+        $data = $request->validate(['ids' => ['required', 'array', 'max:200'], 'ids.*' => ['string', 'max:32']]);
         $user = $request->user();
-        foreach (array_values($data['ids']) as $i => $id) {
-            $user->groups()->where('id', $id)->update(['sort_order' => $i]);
+        $ids = array_values(array_map('strval', $data['ids']));
+        $position = 0;
+        foreach ($ids as $id) {
+            if (ctype_digit($id)) {
+                $user->groups()->where('id', (int) $id)->update(['sort_order' => $position++]);
+            }
         }
+        $user->forceFill(['preferences' => Preferences::merge(array_merge($user->prefs(), ['menu_order' => $ids]))])->save();
 
-        return response()->json(['menu' => $this->resolver->menu($user)]);
+        return response()->json(['menu' => $this->resolver->menu($user->fresh())]);
     }
 
     public function resync(Request $request, Group $group): JsonResponse

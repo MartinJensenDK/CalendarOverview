@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 60, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], page_sizes: [25, 50, 100, 200], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -65,6 +65,7 @@ globalThis.fetch = async (url, opts = {}) => {
   else if (path === '/api/settings/reset') body = { preferences: { ...defaultPrefs }, menu: null };
   else if (path === '/api/settings') body = { preferences: { ...me.preferences, ...JSON.parse(opts.body) }, menu: null };
   else if (path === '/api/directory/users') body = { users: [member('x1', 'Xenia Search', 'Analyst')] };
+  else if (path === '/api/groups/reorder') body = { menu: [...me.menu].reverse() };
   else if (path === '/api/groups') body = { menu: me.menu };
   else if (path === '/api/color-rules') body = { color_rules: me.color_rules };
   return { ok: true, status: 200, json: async () => body };
@@ -178,7 +179,7 @@ w.document.querySelector('.modal .picker .opt').dispatchEvent(new w.MouseEvent('
 assert(store.selected.includes('x1') && calls.some((c) => c.includes('/api/availability') && c.includes('x1')), 'picked person is added to the search');
 const sugg = w.document.querySelectorAll('.suggest-btn');
 assert(sugg.length === 3 && /\d+ of \d+ free/.test(sugg[0].textContent), `three suggested times with attendance shown (got ${sugg.length}: ${sugg[0] && sugg[0].textContent})`);
-{ const counts = [...sugg].map((b) => Number(/(\d+) of/.exec(b.textContent)[1])); assert(counts[0] >= counts[1] && counts[1] >= counts[2], 'suggestions are ordered by attendance'); }
+{ const counts = [...sugg].map((b) => Number(/(\d+) of/.exec(b.querySelector('.suggest-count').textContent)[1])); assert(counts[0] >= counts[1] && counts[1] >= counts[2], 'suggestions are ordered by attendance'); }
 sugg[1].click(); await tick();
 assert(sugg[1].className.includes('active') && html().includes('Open in Outlook'), 'choosing a suggestion selects it in the heatmap');
 const modalRef = w.document.querySelector('.modal');
@@ -201,6 +202,16 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
 store.prefs.locale = 'da'; await tick();
 assert(html().includes('Kalenderoversigt') && html().includes('Mit team'), 'Danish translation applied');
 assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
+
+// Drag and drop menu entries (built-ins included)
+{
+  const rows = w.document.querySelectorAll('.sidebar .group');
+  const dt = { effectAllowed: '', dropEffect: '', setData() {} };
+  rows[0].dispatchEvent(Object.assign(new w.Event('dragstart', { bubbles: true }), { dataTransfer: dt }));
+  rows[2].dispatchEvent(Object.assign(new w.Event('dragover', { bubbles: true, cancelable: true }), { dataTransfer: dt }));
+  rows[2].dispatchEvent(new w.Event('drop', { bubbles: true })); await tick(60);
+  assert(calls.some((c) => c === 'POST /api/groups/reorder') && store.menu[0].id === 8, 'dragging My team below a group reorders the menu (got ' + store.menu.map((g) => g.id).join(',') + ')');
+}
 
 // Type-to-search person lookup
 store.prefs.locale = 'en'; await tick();

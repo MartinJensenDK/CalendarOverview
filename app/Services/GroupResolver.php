@@ -74,20 +74,48 @@ class GroupResolver
         return $this->sorted(DirectoryUser::whereIn('id', array_values(array_unique($ids)))->where('account_enabled', true)->get(), $actor);
     }
 
+    /**
+     * Menu entries in the user's chosen order: built-ins and groups mixed, as saved
+     * in the menu_order preference; anything new is appended in sort order.
+     *
+     * @return list<array{key: string, kind: string, group: ?Group}>
+     */
+    public function orderedEntries(User $actor): array
+    {
+        $prefs = $actor->prefs();
+        $entries = [['key' => self::MY_TEAM, 'kind' => 'my_team', 'group' => null]];
+        foreach ($actor->groups()->get() as $group) {
+            $entries[] = ['key' => (string) $group->id, 'kind' => 'group', 'group' => $group];
+        }
+        if ($prefs['demo_enabled']) {
+            $entries[] = ['key' => self::DEMO_TEAM, 'kind' => 'demo', 'group' => null];
+        }
+        $order = array_flip(array_map('strval', $prefs['menu_order'] ?? []));
+        $count = count($order);
+        usort($entries, function ($a, $b) use ($order, $count) {
+            $ia = $order[$a['key']] ?? $count;
+            $ib = $order[$b['key']] ?? $count;
+
+            return $ia <=> $ib;
+        });
+
+        return $entries;
+    }
+
     /** All users that should appear in the overview: the signed-in user first, then menu order, without duplicates. */
     public function visibleUsers(User $actor): Collection
     {
         $prefs = $actor->prefs();
         $me = DirectoryUser::find($actor->entra_id);
         $all = collect($me ? [$me] : []);
-        if ($prefs['my_team_visible']) {
-            $all = $all->concat($this->myTeam($actor));
-        }
-        foreach ($actor->groups()->where('visible', true)->get() as $group) {
-            $all = $all->concat($this->membersOf($actor, $group));
-        }
-        if ($prefs['demo_enabled'] && $prefs['demo_visible']) {
-            $all = $all->concat($this->demoTeam());
+        foreach ($this->orderedEntries($actor) as $entry) {
+            if ($entry['kind'] === 'my_team' && $prefs['my_team_visible']) {
+                $all = $all->concat($this->myTeam($actor));
+            } elseif ($entry['kind'] === 'group' && $entry['group']->visible) {
+                $all = $all->concat($this->membersOf($actor, $entry['group']));
+            } elseif ($entry['kind'] === 'demo' && $prefs['demo_visible']) {
+                $all = $all->concat($this->demoTeam());
+            }
         }
 
         // One row per person: by directory id, and by mailbox for accounts that share an address.
@@ -100,29 +128,30 @@ class GroupResolver
     public function menu(User $actor): array
     {
         $prefs = $actor->prefs();
-        $entries = [[
-            'id' => self::MY_TEAM,
-            'kind' => 'builtin',
-            'type' => 'my_team',
-            'name' => null,
-            'visible' => (bool) $prefs['my_team_visible'],
-            'members' => $this->myTeam($actor)->map->toSummary()->values()->all(),
-            'has_manager' => (bool) $actor->manager_entra_id,
-        ]];
-
-        foreach ($actor->groups as $group) {
-            $entries[] = $this->groupEntry($actor, $group);
-        }
-
-        if ($prefs['demo_enabled']) {
-            $entries[] = [
-                'id' => self::DEMO_TEAM,
-                'kind' => 'builtin',
-                'type' => 'demo',
-                'name' => null,
-                'visible' => (bool) $prefs['demo_visible'],
-                'members' => $this->demoTeam()->map->toSummary()->values()->all(),
-            ];
+        $entries = [];
+        foreach ($this->orderedEntries($actor) as $entry) {
+            if ($entry['kind'] === 'my_team') {
+                $entries[] = [
+                    'id' => self::MY_TEAM,
+                    'kind' => 'builtin',
+                    'type' => 'my_team',
+                    'name' => null,
+                    'visible' => (bool) $prefs['my_team_visible'],
+                    'members' => $this->myTeam($actor)->map->toSummary()->values()->all(),
+                    'has_manager' => (bool) $actor->manager_entra_id,
+                ];
+            } elseif ($entry['kind'] === 'group') {
+                $entries[] = $this->groupEntry($actor, $entry['group']);
+            } else {
+                $entries[] = [
+                    'id' => self::DEMO_TEAM,
+                    'kind' => 'builtin',
+                    'type' => 'demo',
+                    'name' => null,
+                    'visible' => (bool) $prefs['demo_visible'],
+                    'members' => $this->demoTeam()->map->toSummary()->values()->all(),
+                ];
+            }
         }
 
         return $entries;

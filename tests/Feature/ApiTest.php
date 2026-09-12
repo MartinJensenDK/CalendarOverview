@@ -91,6 +91,19 @@ class ApiTest extends TestCase
         $this->assertTrue($data['users'][0]['is_me']);
     }
 
+    public function test_menu_order_can_move_built_in_groups(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $group = $this->actingAs($user)->postJson('/api/groups', ['name' => 'Others', 'type' => 'manual', 'members' => ['other-0001']])->assertCreated()->json('group');
+
+        $menu = $this->actingAs($user)->postJson('/api/groups/reorder', ['ids' => [(string) $group['id'], 'my_team']])->assertOk()->json('menu');
+        $this->assertSame([$group['id'], 'my_team'], array_column($menu, 'id'));
+
+        $names = array_column($this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=1')->json('users'), 'name');
+        $this->assertSame(['Test Person', 'Otto Other', 'Paula Peer', 'Peter Peer'], $names);
+    }
+
     public function test_user_in_several_groups_appears_once(): void
     {
         $user = Fixtures::user();

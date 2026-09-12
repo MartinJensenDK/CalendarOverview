@@ -40,10 +40,11 @@ class Preferences
             'mini_months' => 1,
             'show_week_numbers' => false,
             'find_time_enabled' => true,
-            'heatmap_duration' => 60,
+            'heatmap_duration' => 30,
             'heatmap_work_only' => true,
             'heatmap_show_weekends' => true,
             'heatmap_days' => 7,
+            'menu_order' => [],
         ];
     }
 
@@ -78,6 +79,8 @@ class Preferences
             'heatmap_work_only' => ['sometimes', 'boolean'],
             'heatmap_show_weekends' => ['sometimes', 'boolean'],
             'heatmap_days' => ['sometimes', 'integer', 'min:1', 'max:366'],
+            'menu_order' => ['sometimes', 'array', 'max:200'],
+            'menu_order.*' => ['string', 'max:32'],
         ];
     }
 }

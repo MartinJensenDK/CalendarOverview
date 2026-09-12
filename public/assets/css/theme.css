@@ -228,6 +228,10 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .group { border-radius: var(--radius); margin-bottom: 2px; }
 .group-row { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 4px; border-radius: var(--radius); }
 .group-row:hover { background: var(--surface-2); }
+.group-row { cursor: grab; }
+.group-row .grip { color: var(--muted-2); display: grid; place-items: center; width: 14px; margin-right: 2px; opacity: 0; transition: opacity .12s; }
+.group-row:hover .grip { opacity: 1; }
+.group.dragging .group-row { cursor: grabbing; }
 .swatch-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); margin: 0 6px 0 8px; flex: none; }
 .swatch-dot.on { background: var(--accent); }
 .group-row .caret { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; flex: none; }

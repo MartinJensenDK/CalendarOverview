@@ -37,16 +37,18 @@ export default {
       if (ok) deleteGroup(entry);
     }
 
-    // Drag and drop reordering of user groups
-    function onDragStart(entry, e) { if (entry.kind !== 'group') return; dragId.value = entry.id; e.dataTransfer.effectAllowed = 'move'; }
-    function onDragOver(entry, e) { if (dragId.value === null || entry.kind !== 'group') return; e.preventDefault(); dropTarget.value = entry.id; }
+    // Drag and drop reordering of every menu entry (built-ins included); the overview follows this order.
+    function onDragStart(entry, e) { dragId.value = entry.id; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(entry.id)); } catch (err) { /* older browsers */ } }
+    function onDragOver(entry, e) { if (dragId.value === null) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dropTarget.value = entry.id; }
     function onDrop(entry) {
-      if (dragId.value === null || entry.kind !== 'group' || entry.id === dragId.value) { dragId.value = null; dropTarget.value = null; return; }
-      const ids = store.menu.filter((g) => g.kind === 'group').map((g) => g.id);
+      if (dragId.value === null || entry.id === dragId.value) { dragId.value = null; dropTarget.value = null; return; }
+      const ids = store.menu.map((g) => g.id);
       const from = ids.indexOf(dragId.value); const to = ids.indexOf(entry.id);
       ids.splice(from, 1); ids.splice(to, 0, dragId.value);
+      // Optimistic reorder so the menu moves immediately.
+      store.menu = ids.map((id) => store.menu.find((g) => g.id === id));
       dragId.value = null; dropTarget.value = null;
-      reorderGroups(ids);
+      reorderGroups(ids.map(String));
     }
     function onDragEnd() { dragId.value = null; dropTarget.value = null; }
 
@@ -60,9 +62,10 @@ export default {
       </div>
       <div class="sidebar-scroll">
         <div v-for="entry in entries" :key="entry.id" class="group" :class="{ dragging: dragId === entry.id, 'drop-before': dropTarget === entry.id && dragId !== entry.id }"
-             :draggable="entry.kind === 'group'" @dragstart="onDragStart(entry, $event)" @dragover="onDragOver(entry, $event)" @drop="onDrop(entry)" @dragend="onDragEnd">
+             draggable="true" @dragstart="onDragStart(entry, $event)" @dragover="onDragOver(entry, $event)" @drop="onDrop(entry)" @dragend="onDragEnd">
           <div class="group-row" :class="{ 'hidden-group': !entry.visible }" :title="hint(entry)">
             <span class="swatch-dot" :class="{ on: entry.visible }"></span>
+            <span class="grip" :title="t('Drag to reorder')"><icon name="grip" :size="14"></icon></span>
             <span class="name" @click="toggleGroup(entry)">{{ label(entry) }}<small>{{ entry.members.length }}</small></span>
             <span class="kind" v-if="kindLabel(entry)">{{ kindLabel(entry) }}</span>
             <span class="tools" v-if="entry.kind === 'group'">
