@@ -38,7 +38,9 @@ export default {
       document.addEventListener('keydown', onKey);
       document.body.style.overflow = 'hidden';
       requestAnimationFrame(() => {
-        const el = box.value && box.value.querySelector('input, select, textarea, button.primary, button');
+        if (!box.value || box.value.contains(document.activeElement)) return; // the component already placed focus
+        const body = box.value.querySelector('.modal-body');
+        const el = (body && body.querySelector('input:not([type="hidden"]), select, textarea, button')) || box.value.querySelector('.modal-foot button.primary, .modal-foot button, .close');
         if (el) el.focus();
       });
     });
