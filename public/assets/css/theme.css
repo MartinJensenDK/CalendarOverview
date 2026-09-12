@@ -252,6 +252,10 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .members-empty { padding: 4px 6px 8px 30px; color: var(--muted); font-size: 12px; }
 .sidebar-foot { border-top: 1px solid var(--line); padding: 8px 10px 10px; }
 .minical-head { display: flex; align-items: center; gap: 2px; margin-bottom: 2px; }
+.minical-head .expand { width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; display: grid; place-items: center; }
+.minical-head .expand:hover { background: var(--surface-2); color: var(--ink); }
+.minical-head .expand .icon { transition: transform .16s var(--ease); }
+.minical-head .expand.open .icon { transform: rotate(180deg); }
 .minical-month + .minical-month { margin-top: 8px; }
 .minical-title { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: capitalize; padding: 2px 4px 4px; }
 .minical-grid { display: grid; grid-template-columns: 22px repeat(7, 1fr); gap: 1px; }

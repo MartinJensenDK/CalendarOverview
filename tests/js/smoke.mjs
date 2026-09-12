@@ -135,7 +135,7 @@ const callsBefore = calls.length;
 const target = [...w.document.querySelectorAll('.minical .day')].find((b) => !b.classList.contains('outside') && b.getAttribute('aria-label') !== store.from);
 target.click(); await tick(60);
 assert(store.from === target.getAttribute('aria-label') && calls.slice(callsBefore).some((c) => c.includes('/api/overview?from=' + store.from)), 'clicking a day moves the overview');
-w.document.querySelector('.minical-head .btn.ghost.sm:not(.icon)').click(); await tick(60);
+w.document.querySelector('.minical-head .expand').click(); await tick(60);
 assert(w.document.querySelectorAll('.minical-month').length === 2, 'expands to two months');
 assert(w.document.querySelectorAll('.minical .wk').length === 0, 'week numbers hidden by default');
 store.prefs.show_week_numbers = true; await tick();

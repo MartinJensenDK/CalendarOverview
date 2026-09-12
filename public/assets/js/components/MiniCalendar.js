@@ -61,9 +61,9 @@ export default {
     <div class="minical">
       <div class="minical-head">
         <button type="button" class="btn ghost icon sm" @click="browse(-1)" :title="t('Previous')"><icon name="chevron-left" :size="14"></icon></button>
-        <span class="grow"></span>
-        <button type="button" class="btn ghost sm" @click="toggleMonths">{{ store.prefs.mini_months === 2 ? t('1 month') : t('2 months') }}</button>
         <button type="button" class="btn ghost icon sm" @click="browse(1)" :title="t('Next')"><icon name="chevron-right" :size="14"></icon></button>
+        <span class="grow"></span>
+        <button type="button" class="expand" :class="{ open: store.prefs.mini_months === 2 }" @click="toggleMonths" :title="store.prefs.mini_months === 2 ? t('1 month') : t('2 months')" :aria-label="store.prefs.mini_months === 2 ? t('1 month') : t('2 months')"><icon name="chevron-down" :size="14"></icon></button>
       </div>
       <div v-for="m in months" :key="m.first" class="minical-month">
         <div class="minical-title">{{ m.label }}</div>
