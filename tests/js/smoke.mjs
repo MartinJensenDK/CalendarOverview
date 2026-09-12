@@ -301,7 +301,7 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
   trigger.click(); await tick();
   const head = w.document.querySelector('.topbar .menu .head');
   const toggle = head && head.querySelector('.theme-toggle');
-  assert(toggle && head.querySelector('.who strong') && head.children[0].classList.contains('who') && head.children[1] === toggle, 'theme toggle sits to the right of name and e-mail');
+  assert(toggle && head.querySelector('.who strong') && head.children[0].classList.contains('who') && head.lastElementChild === toggle, 'theme toggle sits to the right of name and e-mail');
   assert(!w.document.querySelector('.topbar .menu [title="System"]') && w.document.querySelectorAll('.topbar .menu .theme-toggle').length === 1, 'only one theme button, no System option');
   assert(!w.document.querySelector('.topbar .menu .item.switch') && !w.document.querySelector('.topbar .menu input[type=checkbox]'), 'demo data switch removed from the profile menu');
   { // Directory sync is an icon left of the theme toggle; its tooltip carries the old row's text

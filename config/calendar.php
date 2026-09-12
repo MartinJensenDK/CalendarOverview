@@ -49,5 +49,5 @@ return [
     // Strict-Transport-Security max-age in seconds (0 disables the header; only sent over HTTPS).
     'hsts_max_age' => (int) env('HSTS_MAX_AGE', 31536000),
 
-    'version' => '1.6.5',
+    'version' => '1.6.6',
 ];

@@ -87,7 +87,7 @@ export default {
           <div class="head" v-if="store.me">
             <div class="who"><strong>{{ store.me.name }}</strong><small>{{ store.me.email }}</small></div>
             <button type="button" class="btn icon sync-dir" :class="{ busy: syncing }" :title="syncTitle" :aria-label="syncTitle" :disabled="syncing" @click="sync">
-              <icon name="users" :size="15"></icon>
+              <icon name="refresh" :size="15"></icon>
             </button>
             <button type="button" class="btn icon theme-toggle" :title="isDark ? t('Switch to light mode') : t('Switch to dark mode')" :aria-label="isDark ? t('Switch to light mode') : t('Switch to dark mode')" @click="toggleTheme">
               <icon :name="isDark ? 'sun' : 'moon'" :size="15"></icon>
