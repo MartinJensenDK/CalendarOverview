@@ -4,7 +4,7 @@ import { closeModal, savePrefs, resetSettings } from '../actions.js';
 import { hoursFor } from '../util/hours.js';
 import { weekday, dayLabel, minutesToHhmm, todayYmd } from '../util/date.js';
 
-const { computed } = Vue;
+const { computed, ref } = Vue;
 
 export default {
   name: 'SettingsModal',
@@ -25,7 +25,23 @@ export default {
     });
     function locIcon(loc) { return loc === 'remote' ? 'home' : 'building'; }
     function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
-    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel, locIcon, locLabel };
+    // The hours box is teleported to <body> and positioned in the viewport, above the trigger when
+    // there is no room below, so it never ends up in the modal's scroll area.
+    const hoursOpen = ref(false);
+    const hoursStyle = ref({});
+    function showHours(e) {
+      const r = e.currentTarget.getBoundingClientRect();
+      const est = 70 + ((myHours.value || []).length || 1) * 27;
+      const below = r.bottom + 6 + est <= window.innerHeight;
+      hoursStyle.value = {
+        left: `${Math.max(8, Math.min(r.left, window.innerWidth - 320))}px`,
+        top: below ? `${r.bottom + 6}px` : 'auto',
+        bottom: below ? 'auto' : `${Math.max(8, window.innerHeight - r.top + 6)}px`,
+      };
+      hoursOpen.value = true;
+    }
+    function hideHours() { hoursOpen.value = false; }
+    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel, locIcon, locLabel, hoursOpen, hoursStyle, showHours, hideHours };
   },
   template: `
     <modal :title="t('Settings')" width="560px" @close="closeModal">
@@ -59,8 +75,8 @@ export default {
       <div class="field-label" style="margin-top:26px">{{ t('Find free time') }}</div>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.find_time_enabled" @change="set({ find_time_enabled: $event.target.checked })"><span class="track"></span>{{ t('Show the “Find free time” section in the menu') }}</label>
       <div class="field" style="margin-top:26px;margin-bottom:14px"><span class="field-label">{{ t('Working hours') }}</span>
-        <span class="hours-info" tabindex="0">{{ t('Working hours are read from Outlook') }}<span class="i"><icon name="info" :size="14"></icon></span>
-          <div class="hours-pop" role="tooltip">
+        <span class="hours-info" tabindex="0" @mouseenter="showHours" @mouseleave="hideHours" @focus="showHours" @blur="hideHours">{{ t('Working hours are read from Outlook') }}<span class="i"><icon name="info" :size="14"></icon></span></span>
+        <teleport to="body"><div class="hours-pop" role="tooltip" v-if="hoursOpen" :style="hoursStyle">
             <div class="hd">{{ t('Your working hours in the period shown') }}</div>
             <table v-if="myHours">
               <thead><tr><th>{{ t('Day') }}</th><th>{{ t('Hours') }}</th><th>{{ t('Location') }}</th></tr></thead>
@@ -73,8 +89,7 @@ export default {
               </tbody>
             </table>
             <div v-else class="muted">{{ t('No data yet') }}</div>
-          </div>
-        </span></div>
+        </div></teleport></div>
       <div class="field-label" style="margin-top:18px">{{ t('Demo data') }}</div>
       <label class="switch block" style="align-items:flex-start"><input type="checkbox" :checked="store.prefs.demo_enabled" @change="set({ demo_enabled: $event.target.checked })"><span class="track" style="margin-top:2px"></span><span>{{ t('Demo data') }}<br><small class="muted">{{ t('Show 150 fictional people with generated calendars. Handy for trying the app before your colleagues are in a group.') }}</small></span></label>
       <div class="row" style="margin-top:16px"><span class="muted" style="font-size:12px">{{ t('Version') }} {{ store.app.version }}</span></div>

@@ -132,6 +132,9 @@ closeModal(); await tick();
 
 openModal('settings'); await tick();
 assert(html().includes('Days to show') && !html().includes('Rows per page'), 'settings modal renders without paging option');
+assert(!w.document.querySelector('.hours-pop'), 'hours box hidden until hovered');
+w.document.querySelector('.hours-info').dispatchEvent(new w.MouseEvent('mouseenter')); await tick();
+assert(w.document.querySelector('.hours-pop').parentElement === w.document.body && w.document.querySelector('.hours-pop').style.position !== 'absolute', 'hours box is rendered on body, outside the modal scroll area');
 assert(!html().includes('Sync photos') && html().includes('Working hours are read from Outlook') && w.document.querySelectorAll('.hours-pop tbody tr').length === 7 && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.hours-pop td.h').textContent) && w.document.querySelector('.hours-pop td.l .loc').textContent.includes('Office') && w.document.querySelector('.hours-pop tr.off'), 'settings shows own working hours per day in the hover box, no sync-photos button');
 assert(w.document.querySelectorAll('.steps.compact button[aria-pressed="true"]').length === 1 && w.document.querySelector('.steps.compact button[aria-pressed="true"]').textContent.includes('1 month'), 'months shown is a pressed-button pair');
 store.prefs.days = 14; w.document.querySelector('.modal-foot .btn.danger').click(); await tick();
