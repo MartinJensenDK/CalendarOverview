@@ -13,7 +13,7 @@ const { ref, computed, watch, onMounted, nextTick } = Vue;
 
 export default {
   name: 'PersonLookupModal',
-  props: { initial: { type: String, default: '' } },
+  props: { initial: { type: String, default: '' }, person: { type: Object, default: null } }, // person: open straight on their calendar
   setup(props) {
     const q = ref(props.initial);
     const input = ref(null);
@@ -45,6 +45,7 @@ export default {
     watch(q, () => { person.value = null; schedule.value = null; clearTimeout(timer); timer = setTimeout(search, 160); });
     onMounted(async () => {
       await nextTick();
+      if (props.person) { pick(props.person); return; }
       if (input.value) { input.value.focus(); input.value.setSelectionRange(q.value.length, q.value.length); }
       search();
     });

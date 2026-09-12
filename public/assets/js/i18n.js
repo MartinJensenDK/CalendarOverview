@@ -209,6 +209,7 @@ const da = {
   'New group with this person': 'Ny gruppe med denne person',
   '{name} added to {group}': '{name} er tilføjet til {group}',
   'Member of {groups}': 'Medlem af {groups}',
+  'Show calendar': 'Vis kalender',
   'In {groups}': 'I {groups}',
   'Tip: just start typing anywhere to look someone up.': 'Tip: begynd bare at skrive hvor som helst for at slå en person op.',
   'Select everyone on this page': 'Vælg alle på denne side',

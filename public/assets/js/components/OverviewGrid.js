@@ -226,6 +226,7 @@ export default {
               <input v-if="store.prefs.find_time_enabled" type="checkbox" class="pick" :checked="isSelected(u.id)" @click.stop @change="toggleSelect(u.id)" :aria-label="u.name">
               <img class="avatar" :src="u.photo_url" alt="" loading="lazy">
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
+              <button type="button" class="cal" :title="t('Show calendar')" :aria-label="t('Show calendar') + ': ' + u.name" @click.stop="openModal('lookup', { person: u })"><icon name="calendar" :size="15"></icon></button>
             </div>
             <div v-for="d in days" :key="u.id + d" v-memo="[blocksFor(u, d), bandsFor(u, d), d === today ? nowPct : null, u.error]" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
               <div v-for="(b, k) in bandsFor(u, d)" :key="k" class="band" :style="b.style"><span class="loc" v-if="b.loc" :title="locLabel(b.loc)"><icon :name="locIcon(b.loc)" :size="11"></icon></span></div>

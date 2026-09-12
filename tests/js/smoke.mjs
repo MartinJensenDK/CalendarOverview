@@ -335,6 +335,13 @@ w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'x', bubbles: tru
 await tick(250);
 assert(store.modal && store.modal.name === 'lookup' && w.document.querySelector('.lookup-search input').value === 'x', 'typing a letter opens the lookup modal with the letter');
 assert(w.document.querySelectorAll('.lookup-row').length === 1 && html().includes('Xenia Search'), 'lookup shows search results');
+closeModal(); await tick();
+{ const cal = w.document.querySelectorAll('.grid .name .cal'); const before = store.selected.length;
+  assert(cal.length === w.document.querySelectorAll('.grid .name').length - 0 && cal[1].getAttribute('aria-label').includes('Peter Peer'), 'every person row has a calendar button');
+  cal[1].click(); await tick(120);
+  assert(store.modal && store.modal.name === 'lookup' && w.document.querySelector('.lookup-person') && html().includes('Peter Peer') && store.selected.length === before, 'calendar button opens the lookup straight on that person without selecting the row');
+  closeModal(); await tick(); }
+w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'x', bubbles: true })); await tick(250);
 assert(w.document.activeElement === w.document.querySelector('.lookup-search input'), 'search field keeps focus after results arrive');
 w.document.querySelector('.lookup-row').click(); await tick(120);
 assert(w.document.querySelectorAll('.lookup-date .hours').length === 5 && w.document.querySelector('.lookup-date .hours .loc[title="Office"]') && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.lookup-date .hours').textContent), 'lookup shows working hours and location per day');

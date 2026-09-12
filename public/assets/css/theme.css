@@ -388,6 +388,10 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid .name.me { box-shadow: inset 3px 0 0 var(--accent); }
 .grid .name .pick { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); cursor: pointer; opacity: 0; transition: opacity .12s; flex: none; }
 .grid .name:hover .pick, .grid .name.selected .pick, .grid .name .pick:focus-visible { opacity: 1; }
+.grid .name .cal { margin-left: auto; flex: none; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity .12s, background .12s, color .12s; }
+.grid .name:hover .cal, .grid .name .cal:focus-visible { opacity: 1; }
+.grid .name .cal:hover { background: var(--surface-3); color: var(--ink); }
+.grid.rh-sm .name .cal { width: 22px; height: 22px; }
 .grid .name.selectable { cursor: pointer; user-select: none; }
 .grid .name.selectable:hover { background: var(--surface-2); }
 .grid .name.selected:hover { background: var(--accent-soft); }
