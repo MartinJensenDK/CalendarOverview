@@ -38,5 +38,5 @@ return [
 
     'demo_user_count' => 150,
 
-    'version' => '1.3.4',
+    'version' => '1.3.5',
 ];

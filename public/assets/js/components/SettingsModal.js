@@ -38,7 +38,7 @@ export default {
         <label class="field"><span>{{ t('Language') }}</span>
           <select class="select" :value="store.prefs.locale" @change="set({ locale: $event.target.value })"><option value="en">English</option><option value="da">Dansk</option></select></label>
       </div>
-      <div class="field-label" style="margin-top:6px">{{ t('Calendar overview') }}</div>
+      <div class="field-label" style="margin-top:26px">{{ t('Calendar overview') }}</div>
       <div class="grid-2">
         <label class="field"><span>{{ t('Row height') }}</span>
           <select class="select" :value="store.prefs.row_height" @change="set({ row_height: $event.target.value })">
@@ -49,16 +49,16 @@ export default {
       </div>
       <label class="switch block" style="margin-bottom:8px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers_overview" @change="set({ show_week_numbers_overview: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
-      <div class="field-label" style="margin-top:18px">{{ t('Month calendar') }}</div>
+      <div class="field-label" style="margin-top:26px">{{ t('Month calendar') }}</div>
       <div class="field"><span>{{ t('Months shown') }}</span>
         <div class="steps compact" role="group" :aria-label="t('Months shown')">
           <button type="button" :aria-pressed="store.prefs.mini_months === 1 ? 'true' : 'false'" @click="set({ mini_months: 1 })">{{ t('1 month') }}</button>
           <button type="button" :aria-pressed="store.prefs.mini_months === 2 ? 'true' : 'false'" @click="set({ mini_months: 2 })">{{ t('2 months') }}</button>
         </div></div>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers" @change="set({ show_week_numbers: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
-      <div class="field-label" style="margin-top:18px">{{ t('Find free time') }}</div>
+      <div class="field-label" style="margin-top:26px">{{ t('Find free time') }}</div>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.find_time_enabled" @change="set({ find_time_enabled: $event.target.checked })"><span class="track"></span>{{ t('Show the “Find free time” section in the menu') }}</label>
-      <div class="field" style="margin-top:4px;margin-bottom:14px"><span class="field-label">{{ t('Working hours') }}</span>
+      <div class="field" style="margin-top:26px;margin-bottom:14px"><span class="field-label">{{ t('Working hours') }}</span>
         <span class="hours-info" tabindex="0">{{ t('Working hours are read from Outlook') }}<span class="i"><icon name="info" :size="14"></icon></span>
           <div class="hours-pop" role="tooltip">
             <div class="hd">{{ t('Your working hours in the period shown') }}</div>
