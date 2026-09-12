@@ -93,10 +93,6 @@ export default {
           <div class="sep"></div>
           <button type="button" class="item" @click="open('rules')"><icon name="palette"></icon><span class="grow">{{ t('Colour rules') }}</span></button>
           <button type="button" class="item" @click="open('settings')"><icon name="sliders"></icon><span class="grow">{{ t('Settings') }}</span></button>
-          <label class="item switch" style="cursor:pointer">
-            <icon name="layers"></icon><span class="grow">{{ t('Demo data') }}</span>
-            <input type="checkbox" :checked="store.prefs.demo_enabled" @change="pick({ demo_enabled: $event.target.checked })"><span class="track"></span>
-          </label>
           <div class="sep"></div>
           <button type="button" class="item" @click="sync"><icon name="refresh"></icon><span class="grow">{{ t('Sync directory now') }}<br><small class="muted">{{ t('Directory: {n} people, updated {time}', { n: store.directory.user_count, time: store.directory.synced_at ? new Date(store.directory.synced_at).toLocaleString() : t('never') }) }}</small></span></button>
           <div class="sep"></div>

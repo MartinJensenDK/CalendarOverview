@@ -288,6 +288,7 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
   const toggle = head && head.querySelector('.theme-toggle');
   assert(toggle && head.querySelector('.who strong') && head.children[0].classList.contains('who') && head.children[1] === toggle, 'theme toggle sits to the right of name and e-mail');
   assert(!w.document.querySelector('.topbar .menu [title="System"]') && w.document.querySelectorAll('.topbar .menu .theme-toggle').length === 1, 'only one theme button, no System option');
+  assert(!w.document.querySelector('.topbar .menu .item.switch') && !w.document.querySelector('.topbar .menu input[type=checkbox]'), 'demo data switch removed from the profile menu');
   assert(store.prefs.theme === 'system' || store.prefs.theme === 'light', 'theme still system/light before clicking');
   toggle.click(); await tick();
   assert(store.prefs.theme === 'dark' && w.document.documentElement.getAttribute('data-theme') === 'dark', 'clicking picks dark explicitly');
