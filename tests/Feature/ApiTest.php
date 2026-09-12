@@ -57,6 +57,25 @@ class ApiTest extends TestCase
         $this->assertCount(51, $page2['users']);
     }
 
+    public function test_signed_in_user_is_always_first_in_overview(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $this->actingAs($user)->putJson('/api/settings', ['my_team_visible' => false]);
+        $this->actingAs($user)->postJson('/api/groups', ['name' => 'Others', 'type' => 'manual', 'members' => ['other-0001', 'peer-0002']])->assertCreated();
+
+        $names = array_column($this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=1')->assertOk()->json('users'), 'name');
+        $this->assertSame(['Test Person', 'Otto Other', 'Paula Peer'], $names);
+
+        // Even with every group hidden the user's own row remains.
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true, 'demo_visible' => false]);
+        $group = $user->groups()->first();
+        $this->actingAs($user)->postJson("/api/groups/{$group->id}/toggle", ['visible' => false]);
+        $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=1')->assertOk()->json();
+        $this->assertSame(1, $data['total']);
+        $this->assertTrue($data['users'][0]['is_me']);
+    }
+
     public function test_demo_schedule_is_deterministic(): void
     {
         $user = Fixtures::user();

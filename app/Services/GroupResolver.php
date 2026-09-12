@@ -74,11 +74,12 @@ class GroupResolver
         return $this->sorted(DirectoryUser::whereIn('id', array_values(array_unique($ids)))->where('account_enabled', true)->get(), $actor);
     }
 
-    /** All users that should appear in the overview, in menu order, without duplicates. */
+    /** All users that should appear in the overview: the signed-in user first, then menu order, without duplicates. */
     public function visibleUsers(User $actor): Collection
     {
         $prefs = $actor->prefs();
-        $all = collect();
+        $me = DirectoryUser::find($actor->entra_id);
+        $all = collect($me ? [$me] : []);
         if ($prefs['my_team_visible']) {
             $all = $all->concat($this->myTeam($actor));
         }
