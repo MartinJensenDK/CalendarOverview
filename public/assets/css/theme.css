@@ -483,6 +483,7 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .heat-detail h3 { font-size: 15px; margin-bottom: 8px; }
 .heat-detail ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
 .heat-detail li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.heat-detail li .loc { line-height: 0; color: var(--muted); }
 .heat-detail li .st { margin-left: auto; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .heat-detail li.busy .st { color: var(--danger); }
 

@@ -3,7 +3,7 @@ import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, savePrefs } from '../actions.js';
 import { todayYmd, addDays, isWeekend, weekday, dayLabel, minutesToHhmm, parseYmd, localIso } from '../util/date.js';
-import { hoursRange, isWorking, DEFAULT_HOURS } from '../util/hours.js';
+import { hoursRange, isWorking, hoursFor, DEFAULT_HOURS } from '../util/hours.js';
 
 const { ref, reactive, computed, watch, onMounted } = Vue;
 
@@ -201,9 +201,16 @@ export default {
     const detail = computed(() => {
       if (!sel.value) return null;
       const s = sel.value;
-      const list = users.value.map((u) => ({ ...u, free: isFree(u, s.day, s.start, s.end) }));
+      // Per person: free, busy, or not working then; plus where they work that day (office/home) when the plan says.
+      const list = users.value.map((u) => {
+        const working = isWorking(u, s.day, s.start, s.end);
+        const loc = (hoursFor(u, s.day).find((h) => h.loc) || {}).loc || null;
+        return { ...u, free: isFree(u, s.day, s.start, s.end), working, loc };
+      });
       return { ...s, list, free: list.filter((x) => x.free).length, label: `${weekday(s.day, 'long')} ${dayLabel(s.day)} · ${minutesToHhmm(s.start)}–${minutesToHhmm(s.end)}` };
     });
+    function locIcon(loc) { return loc === 'remote' ? 'home' : 'building'; }
+    function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
     const outlookUrl = computed(() => {
       if (!detail.value) return '#';
       const d = parseYmd(detail.value.day);
@@ -214,7 +221,7 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, locIcon, locLabel, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -248,7 +255,7 @@ export default {
       <div class="heat-detail" v-if="detail">
         <div class="row" style="align-items:flex-start"><h3 class="grow">{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3><button type="button" class="btn ghost icon sm" :title="t('Clear selection')" @click="clearSel"><icon name="x" :size="14"></icon></button></div>
         <ul>
-          <li v-for="u in detail.list" :key="u.id" :class="{ busy: !u.free }"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="st">{{ u.free ? t('free') : t('busy') }}</span></li>
+          <li v-for="u in detail.list" :key="u.id" :class="{ busy: !u.free }"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="loc" v-if="u.loc" :title="locLabel(u.loc)"><icon :name="locIcon(u.loc)" :size="12"></icon></span><span class="st">{{ u.free ? t('free') : (u.working ? t('busy') : t('not working')) }}</span></li>
         </ul>
         <div class="row" style="margin-top:12px">
           <input class="input" v-model="form.subject" :placeholder="t('Meeting subject')" style="max-width:320px">

@@ -79,6 +79,7 @@ const da = {
   'free': 'ledig',
   'tentative': 'foreløbig',
   'busy': 'optaget',
+  'not working': 'ikke på arbejde',
   'oof': 'ude af kontoret',
   'workingElsewhere': 'arbejder andetsteds',
   'unknown': 'ukendt',

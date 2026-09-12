@@ -190,6 +190,7 @@ cells[5].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 1
 assert([...w.document.querySelectorAll('.tooltip')].some((el) => /0 of 2 free/.test(el.textContent)), 'Saturday: nobody works, so 0 of 2 free');
 cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick();
 assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/0/deeplink/compose'), 'slot selection shows Outlook link');
+assert(w.document.querySelector('.heat-detail li .loc[title="Office"]') && w.document.querySelectorAll('.heat-detail li').length === 2, 'detail list shows each person\'s work location for that day');
 cells[3].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
 assert([...w.document.querySelectorAll('.tooltip')].some((el) => /of 2 free/.test(el.textContent)), 'hovering a heatmap cell shows "x of y free"');
 [...w.document.querySelectorAll('.heat-toolbar .btn')].find((b) => b.textContent.includes('Add more')).click(); await tick();
