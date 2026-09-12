@@ -39,7 +39,7 @@ export default {
       const step = days.value.length > 7 ? 2 : 1;
       const out = [];
       for (let h = Math.ceil(s.start / 60); h * 60 <= s.end; h++) {
-        out.push({ h, left: ((h * 60 - s.start) / s.len) * 100, label: String(h).padStart(2, '0'), minor: h % step !== 0 || h * 60 === s.end });
+        out.push({ h, left: ((h * 60 - s.start) / s.len) * 100, label: String(h).padStart(2, '0'), minor: h % step !== 0 || h * 60 === s.end, edge: h * 60 === s.start ? 'start' : h * 60 === s.end ? 'end' : '' });
       }
       return out;
     });
@@ -219,7 +219,7 @@ export default {
           <div v-for="(d, i) in days" :key="d" class="h" :class="{ weekend: isWeekend(d), today: d === today }">
             <span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
             <span class="wkno" v-if="weekBadge(d, i)">{{ t('Week') }} {{ weekBadge(d, i) }}</span>
-            <span class="hours" aria-hidden="true"><span v-for="m in hourMarks" :key="m.h" class="hl" :class="{ minor: m.minor }" :style="{ left: m.left + '%' }">{{ m.label }}</span></span>
+            <span class="hours" aria-hidden="true"><span v-for="m in hourMarks" :key="m.h" class="hl" :class="[m.edge, { minor: m.minor }]" :style="{ left: m.left + '%' }">{{ m.label }}</span></span>
           </div>
           <template v-for="u in users" :key="u.id">
             <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id), selectable: store.prefs.find_time_enabled }" @click="store.prefs.find_time_enabled && toggleSelect(u.id)" :title="store.prefs.find_time_enabled ? t('Click to select') : ''">

@@ -343,10 +343,14 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid-wrap { flex: 1; overflow: auto; position: relative; }
 .grid { display: grid; grid-template-columns: var(--name-col-w) repeat(var(--days), minmax(var(--day-min-w), 1fr)); min-width: max-content; width: 100%; }
 .grid .h { position: sticky; top: 0; z-index: 3; background: var(--surface); border-bottom: 1px solid var(--line-strong); height: 42px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 8px; padding: 0 8px 14px; }
-.grid .h .hours { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; }
+.grid .h .hours { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; overflow: hidden; }
 .grid .h .hl { position: absolute; bottom: 1px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 9px; line-height: 10px; color: var(--muted); }
 .grid .h .hl::before { content: ""; position: absolute; left: 50%; top: -4px; width: 1px; height: 3px; background: var(--line-strong); }
 .grid .h .hl.minor { font-size: 0; }
+.grid .h .hl.start { transform: none; }
+.grid .h .hl.start::before { left: 0; }
+.grid .h .hl.end { transform: translateX(-100%); }
+.grid .h .hl.end::before { left: auto; right: 0; }
 .grid .h.corner { padding-bottom: 0; }
 .grid.skeleton .h .hours { display: none; }
 .grid .h.corner { left: 0; z-index: 4; border-right: 1px solid var(--line); }
