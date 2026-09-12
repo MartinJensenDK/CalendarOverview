@@ -413,19 +413,18 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid .blk .t { font-family: var(--font-mono); font-size: 10px; opacity: .85; display: none; }
 .grid .blk.allday { left: 2px !important; right: 2px; width: auto !important; }
 /* Row heights */
-.grid.rh-sm { --row-h: 34px; }
-.grid.rh-sm .blk { top: 9px; height: 16px; padding: 0 4px; font-size: 10px; line-height: 16px; }
+/* Lanes: S one appointment per row, M two, L three (--lane is set per block). */
+.grid .blk { top: calc(var(--lane-top) + var(--lane, 0) * var(--lane-step)); height: var(--lane-h); }
+.grid.rh-sm { --row-h: 34px; --lane-top: 11px; --lane-h: 16px; --lane-step: 0px; }
+.grid.rh-sm .blk { padding: 0 4px; font-size: 10px; line-height: 16px; }
 .grid.rh-sm .blk.allday { top: 3px; height: 4px; padding: 0; border-radius: 2px; font-size: 0; }
-.grid.rh-sm .blk.allday ~ .blk:not(.allday) { top: 11px; }
-.grid.rh-md { --row-h: 56px; }
-.grid.rh-md .blk { top: 17px; height: 24px; line-height: 20px; }
-.grid.rh-md .blk.allday { top: 4px; height: 10px; padding: 0 5px; font-size: 9px; line-height: 10px; }
-.grid.rh-md .blk.allday ~ .blk:not(.allday) { top: 20px; height: 26px; }
-.grid.rh-lg { --row-h: 92px; }
-.grid.rh-lg .blk { top: 26px; height: 52px; white-space: normal; padding: 5px 7px; font-size: 12px; }
-.grid.rh-lg .blk .t { display: block; }
-.grid.rh-lg .blk.allday { top: 5px; height: 16px; font-size: 10px; line-height: 12px; padding: 2px 6px; }
-.grid.rh-lg .blk.allday ~ .blk:not(.allday) { top: 28px; height: 56px; }
+.grid.rh-md { --row-h: 56px; --lane-top: 16px; --lane-h: 18px; --lane-step: 20px; }
+.grid.rh-md .blk { padding: 0 5px; font-size: 10.5px; line-height: 18px; }
+.grid.rh-md .blk.allday { top: 3px; height: 10px; padding: 0 5px; font-size: 9px; line-height: 10px; }
+.grid.rh-lg { --row-h: 92px; --lane-top: 24px; --lane-h: 20px; --lane-step: 23px; }
+.grid.rh-lg .blk { padding: 0 6px; font-size: 11px; line-height: 20px; }
+.grid.rh-lg .blk .t { display: inline; margin-right: 5px; }
+.grid.rh-lg .blk.allday { top: 4px; height: 16px; font-size: 10px; line-height: 16px; padding: 0 6px; }
 .grid .cell .err { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 11px; }
 
 .grid-empty { display: grid; place-items: center; height: 100%; padding: 40px; text-align: center; color: var(--muted); }

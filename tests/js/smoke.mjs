@@ -47,7 +47,7 @@ const overview = {
       { s: '2026-09-14T07:00:00Z', e: '2026-09-14T08:30:00Z', st: 'busy', sub: 'Team sync', loc: 'Teams', ad: false, pr: false },
       { s: '2026-09-15T00:00:00Z', e: '2026-09-16T00:00:00Z', st: 'oof', sub: 'Vacation', loc: null, ad: true, pr: false },
     ] },
-    { ...member('p1', 'Peter Peer', 'Engineer'), is_me: false, error: null, work: [{ s: '2026-09-14T06:00:00Z', e: '2026-09-14T14:00:00Z', loc: null }, { s: '2026-09-15T06:00:00Z', e: '2026-09-15T14:00:00Z', loc: null }, { s: '2026-09-16T06:00:00Z', e: '2026-09-16T14:00:00Z', loc: null }, { s: '2026-09-17T07:00:00Z', e: '2026-09-17T13:00:00Z', loc: 'remote' }], items: [{ s: '2026-09-16T11:00:00Z', e: '2026-09-16T12:00:00Z', st: 'tentative', sub: null, loc: null, ad: false, pr: true }] },
+    { ...member('p1', 'Peter Peer', 'Engineer'), is_me: false, error: null, work: [{ s: '2026-09-14T06:00:00Z', e: '2026-09-14T14:00:00Z', loc: null }, { s: '2026-09-15T06:00:00Z', e: '2026-09-15T14:00:00Z', loc: null }, { s: '2026-09-16T06:00:00Z', e: '2026-09-16T14:00:00Z', loc: null }, { s: '2026-09-17T07:00:00Z', e: '2026-09-17T13:00:00Z', loc: 'remote' }], items: [{ s: '2026-09-16T11:00:00Z', e: '2026-09-16T12:00:00Z', st: 'tentative', sub: null, loc: null, ad: false, pr: true }, { s: '2026-09-16T11:30:00Z', e: '2026-09-16T12:30:00Z', st: 'busy', sub: 'Overlap', loc: null, ad: false, pr: false }, { s: '2026-09-16T12:30:00Z', e: '2026-09-16T13:00:00Z', st: 'busy', sub: 'After', loc: null, ad: false, pr: false }] },
     { ...member('o1', 'Otto Other', 'Account Manager'), is_me: false, error: 'no_mailbox', work: [], items: [] },
   ],
 };
@@ -101,7 +101,13 @@ assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows
 assert(!w.document.querySelector('.pager'), 'no footer bar under the grid');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
 const blocks = w.document.querySelectorAll('.grid .blk');
-assert(blocks.length === 3, `three event blocks rendered (got ${blocks.length})`);
+assert(blocks.length === 5, `five event blocks rendered (got ${blocks.length})`);
+{ const lane = (name) => [...blocks].find((b) => b.textContent.includes(name)).style.getPropertyValue('--lane');
+  assert(lane('Overlap') === '1' && lane('After') === '0', 'M: overlapping appointment goes to lane 2, the next non-overlapping one back to lane 1');
+  store.prefs.row_height = 'sm'; await tick();
+  const l = (name) => [...w.document.querySelectorAll('.grid .blk')].find((b) => b.textContent.includes(name)).style.getPropertyValue('--lane');
+  assert(l('Overlap') === '0' && l('After') === '0', 'S: one lane, overlapping appointments stack');
+  store.prefs.row_height = 'md'; await tick(); }
 const vac = [...blocks].find((b) => b.textContent.includes('Vacation'));
 assert(vac && vac.className.includes('allday') && vac.getAttribute('style').includes('#e5484d'), 'vacation block is all-day and coloured by rule');
 assert(html().includes('No mailbox'), 'row error label shown');

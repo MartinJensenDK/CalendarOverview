@@ -129,9 +129,26 @@ export default {
           style: { ...style, left: `${left}%`, width: `calc(${width}% - 2px)` },
           label,
           time: `${timeLabel(new Date(it.s))}–${timeLabel(new Date(it.e))}`,
+          sm, em,
         });
       }
+      assignLanes(out);
       return out;
+    }
+
+    // Row height decides how many appointments fit side by side per row: S 1, M 2, L 3.
+    // Overlapping appointments take the next free lane; beyond that they overlap as before.
+    const LANES = { sm: 1, md: 2, lg: 3 };
+    function assignLanes(blocks) {
+      const lanes = LANES[store.prefs.row_height] || 1;
+      const timed = blocks.filter((b) => b.sm !== undefined).sort((a, b) => a.sm - b.sm || b.em - a.em);
+      const laneEnd = Array(lanes).fill(-1);
+      for (const b of timed) {
+        let lane = laneEnd.findIndex((end) => end <= b.sm);
+        if (lane < 0) lane = laneEnd.indexOf(Math.min(...laneEnd)); // no free lane: stack on the one that frees up first
+        laneEnd[lane] = Math.max(laneEnd[lane], b.em);
+        b.style['--lane'] = lane;
+      }
     }
 
     function showTip(e, blk, user) { store.tooltip = { x: e.clientX, y: e.clientY, item: blk.item, user: user.name }; }

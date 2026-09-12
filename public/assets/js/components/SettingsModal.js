@@ -58,7 +58,7 @@ export default {
       <div class="grid-2">
         <label class="field"><span>{{ t('Row height') }}</span>
           <select class="select" :value="store.prefs.row_height" @change="set({ row_height: $event.target.value })">
-            <option value="sm">{{ t('Compact') }} – {{ t('Only the strip (no text)') }}</option><option value="md">{{ t('Normal') }}</option><option value="lg">{{ t('Comfortable') }}</option>
+            <option value="sm">{{ t('Compact') }} – {{ t('1 appointment per row') }}</option><option value="md">{{ t('Normal') }} – {{ t('{n} appointments per row', { n: 2 }) }}</option><option value="lg">{{ t('Comfortable') }} – {{ t('{n} appointments per row', { n: 3 }) }}</option>
           </select></label>
         <label class="field"><span>{{ t('Days to show') }}</span>
           <select class="select" :value="store.prefs.days" @change="set({ days: Number($event.target.value) })"><option v-for="d in store.options.day_options" :key="d" :value="d">{{ d }}</option></select></label>
