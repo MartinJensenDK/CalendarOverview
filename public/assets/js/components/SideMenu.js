@@ -96,7 +96,7 @@ export default {
         </div>
         <div class="menu-section vacation" :class="{ collapsed: store.prefs.vacation_collapsed }" v-if="store.prefs.vacation_enabled">
           <div class="findtime-head"><h2>{{ t('Vacation calendar') }}</h2>
-            <button type="button" class="expand" @click="toggleVacation" :title="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.vacation_collapsed ? 'false' : 'true'"><icon :name="store.prefs.vacation_collapsed ? 'chevrons-down' : 'chevrons-up'" :size="14"></icon></button>
+            <button type="button" class="expand" @click="toggleVacation" :title="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.vacation_collapsed ? 'false' : 'true'"><icon :name="store.prefs.vacation_collapsed ? 'chevrons-up' : 'chevrons-down'" :size="14"></icon></button>
           </div>
           <template v-if="!store.prefs.vacation_collapsed">
             <div class="findtime-body"><span class="muted hint">{{ t('See when your colleagues are on vacation.') }}</span></div>
