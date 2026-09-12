@@ -169,6 +169,7 @@ assert(html().includes('Days to show') && !html().includes('Rows per page'), 'se
 { // Five tabs; only the active panel is visible, and the choice sticks while the app is open
   const tabs = [...w.document.querySelectorAll('.settings-tabs [role=tab]')];
   assert(tabs.map((b) => b.textContent.trim()).join('|') === 'Site settings|Find free time|Calendar overview|Month calendar|Vacation calendar', 'settings has the five tabs in order');
+  assert(w.document.querySelector('.modal').style.getPropertyValue('--modal-h') === '620px' && w.document.querySelector('.modal').style.getPropertyValue('--modal-w') === '660px', 'settings window has a fixed size so tabs do not move it');
   const visible = () => [...w.document.querySelectorAll('.settings-panel')].filter((p) => !p.style.display || p.style.display !== 'none').map((p) => p.id);
   assert(visible().join() === 'settings-panel-site' && tabs[0].getAttribute('aria-selected') === 'true', 'site settings tab is active first');
   tabs[4].click(); await tick();

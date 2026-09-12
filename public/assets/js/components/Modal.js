@@ -9,6 +9,8 @@ export default {
   props: {
     title: { type: String, default: '' },
     width: { type: String, default: '560px' },
+    // Optional fixed height (e.g. for tabbed content) so the window does not resize between views.
+    height: { type: String, default: '' },
     dismissable: { type: Boolean, default: false },
   },
   emits: ['close'],
@@ -55,7 +57,7 @@ export default {
   },
   template: `
     <div class="backdrop" @mousedown="onBackdrop">
-      <div class="modal" :class="{ shake: shaking }" :style="{ '--modal-w': width }" role="dialog" aria-modal="true" :aria-label="title" ref="box">
+      <div class="modal" :class="{ shake: shaking }" :style="{ '--modal-w': width, '--modal-h': height || 'auto' }" role="dialog" aria-modal="true" :aria-label="title" ref="box">
         <div class="modal-head">
           <h2>{{ title }}</h2>
           <slot name="head"></slot>

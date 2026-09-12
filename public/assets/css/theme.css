@@ -430,10 +430,10 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .hours-pop tr.off td { color: var(--muted-2); }
 .hours-pop tr.today td.d { color: var(--today-line); font-weight: 600; }
 .steps.compact { margin-bottom: 12px; max-width: 260px; }
-.settings-tabs { margin: 6px 0 18px; gap: 4px; flex-wrap: wrap; }
-.settings-tabs button { flex: 1 1 auto; padding: 7px 8px; font-size: 12.5px; white-space: nowrap; }
+.settings-tabs { margin: 6px 0 18px; gap: 4px; flex-wrap: nowrap; }
+.settings-tabs button { flex: 1 1 0; min-width: 0; padding: 7px 6px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .settings-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.settings-panel { min-height: 220px; }
+.settings-panel { padding-bottom: 6px; }
 .steps button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 2px 3px rgba(0, 0, 0, .14); }
 .grid .cell .now { position: absolute; top: 0; bottom: 0; left: var(--now-pct); width: 2px; background: var(--today-line); z-index: 3; opacity: .9; }
 .grid .cell .blk { z-index: 2; } /* appointments sit on top of the hour grid */
@@ -496,7 +496,7 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
    -------------------------------------------------------------------------- */
 .backdrop { position: fixed; inset: 0; background: rgba(15, 18, 24, .45); z-index: 50; display: grid; place-items: center; padding: 20px; animation: fade .14s; backdrop-filter: blur(2px); }
 @keyframes fade { from { opacity: 0; } }
-.modal { width: min(100%, var(--modal-w, 560px)); max-height: calc(100vh - 40px); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; animation: rise .18s var(--ease); border: 1px solid var(--line); }
+.modal { width: min(100%, var(--modal-w, 560px)); height: var(--modal-h, auto); max-height: calc(100vh - 40px); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); display: flex; flex-direction: column; animation: rise .18s var(--ease); border: 1px solid var(--line); }
 @keyframes rise { from { opacity: 0; transform: translateY(8px) scale(.985); } }
 .modal-head { display: flex; align-items: center; gap: 10px; padding: 18px 20px 12px; }
 .modal-head h2 { font-size: 20px; flex: 1; }

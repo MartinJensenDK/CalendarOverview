@@ -63,7 +63,7 @@ export default {
     return { store, t, set, closeModal, reset, myHours, weekday, dayLabel, locIcon, locLabel, hoursOpen, hoursStyle, showHours, hideHours, effectiveTheme, TABS, tab, pickTab, onTabKey };
   },
   template: `
-    <modal :title="t('Settings')" width="600px" @close="closeModal">
+    <modal :title="t('Settings')" width="660px" height="620px" @close="closeModal">
       <div class="steps settings-tabs" role="tablist" :aria-label="t('Settings')" @keydown="onTabKey">
         <button v-for="x in TABS" :key="x.key" type="button" role="tab" :id="'settings-tab-' + x.key" :aria-selected="tab === x.key ? 'true' : 'false'" :aria-controls="'settings-panel-' + x.key" :tabindex="tab === x.key ? 0 : -1" :class="{ active: tab === x.key }" @click="pickTab(x.key)">{{ t(x.label) }}</button>
       </div>
