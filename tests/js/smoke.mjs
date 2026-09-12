@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, show_hour_grid: true, find_time_collapsed: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, vacation_grid: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, show_hour_grid: true, find_time_collapsed: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, vacation_grid: true, vacation_show_weekends: true, vacation_week_numbers: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -306,6 +306,19 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
     assert(nums.length >= 15 && nums[0] === '1' && nums.includes('15') && nums.includes('25'), `day numbers shown in the header (${nums.slice(0, 8).join(' ')})`);
     assert(w.document.querySelector('.vac.grid') && /px$/.test(w.document.querySelector('.vac').style.getPropertyValue('--vac-step')), 'day grid on by default');
     store.prefs.vacation_grid = false; await tick(); assert(!w.document.querySelector('.vac.grid'), 'day grid can be switched off'); store.prefs.vacation_grid = true; await tick(); }
+  { const wk = [...w.document.querySelectorAll('.vac-week')];
+    assert(wk.length >= 12 && wk[0].textContent === '36' && wk[0].title === t('Week') + ' 36' && w.document.querySelector('.vac.with-weeks'), `ISO week numbers in the header (${wk.slice(0, 4).map((e) => e.textContent).join(' ')})`);
+    store.prefs.vacation_week_numbers = false; await tick(); assert(!w.document.querySelector('.vac-week') && !w.document.querySelector('.vac.with-weeks'), 'week numbers can be switched off'); store.prefs.vacation_week_numbers = true; await tick();
+    w.document.querySelector('.vac-spans button').click(); await tick(120); // one month: every day labelled
+    let nums = [...w.document.querySelectorAll('.vac-daynum')].map((e) => e.textContent);
+    assert(nums.length === 31 && nums.includes('5') && w.document.querySelectorAll('.vac-weekend').length === 8, 'one month shows every day and shades the weekends');
+    store.prefs.vacation_show_weekends = false; await tick();
+    nums = [...w.document.querySelectorAll('.vac-daynum')].map((e) => e.textContent);
+    assert(nums.length === 23 && !nums.includes('5') && nums.includes('4') && nums.includes('7') && w.document.querySelectorAll('.vac-weekend').length === 0, 'hiding weekends removes Saturday and Sunday from the axis');
+    const bar = w.document.querySelector('.vac-row .vac-bar');
+    assert(bar && Math.abs(parseFloat(bar.style.left) - (10 / 23) * 100) < 0.01 && Math.abs(parseFloat(bar.style.width) - (2 / 23) * 100) < 0.01, 'bars are placed on the weekday-only axis');
+    store.prefs.vacation_show_weekends = true; await tick();
+    w.document.querySelectorAll('.vac-spans button')[1].click(); await tick(120); }
   { const gb = [...w.document.querySelectorAll('.vac-groups .vac-group')]; const byName = (n) => gb.find((b) => b.textContent.includes(n));
     assert(gb.length === 3 && byName('My team').getAttribute('aria-pressed') === 'true' && byName('Sales').getAttribute('aria-pressed') === 'true' && byName('Board').getAttribute('aria-pressed') === 'false' && !w.document.querySelector('.vac-reset'), 'group chips follow the overview visibility until changed');
     let before = calls.length; byName('Board').click(); await tick(120);

@@ -3,7 +3,7 @@ import { api } from '../api.js';
 import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, savePrefs } from '../actions.js';
-import { todayYmd, addDays, parseYmd, isWeekend, dayLabel, weekday, ymd } from '../util/date.js';
+import { todayYmd, addDays, parseYmd, isWeekend, isoWeek, dayLabel, weekday, ymd } from '../util/date.js';
 import PersonLookupModal from './PersonLookupModal.js';
 
 const { ref, computed, onMounted, onBeforeUnmount, watch } = Vue;
@@ -67,8 +67,23 @@ export default {
     const isPreset = (s) => spanDays() === s;
 
     const end = computed(() => addDays(to.value, 1)); // exclusive, for geometry
-    const total = computed(() => Math.max(1, dayDiff(from.value, end.value)));
-    function pct(d) { return (dayDiff(from.value, d) / total.value) * 100; }
+    // The axis is the list of shown days; with weekends hidden, Saturday and Sunday take no room.
+    const showWeekends = computed(() => store.prefs.vacation_show_weekends !== false);
+    const shownDays = computed(() => {
+      const out = [];
+      for (let d = from.value; d < end.value; d = addDays(d, 1)) if (showWeekends.value || !isWeekend(d)) out.push(d);
+      return out.length ? out : [from.value];
+    });
+    const dayIndex = computed(() => { const m = new Map(); shownDays.value.forEach((d, i) => m.set(d, i)); return m; });
+    const total = computed(() => shownDays.value.length);
+    // Position of a day on the axis; a hidden day maps to the next shown one (so ranges still line up).
+    function idx(d) {
+      const i = dayIndex.value.get(d);
+      if (i !== undefined) return i;
+      const j = shownDays.value.findIndex((x) => x >= d);
+      return j === -1 ? total.value : j;
+    }
+    function pct(d) { return (idx(d) / total.value) * 100; }
 
     // Header: one segment per month in the range, plus weekend shading and the today line.
     const months = computed(() => {
@@ -86,10 +101,28 @@ export default {
     const weekends = computed(() => {
       const out = [];
       if (total.value > 183) return out; // too dense to be useful over a year
-      for (let d = from.value; d < end.value; d = addDays(d, 1)) if (isWeekend(d)) out.push({ key: d, left: pct(d), width: 100 / total.value });
+      if (!showWeekends.value) return out;
+      for (const d of shownDays.value) if (isWeekend(d)) out.push({ key: d, left: pct(d), width: 100 / total.value });
       return out;
     });
-    const todayLeft = computed(() => (today >= from.value && today < end.value) ? pct(today) : null);
+    // ISO week numbers: one label per week in the range, thinned out when the weeks get narrow.
+    const weeks = computed(() => {
+      const out = [];
+      if (!store.prefs.vacation_week_numbers) return out;
+      const pxPerWeek = (trackW.value / total.value) * (showWeekends.value ? 7 : 5);
+      const step = pxPerWeek >= 20 ? 1 : pxPerWeek >= 10 ? 2 : 4;
+      let cursor = from.value;
+      while (cursor < end.value) {
+        let next = addDays(cursor, 1);
+        while (next < end.value && parseYmd(next).getDay() !== 1) next = addDays(next, 1);
+        const n = isoWeek(cursor);
+        const left = pct(cursor); const width = pct(next) - left;
+        if (width > 0 && (step === 1 || n % step === 0)) out.push({ key: cursor, n, left, width });
+        cursor = next;
+      }
+      return out;
+    });
+    const todayLeft = computed(() => dayIndex.value.has(today) ? pct(today) : null);
 
     // Day numbers and grid lines thin out as the range grows; based on the measured track width.
     const headTrack = ref(null);
@@ -107,7 +140,7 @@ export default {
       const step = px >= 16 ? 1 : px >= 6 ? 5 : px >= 2.5 ? 15 : 0;
       const out = [];
       if (!step) return out;
-      for (let d = from.value; d < end.value; d = addDays(d, 1)) {
+      for (const d of shownDays.value) {
         const n = parseYmd(d).getDate();
         if (step === 1 || n === 1 || (step === 5 && n % 5 === 0 && n < 30) || (step === 15 && n === 15)) out.push({ key: d, n, left: pct(d), width: 100 / total.value, today: d === today });
       }
@@ -118,8 +151,8 @@ export default {
       const px = pxPerDay.value;
       const perDay = px >= 6;
       let offset = 0;
-      if (!perDay) { let d = from.value; while (parseYmd(d).getDay() !== 1) d = addDays(d, 1); offset = dayDiff(from.value, d) * px; }
-      return { '--vac-step': `${(perDay ? 1 : 7) * px}px`, '--vac-off': `${offset}px` };
+      if (!perDay) { let d = from.value; while (parseYmd(d).getDay() !== 1) d = addDays(d, 1); offset = idx(d) * px; }
+      return { '--vac-step': `${(perDay ? 1 : (showWeekends.value ? 7 : 5)) * px}px`, '--vac-off': `${offset}px` };
     });
 
     const rows = computed(() => {
@@ -132,8 +165,8 @@ export default {
           bars: u.periods.map((p) => {
             const left = Math.max(0, pct(p.from));
             const right = Math.min(100, pct(addDays(p.to, 1)));
-            return { ...p, style: { left: `${left}%`, width: `${Math.max(right - left, 0.6)}%` }, label: barLabel(p), current: p.from <= today && p.to >= today };
-          }),
+            return { ...p, left, right, style: { left: `${left}%`, width: `${Math.max(right - left, 0.6)}%` }, label: barLabel(p), current: p.from <= today && p.to >= today };
+          }).filter((b) => b.right > b.left), // periods that fall only on hidden days take no room
         }));
     });
     function barLabel(p) {
@@ -143,7 +176,7 @@ export default {
     const onVacationToday = computed(() => (data.value ? data.value.users.filter((u) => u.periods.some((p) => p.from <= today && p.to >= today)) : []));
     const barColor = computed(() => (store.rules.find((r) => /vacation|ferie/i.test(r.name || '') && r.enabled !== false) || {}).color || '#e5484d');
 
-    return { store, t, lookupPerson, headTrack, dayNumbers, gridStyle, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
+    return { store, t, lookupPerson, headTrack, dayNumbers, weeks, gridStyle, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
   },
   template: `
     <modal :title="t('Vacation calendar')" width="1040px" @close="closeModal">
@@ -180,11 +213,12 @@ export default {
           <div class="vac-head"><div class="vac-name"></div><div class="vac-track"><span class="sk" style="width:120px;height:12px;margin:8px"></span></div></div>
           <div class="vac-row" v-for="i in 8" :key="i"><div class="vac-name"><span class="avatar sk circle"></span><span class="sk" :style="{ width: (70 + (i * 37) % 60) + 'px', height: '11px' }"></span></div><div class="vac-track"><span class="sk vac-bar" :style="{ left: ((i * 23) % 70) + '%', width: (6 + (i * 5) % 14) + '%' }"></span></div></div>
         </div>
-        <div class="vac" v-else :class="{ grid: store.prefs.vacation_grid }" :style="{ '--vac-bar': barColor, ...gridStyle }">
+        <div class="vac" v-else :class="{ grid: store.prefs.vacation_grid, 'with-weeks': weeks.length }" :style="{ '--vac-bar': barColor, ...gridStyle }">
           <div class="vac-head">
             <div class="vac-name muted">{{ t('{n} people', { n: rows.length }) }}</div>
             <div class="vac-track" ref="headTrack">
               <span v-for="m in months" :key="m.key" class="vac-month" :style="{ left: m.left + '%', width: m.width + '%' }">{{ m.label }}</span>
+              <span v-for="wk in weeks" :key="wk.key" class="vac-week" :style="{ left: wk.left + '%', width: wk.width + '%' }" :title="t('Week') + ' ' + wk.n">{{ wk.n }}</span>
               <span v-for="d in dayNumbers" :key="d.key" class="vac-daynum" :class="{ today: d.today }" :style="{ left: d.left + '%', width: d.width + '%' }">{{ d.n }}</span>
             </div>
           </div>
