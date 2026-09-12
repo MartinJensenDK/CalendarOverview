@@ -182,9 +182,9 @@ export default {
     <modal :title="t('Vacation calendar')" width="1040px" @close="closeModal">
       <div class="row wrap vac-toolbar">
         <div class="row" style="gap:4px">
-          <button type="button" class="btn icon sm" :title="t('Previous')" @click="shift(-1)"><icon name="chevron-left" :size="14"></icon></button>
+          <button type="button" class="btn icon sm" v-tip="t('Previous')" @click="shift(-1)"><icon name="chevron-left" :size="14"></icon></button>
           <button type="button" class="btn sm" @click="goToday">{{ t('Today') }}</button>
-          <button type="button" class="btn icon sm" :title="t('Next')" @click="shift(1)"><icon name="chevron-right" :size="14"></icon></button>
+          <button type="button" class="btn icon sm" v-tip="t('Next')" @click="shift(1)"><icon name="chevron-right" :size="14"></icon></button>
         </div>
         <label class="field inline"><span>{{ t('From') }}</span><input class="input" type="date" :value="from" @change="setFrom($event.target.value)"></label>
         <label class="field inline"><span>{{ t('To') }}</span><input class="input" type="date" :value="to" @change="setTo($event.target.value)"></label>
@@ -218,17 +218,17 @@ export default {
             <div class="vac-name muted">{{ t('{n} people', { n: rows.length }) }}</div>
             <div class="vac-track" ref="headTrack">
               <span v-for="m in months" :key="m.key" class="vac-month" :style="{ left: m.left + '%', width: m.width + '%' }">{{ m.label }}</span>
-              <span v-for="wk in weeks" :key="wk.key" class="vac-week" :style="{ left: wk.left + '%', width: wk.width + '%' }" :title="t('Week') + ' ' + wk.n">{{ wk.n }}</span>
+              <span v-for="wk in weeks" :key="wk.key" class="vac-week" :style="{ left: wk.left + '%', width: wk.width + '%' }" v-tip="t('Week') + ' ' + wk.n">{{ wk.n }}</span>
               <span v-for="d in dayNumbers" :key="d.key" class="vac-daynum" :class="{ today: d.today }" :style="{ left: d.left + '%', width: d.width + '%' }">{{ d.n }}</span>
             </div>
           </div>
           <div class="vac-empty muted" v-if="!rows.length">{{ groupKeys.length ? t('No vacation in this period.') : t('Choose at least one group to show.') }}</div>
           <div v-for="u in rows" :key="u.id" class="vac-row" :class="{ me: u.is_me }">
-            <div class="vac-name"><img class="avatar" :src="u.photo_url" alt=""><span class="txt"><b>{{ u.name }}</b><small>{{ u.title || u.email }}</small></span><button type="button" class="cal" :title="t('Show calendar')" :aria-label="t('Show calendar') + ': ' + u.name" @click="lookupPerson = u"><icon name="calendar" :size="15"></icon></button></div>
+            <div class="vac-name"><img class="avatar" :src="u.photo_url" alt=""><span class="txt"><b>{{ u.name }}</b><small>{{ u.title || u.email }}</small></span><button type="button" class="cal" v-tip="t('Show calendar')" :aria-label="t('Show calendar') + ': ' + u.name" @click="lookupPerson = u"><icon name="calendar" :size="15"></icon></button></div>
             <div class="vac-track">
               <span v-for="w in weekends" :key="w.key" class="vac-weekend" :style="{ left: w.left + '%', width: w.width + '%' }"></span>
               <span class="vac-now" v-if="todayLeft !== null" :style="{ left: todayLeft + '%' }"></span>
-              <span v-for="b in u.bars" :key="b.from" class="vac-bar" :class="{ current: b.current }" :style="b.style" :title="u.name + ': ' + b.label"><span class="vac-bar-text">{{ b.days === 1 ? t('1 day') : t('{n} days', { n: b.days }) }}</span></span>
+              <span v-for="b in u.bars" :key="b.from" class="vac-bar" :class="{ current: b.current }" :style="b.style" v-tip="u.name + ': ' + b.label"><span class="vac-bar-text">{{ b.days === 1 ? t('1 day') : t('{n} days', { n: b.days }) }}</span></span>
             </div>
           </div>
         </div>

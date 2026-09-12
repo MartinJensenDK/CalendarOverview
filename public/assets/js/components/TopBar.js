@@ -42,22 +42,28 @@ export default {
       syncing.value = true;
       try { await syncDirectory(); } catch (e) { /* toast shown by api */ } finally { syncing.value = false; }
     }
-    // The icon's tooltip carries what the old menu row said: action + directory size and last sync.
-    const syncTitle = computed(() => t('Sync directory now') + ' — ' + t('Directory: {n} people, updated {time}', { n: store.directory.user_count, time: store.directory.synced_at ? new Date(store.directory.synced_at).toLocaleString() : t('never') }));
+    // The icon's hover box carries what the old menu row said: the action, the directory size and
+    // an "Updated …" line in the same shape as the status at the top of the page. It is a function so
+    // the relative time is fresh every time the box opens.
+    const syncTip = () => ({
+      title: t('Sync directory now'),
+      lines: [t('Directory: {n} people', { n: store.directory.user_count })],
+      status: syncing.value ? t('Refreshing…') : (store.directory.synced_at ? t('Updated {time}', { time: relativeTime(store.directory.synced_at) }) : t('Never synced')),
+    });
     function onDate(e) { if (e.target.value) setFrom(e.target.value); }
 
-    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, syncing, syncTitle, logout, onDate, isDark, toggleTheme };
+    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, syncing, syncTip, logout, onDate, isDark, toggleTheme };
   },
   template: `
     <header class="topbar">
-      <button type="button" class="btn ghost icon" :title="store.prefs.menu_collapsed ? t('Show menu') : t('Hide menu')" @click="toggleMenu"><icon name="panel-left" :size="18"></icon></button>
+      <button type="button" class="btn ghost icon" v-tip="store.prefs.menu_collapsed ? t('Show menu') : t('Hide menu')" @click="toggleMenu"><icon name="panel-left" :size="18"></icon></button>
       <div class="brand"><div class="brand-mark">C</div><h1>{{ t('Calendar overview') }}</h1></div>
 
       <div class="row" style="margin-left:12px">
         <div class="btn-group">
-          <button type="button" class="btn icon" :title="t('Previous')" @click="shiftDays(-store.prefs.days)"><icon name="chevron-left"></icon></button>
+          <button type="button" class="btn icon" v-tip="t('Previous')" @click="shiftDays(-store.prefs.days)"><icon name="chevron-left"></icon></button>
           <button type="button" class="btn" @click="goToday">{{ t('Today') }}</button>
-          <button type="button" class="btn icon" :title="t('Next')" @click="shiftDays(store.prefs.days)"><icon name="chevron-right"></icon></button>
+          <button type="button" class="btn icon" v-tip="t('Next')" @click="shiftDays(store.prefs.days)"><icon name="chevron-right"></icon></button>
         </div>
         <label class="daterange" style="position:relative;cursor:pointer">
           {{ range }} <span class="muted mono" style="font-size:12px;font-weight:400;margin-left:6px">{{ t('Week') }} {{ week }}</span>
@@ -71,7 +77,7 @@ export default {
       <span class="grow"></span>
 
       <span class="sync-state" :class="{ busy: store.loading || refreshing }"><span class="dot"></span>{{ store.loading || refreshing ? t('Refreshing…') : (updated ? t('Updated {time}', { time: updated }) : '') }}</span>
-      <button type="button" class="btn icon" :title="t('Refresh from Microsoft 365')" @click="refresh" :disabled="refreshing"><icon name="refresh"></icon></button>
+      <button type="button" class="btn icon" v-tip="t('Refresh from Microsoft 365')" @click="refresh" :disabled="refreshing"><icon name="refresh"></icon></button>
       <div class="search" style="position:relative">
         <input class="input" type="search" style="width:200px;padding-left:30px" :placeholder="t('Search people')" v-model="store.search">
         <span style="position:absolute;left:9px;top:9px;color:var(--muted)"><icon name="search"></icon></span>
@@ -86,10 +92,10 @@ export default {
         <div class="menu" v-if="profileOpen" role="menu">
           <div class="head" v-if="store.me">
             <div class="who"><strong>{{ store.me.name }}</strong><small>{{ store.me.email }}</small></div>
-            <button type="button" class="btn icon sync-dir" :class="{ busy: syncing }" :title="syncTitle" :aria-label="syncTitle" :disabled="syncing" @click="sync">
+            <button type="button" class="btn icon sync-dir" :class="{ busy: syncing }" v-tip="syncTip" :aria-label="t('Sync directory now')" :disabled="syncing" @click="sync">
               <icon name="refresh" :size="15"></icon>
             </button>
-            <button type="button" class="btn icon theme-toggle" :title="isDark ? t('Switch to light mode') : t('Switch to dark mode')" :aria-label="isDark ? t('Switch to light mode') : t('Switch to dark mode')" @click="toggleTheme">
+            <button type="button" class="btn icon theme-toggle" v-tip="isDark ? t('Switch to light mode') : t('Switch to dark mode')" :aria-label="isDark ? t('Switch to light mode') : t('Switch to dark mode')" @click="toggleTheme">
               <icon :name="isDark ? 'sun' : 'moon'" :size="15"></icon>
             </button>
           </div>

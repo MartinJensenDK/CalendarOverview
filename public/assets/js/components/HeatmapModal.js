@@ -257,7 +257,7 @@ export default {
         <label class="switch" style="height:34px"><input type="checkbox" v-model="form.workOnly"><span class="track"></span>{{ t('Working hours only') }}</label>
         <label class="switch" style="height:34px"><input type="checkbox" v-model="form.showWeekends"><span class="track"></span>{{ t('Show weekends') }}</label>
         <span class="grow"></span>
-        <span class="avatars row" style="gap:0"><img v-for="u in users.slice(0, 8)" :key="u.id" class="avatar sm" :src="u.photo_url" :title="u.name" alt="" style="margin-left:-6px;border:2px solid var(--surface)"></span>
+        <span class="avatars row" style="gap:0"><img v-for="u in users.slice(0, 8)" :key="u.id" class="avatar sm" :src="u.photo_url" v-tip="u.name" alt="" style="margin-left:-6px;border:2px solid var(--surface)"></span>
         <span class="muted" style="font-size:12px">{{ t('{n} people', { n: users.length }) }}</span>
         <button type="button" class="btn ghost sm" @click="addingMore = !addingMore"><icon name="plus" :size="14"></icon>{{ t('Add more') }}</button>
       </div>
@@ -272,19 +272,19 @@ export default {
       <div class="suggest" v-else>
         <div class="field-label">{{ t('Next 4 times when most people can') }}</div>
         <div class="row wrap" v-if="suggestions.length">
-          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: isSuggestionActive(s), partial: s.free < s.total }" :aria-pressed="isSuggestionActive(s)" :title="isSuggestionActive(s) ? t('Click again to deselect') : ''" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
+          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: isSuggestionActive(s), partial: s.free < s.total }" :aria-pressed="isSuggestionActive(s)" v-tip="isSuggestionActive(s) ? t('Click again to deselect') : ''" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
         </div>
         <div class="muted" style="font-size:12px" v-else>{{ t('No common free time in this period.') }}</div>
       </div>
       <p class="muted" style="margin:0 0 10px;font-size:12px">{{ t('Click a slot to see who is free. Drag to select a longer time.') }}</p>
       <div class="heat-detail" v-if="detail">
-        <div class="row" style="align-items:flex-start"><h3 class="grow">{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3><button type="button" class="btn ghost icon sm" :title="t('Clear selection')" @click="clearSel"><icon name="x" :size="14"></icon></button></div>
+        <div class="row" style="align-items:flex-start"><h3 class="grow">{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3><button type="button" class="btn ghost icon sm" v-tip="t('Clear selection')" @click="clearSel"><icon name="x" :size="14"></icon></button></div>
         <div class="heat-counts">
           <span v-for="g in detail.groups" :key="g.key" class="heat-count" :class="g.key" tabindex="0" :aria-label="g.list.length + ' ' + g.label">
             <b>{{ g.list.length }}</b> {{ g.label }}
             <div class="heat-pop" v-if="g.list.length">
               <ul>
-                <li v-for="u in g.list" :key="u.id"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="loc" v-if="u.loc" :title="locLabel(u.loc)"><icon :name="locIcon(u.loc)" :size="12"></icon></span></li>
+                <li v-for="u in g.list" :key="u.id"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="loc" v-if="u.loc" v-tip="locLabel(u.loc)"><icon :name="locIcon(u.loc)" :size="12"></icon></span></li>
               </ul>
             </div>
           </span>

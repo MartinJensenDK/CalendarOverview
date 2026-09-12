@@ -59,7 +59,7 @@ export default {
     <aside class="sidebar">
       <div class="sidebar-head">
         <h2>{{ t('Groups') }}</h2>
-        <button type="button" class="btn sm icon primary" @click="openModal('group')" :title="t('Create group')" :aria-label="t('Create group')"><icon name="plus" :size="16"></icon></button>
+        <button type="button" class="btn sm icon primary" @click="openModal('group')" v-tip="t('Create group')" :aria-label="t('Create group')"><icon name="plus" :size="16"></icon></button>
       </div>
       <div class="sidebar-scroll">
         <div class="sk-groups" v-if="!store.ready" aria-hidden="true">
@@ -67,28 +67,28 @@ export default {
         </div>
         <div v-for="entry in entries" :key="entry.id" class="group" :class="{ dragging: dragId === entry.id, 'drop-before': dropTarget === entry.id && dragId !== entry.id }"
              draggable="true" @dragstart="onDragStart(entry, $event)" @dragover="onDragOver(entry, $event)" @drop="onDrop(entry)" @dragend="onDragEnd">
-          <div class="group-row" :class="{ 'hidden-group': !entry.visible }" :title="hint(entry)">
+          <div class="group-row" :class="{ 'hidden-group': !entry.visible }" v-tip="hint(entry)">
             <span class="swatch-dot" :class="{ on: entry.visible }"></span>
-            <span class="grip" :title="t('Drag to reorder')"><icon name="grip" :size="14"></icon></span>
+            <span class="grip" v-tip="t('Drag to reorder')"><icon name="grip" :size="14"></icon></span>
             <span class="name" @click="toggleGroup(entry)">{{ label(entry) }}<small>{{ entry.members.length }}</small></span>
             <span class="kind" v-if="kindLabel(entry)">{{ kindLabel(entry) }}</span>
             <span class="tools" v-if="entry.kind === 'group'">
-              <button type="button" class="eye" v-if="entry.type === 'entra'" :title="t('Sync members now')" @click="resyncGroup(entry)"><icon name="refresh" :size="14"></icon></button>
-              <button type="button" class="eye" :title="t('Edit group')" @click="openModal('group', { group: entry })"><icon name="pencil" :size="14"></icon></button>
-              <button type="button" class="eye" :title="t('Delete group')" @click="remove(entry)"><icon name="trash" :size="14"></icon></button>
+              <button type="button" class="eye" v-if="entry.type === 'entra'" v-tip="t('Sync members now')" @click="resyncGroup(entry)"><icon name="refresh" :size="14"></icon></button>
+              <button type="button" class="eye" v-tip="t('Edit group')" @click="openModal('group', { group: entry })"><icon name="pencil" :size="14"></icon></button>
+              <button type="button" class="eye" v-tip="t('Delete group')" @click="remove(entry)"><icon name="trash" :size="14"></icon></button>
             </span>
-            <button type="button" class="eye" :class="{ on: entry.visible }" :title="entry.visible ? t('Hide from overview') : t('Show in overview')" @click="toggleGroup(entry)"><icon :name="entry.visible ? 'eye' : 'eye-off'"></icon></button>
+            <button type="button" class="eye" :class="{ on: entry.visible }" v-tip="entry.visible ? t('Hide from overview') : t('Show in overview')" @click="toggleGroup(entry)"><icon :name="entry.visible ? 'eye' : 'eye-off'"></icon></button>
           </div>
         </div>
       </div>
       <div class="sidebar-foot">
         <div class="findtime" :class="{ collapsed: store.prefs.find_time_collapsed }" v-if="store.prefs.find_time_enabled">
           <div class="findtime-head clickable" @click="toggleFindTime"><h2>{{ t('Find free time') }}</h2><span class="muted" v-if="store.selected.length">{{ t('{n} selected', { n: store.selected.length }) }}</span>
-            <button type="button" class="expand" @click.stop="toggleFindTime" :title="store.prefs.find_time_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.find_time_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.find_time_collapsed ? 'false' : 'true'"><icon :name="store.prefs.find_time_collapsed ? 'chevrons-up' : 'chevrons-down'" :size="14"></icon></button>
+            <button type="button" class="expand" @click.stop="toggleFindTime" v-tip="store.prefs.find_time_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.find_time_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.find_time_collapsed ? 'false' : 'true'"><icon :name="store.prefs.find_time_collapsed ? 'chevrons-up' : 'chevrons-down'" :size="14"></icon></button>
           </div>
           <template v-if="!store.prefs.find_time_collapsed">
           <div class="findtime-body">
-            <span class="avatars" v-if="selectedUsers.length"><img v-for="u in selectedUsers.slice(0, 8)" :key="u.id" class="avatar" :src="u.photo_url" :title="u.name" alt=""></span>
+            <span class="avatars" v-if="selectedUsers.length"><img v-for="u in selectedUsers.slice(0, 8)" :key="u.id" class="avatar" :src="u.photo_url" v-tip="u.name" alt=""></span>
             <span class="muted hint" v-else>{{ t('Select people in the overview to compare their availability.') }}</span>
           </div>
           <div class="row">
@@ -100,7 +100,7 @@ export default {
         </div>
         <div class="menu-section vacation" :class="{ collapsed: store.prefs.vacation_collapsed }" v-if="store.prefs.vacation_enabled">
           <div class="findtime-head clickable" @click="toggleVacation"><h2>{{ t('Vacation calendar') }}</h2>
-            <button type="button" class="expand" @click.stop="toggleVacation" :title="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.vacation_collapsed ? 'false' : 'true'"><icon :name="store.prefs.vacation_collapsed ? 'chevrons-up' : 'chevrons-down'" :size="14"></icon></button>
+            <button type="button" class="expand" @click.stop="toggleVacation" v-tip="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.vacation_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.vacation_collapsed ? 'false' : 'true'"><icon :name="store.prefs.vacation_collapsed ? 'chevrons-up' : 'chevrons-down'" :size="14"></icon></button>
           </div>
           <template v-if="!store.prefs.vacation_collapsed">
             <div class="findtime-body"><span class="muted hint">{{ t('See when your colleagues are on vacation.') }}</span></div>

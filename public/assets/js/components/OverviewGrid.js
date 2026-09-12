@@ -211,7 +211,7 @@ export default {
         </div>
         <div v-else class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid, 'hour-grid': store.prefs.show_hour_grid }]" :style="{ '--days': days.length, ...hourGrid }">
           <div class="h corner">
-            <label class="pick-all" v-if="store.prefs.find_time_enabled" :title="allState.all ? t('Clear selection') : t('Select everyone on this page')">
+            <label class="pick-all" v-if="store.prefs.find_time_enabled" v-tip="allState.all ? t('Clear selection') : t('Select everyone on this page')">
               <input type="checkbox" ref="allBox" :checked="allState.all" @change="toggleAll" :aria-label="allState.all ? t('Clear selection') : t('Select everyone on this page')">
             </label>
             <span class="txt"><span class="count">{{ t('{n} people', { n: store.overview.total }) }}</span><span class="muted" style="font-size:11px">{{ t('Hover a block for details.') }}</span></span>
@@ -222,14 +222,14 @@ export default {
             <span class="hours" aria-hidden="true"><span v-for="m in hourMarks" :key="m.h" class="hl" :class="[m.edge, { minor: m.minor }]" :style="{ left: m.left + '%' }">{{ m.label }}</span></span>
           </div>
           <template v-for="u in users" :key="u.id">
-            <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id), selectable: store.prefs.find_time_enabled }" @click="store.prefs.find_time_enabled && toggleSelect(u.id)" :title="store.prefs.find_time_enabled ? t('Click to select') : ''">
+            <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id), selectable: store.prefs.find_time_enabled }" @click="store.prefs.find_time_enabled && toggleSelect(u.id)" v-tip="store.prefs.find_time_enabled ? t('Click to select') : ''">
               <input v-if="store.prefs.find_time_enabled" type="checkbox" class="pick" :checked="isSelected(u.id)" @click.stop @change="toggleSelect(u.id)" :aria-label="u.name">
               <img class="avatar" :src="u.photo_url" alt="" loading="lazy">
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
-              <button type="button" class="cal" :title="t('Show calendar')" :aria-label="t('Show calendar') + ': ' + u.name" @click.stop="openModal('lookup', { person: u })"><icon name="calendar" :size="15"></icon></button>
+              <button type="button" class="cal" v-tip="t('Show calendar')" :aria-label="t('Show calendar') + ': ' + u.name" @click.stop="openModal('lookup', { person: u })"><icon name="calendar" :size="15"></icon></button>
             </div>
             <div v-for="d in days" :key="u.id + d" v-memo="[blocksFor(u, d), bandsFor(u, d), d === today ? nowPct : null, u.error]" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
-              <div v-for="(b, k) in bandsFor(u, d)" :key="k" class="band" :style="b.style"><span class="loc" v-if="b.loc" :title="locLabel(b.loc)"><icon :name="locIcon(b.loc)" :size="11"></icon></span></div>
+              <div v-for="(b, k) in bandsFor(u, d)" :key="k" class="band" :style="b.style"><span class="loc" v-if="b.loc" v-tip="locLabel(b.loc)"><icon :name="locIcon(b.loc)" :size="11"></icon></span></div>
               <div class="now" v-if="d === today && nowPct" :style="{ '--now-pct': nowPct }"></div>
               <div class="strip">
                 <div v-for="b in blocksFor(u, d)" :key="b.key" :class="b.cls" :style="b.style" @mouseenter="showTip($event, b, u)" @mousemove="moveTip" @mouseleave="hideTip">

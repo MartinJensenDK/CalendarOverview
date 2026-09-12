@@ -197,10 +197,10 @@ export default {
           <div v-if="schedule.error" class="callout warn">{{ t('No access to this calendar') }}</div>
           <div v-for="d in days" :key="d" class="lookup-day" :class="{ weekend: isWeekend(d), today: d === todayYmd }">
             <div class="lookup-date"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
-              <span class="hours" v-for="(h, k) in hoursOn(d)" :key="k"><span class="loc" v-if="h.loc" :title="locLabel(h.loc)"><icon :name="locIcon(h.loc)" :size="11"></icon></span>{{ h.time }}</span></div>
+              <span class="hours" v-for="(h, k) in hoursOn(d)" :key="k"><span class="loc" v-if="h.loc" v-tip="locLabel(h.loc)"><icon :name="locIcon(h.loc)" :size="11"></icon></span>{{ h.time }}</span></div>
             <div class="lookup-items">
               <span v-if="!itemsFor(d).length" class="muted free">{{ t('free') }}</span>
-              <span v-for="it in itemsFor(d)" :key="it.key" class="lookup-item" :class="it.st" :style="it.style" :title="it.loc || ''"><span class="mono">{{ it.time }}</span> {{ it.label }}</span>
+              <span v-for="it in itemsFor(d)" :key="it.key" class="lookup-item" :class="it.st" :style="it.style" v-tip="it.loc || ''"><span class="mono">{{ it.time }}</span> {{ it.label }}</span>
             </div>
           </div>
           <div class="lookup-more" v-if="!schedule.error">

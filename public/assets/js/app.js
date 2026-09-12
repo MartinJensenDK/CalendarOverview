@@ -16,6 +16,7 @@ import PersonLookupModal from './components/PersonLookupModal.js';
 import ConfirmDialog from './components/ConfirmDialog.js';
 import Toasts from './components/Toasts.js';
 import Tooltip from './components/Tooltip.js';
+import { tip } from './util/tip.js';
 
 const { createApp, onMounted } = Vue;
 
@@ -64,5 +65,6 @@ const app = createApp(App);
 app.component('icon', Icon);
 app.component('modal', Modal);
 app.component('user-picker', UserPicker);
+app.directive('tip', tip);
 app.config.errorHandler = (err) => { console.error(err); };
 app.mount('#app');

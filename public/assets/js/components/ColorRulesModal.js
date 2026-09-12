@@ -83,13 +83,13 @@ export default {
         <p class="muted" style="margin:0 0 12px">{{ t('Rules are checked from the top; the first match colours the appointment.') }}</p>
         <div class="rule-list">
           <div v-for="r in store.rules" :key="r.id" class="rule" :class="{ off: !r.enabled, dragging: dragId === r.id, 'drop-before': dropTarget === r.id && dragId !== r.id }" draggable="true" @dragstart="onDragStart(r)" @dragover="onDragOver(r, $event)" @drop="onDrop(r)" @dragend="dragId = null; dropTarget = null">
-            <span class="grip" :title="t('Drag to reorder')"><icon name="grip" :size="14"></icon></span>
+            <span class="grip" v-tip="t('Drag to reorder')"><icon name="grip" :size="14"></icon></span>
             <span class="swatch" :style="{ background: r.color }"></span>
             <span class="txt"><b>{{ r.name }}</b><small>{{ describe(r) }}</small></span>
-            <label class="switch" :title="t('Enabled')"><input type="checkbox" :checked="r.enabled" @change="toggle(r)"><span class="track"></span></label>
+            <label class="switch" v-tip="t('Enabled')"><input type="checkbox" :checked="r.enabled" @change="toggle(r)"><span class="track"></span></label>
             <span class="row" style="gap:2px">
-              <button type="button" class="btn ghost icon sm" :title="t('Edit rule')" @click="startEdit(r)"><icon name="pencil" :size="14"></icon></button>
-              <button type="button" class="btn ghost icon sm" :title="t('Remove')" @click="remove(r)"><icon name="trash" :size="14"></icon></button>
+              <button type="button" class="btn ghost icon sm" v-tip="t('Edit rule')" @click="startEdit(r)"><icon name="pencil" :size="14"></icon></button>
+              <button type="button" class="btn ghost icon sm" v-tip="t('Remove')" @click="remove(r)"><icon name="trash" :size="14"></icon></button>
             </span>
           </div>
         </div>

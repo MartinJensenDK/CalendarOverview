@@ -66,16 +66,16 @@ export default {
     <div class="minical" :class="{ collapsed }">
       <div v-if="collapsed" class="findtime-head clickable" @click="expand">
         <h2>{{ t('Month calendar') }}</h2>
-        <button type="button" class="expand" @click.stop="expand" :title="t('Expand')" :aria-label="t('Expand')" aria-expanded="false"><icon name="chevrons-up" :size="14"></icon></button>
+        <button type="button" class="expand" @click.stop="expand" v-tip="t('Expand')" :aria-label="t('Expand')" aria-expanded="false"><icon name="chevrons-up" :size="14"></icon></button>
       </div>
       <template v-else>
       <div class="minical-head">
-        <button type="button" class="btn ghost icon sm" @click="browse(-1)" :title="t('Previous')"><icon name="chevron-left" :size="14"></icon></button>
+        <button type="button" class="btn ghost icon sm" @click="browse(-1)" v-tip="t('Previous')"><icon name="chevron-left" :size="14"></icon></button>
         <span class="minical-title">{{ months[0].label }}</span>
-        <button type="button" class="btn ghost icon sm" @click="browse(1)" :title="t('Next')"><icon name="chevron-right" :size="14"></icon></button>
+        <button type="button" class="btn ghost icon sm" @click="browse(1)" v-tip="t('Next')"><icon name="chevron-right" :size="14"></icon></button>
         <span class="grow"></span>
-        <button type="button" v-if="store.prefs.mini_months !== 2" class="expand up" @click="setMonths(2)" :title="t('2 months')" :aria-label="t('2 months')"><icon name="chevrons-up" :size="14"></icon></button>
-        <button type="button" class="expand down" @click="stepDown" :title="store.prefs.mini_months === 2 ? t('1 month') : t('Collapse')" :aria-label="store.prefs.mini_months === 2 ? t('1 month') : t('Collapse')" aria-expanded="true"><icon name="chevrons-down" :size="14"></icon></button>
+        <button type="button" v-if="store.prefs.mini_months !== 2" class="expand up" @click="setMonths(2)" v-tip="t('2 months')" :aria-label="t('2 months')"><icon name="chevrons-up" :size="14"></icon></button>
+        <button type="button" class="expand down" @click="stepDown" v-tip="store.prefs.mini_months === 2 ? t('1 month') : t('Collapse')" :aria-label="store.prefs.mini_months === 2 ? t('1 month') : t('Collapse')" aria-expanded="true"><icon name="chevrons-down" :size="14"></icon></button>
       </div>
       <div v-for="(m, i) in months" :key="m.first" class="minical-month">
         <div class="minical-title" v-if="i > 0">{{ m.label }}</div>
@@ -83,7 +83,7 @@ export default {
           <span class="wk" v-if="store.prefs.show_week_numbers"></span>
           <span v-for="(w, i) in weekdays" :key="i" class="dow" :class="{ weekend: i >= 5 }">{{ w }}</span>
           <template v-for="w in m.weeks" :key="w.n + m.first">
-            <span class="wk" v-if="store.prefs.show_week_numbers" :title="t('Week') + ' ' + w.n">{{ w.n }}</span>
+            <span class="wk" v-if="store.prefs.show_week_numbers" v-tip="t('Week') + ' ' + w.n">{{ w.n }}</span>
             <button type="button" v-for="d in w.days" :key="d.ymd" class="day" :class="{ outside: d.outside, weekend: d.weekend, today: d.ymd === today, range: inRange(d.ymd), start: d.ymd === store.from }" @click="pick(d.ymd)" :aria-label="d.ymd">{{ d.day }}</button>
           </template>
         </div>

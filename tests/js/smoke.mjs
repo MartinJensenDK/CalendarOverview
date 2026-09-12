@@ -82,6 +82,8 @@ const { store } = await import(`${ROOT}/js/store.js`);
 const { openModal, closeModal, toggleSelect } = await import(`${ROOT}/js/actions.js`);
 const { t } = await import(`${ROOT}/js/i18n.js`);
 const html = () => w.document.body.innerHTML;
+// Hover an element with v-tip and read the shared info box; every tooltip on the site goes through it.
+const tipText = async (el) => { el.dispatchEvent(new w.Event('mouseenter')); await tick(5); const b = w.document.querySelector('.tip:not([hidden])'); const txt = b ? b.textContent : ''; el.dispatchEvent(new w.Event('mouseleave')); return txt; };
 
 function assert(cond, msg) { if (!cond) { errors.push('ASSERT: ' + msg); } else console.log('ok -', msg); }
 
@@ -99,7 +101,7 @@ assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows
   assert(bands(7 + 3) === 1 && bands(7 + 4) === 0, 'colleague: band on Thursday, none on the Friday off (hours differ per day)');
   assert(bands(14 + 0) === 1 && bands(14 + 5) === 0, 'person without reported hours falls back to weekday default');
   assert(cells[7 + 3].querySelector('.band').style.left !== cells[7].querySelector('.band').style.left, 'band position follows that day\'s start time');
-  assert(cells[0].querySelector('.band .loc') && cells[0].querySelector('.band .loc').getAttribute('title') === 'Office' && cells[7 + 3].querySelector('.band .loc').getAttribute('title') === 'Home' && !cells[7].querySelector('.band .loc'), 'work location (office/home) shown on the band when known'); }
+  assert(cells[0].querySelector('.band .loc') && cells[0].querySelector('.band .loc').getAttribute('aria-label') === 'Office' && cells[7 + 3].querySelector('.band .loc').getAttribute('aria-label') === 'Home' && !cells[7].querySelector('.band .loc'), 'work location (office/home) shown on the band when known'); }
 assert(!w.document.querySelector('.pager'), 'no footer bar under the grid');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
 { const hl = w.document.querySelectorAll('.grid .h')[1].querySelectorAll('.hl'); const labels = [...hl].filter((e) => !e.className.includes('minor')).map((e) => e.textContent);
@@ -256,7 +258,7 @@ cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await 
 assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/deeplink/compose'), 'slot selection shows Outlook link');
 { const counts = [...w.document.querySelectorAll('.heat-count')]; const sum = counts.reduce((n, c) => n + Number(c.querySelector('b').textContent), 0);
   assert(counts.length >= 2 && sum === 2 && counts[0].className.includes('free') && counts[1].className.includes('busy') && !w.document.querySelector('.heat-detail > ul'), 'selection shows free and busy counts instead of a list');
-  assert(w.document.querySelectorAll('.heat-pop li').length === 2 && w.document.querySelector('.heat-pop li .loc[title="Office"]'), 'the hover lists name the people with their work location');
+  assert(w.document.querySelectorAll('.heat-pop li').length === 2 && w.document.querySelector('.heat-pop li .loc[aria-label="Office"]'), 'the hover lists name the people with their work location');
   const inp = w.document.querySelector('.heat-onbehalf .picker input'); assert(inp, 'book on behalf of has a person search');
   inp.value = 'Xenia'; inp.dispatchEvent(new w.Event('input', { bubbles: true })); await tick(260);
   const opt = [...w.document.querySelectorAll('.heat-onbehalf .picker .opt')].find((o) => o.textContent.includes('Xenia')); opt.dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true, cancelable: true })); await tick();
@@ -302,16 +304,19 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
   const head = w.document.querySelector('.topbar .menu .head');
   const toggle = head && head.querySelector('.theme-toggle');
   assert(toggle && head.querySelector('.who strong') && head.children[0].classList.contains('who') && head.lastElementChild === toggle, 'theme toggle sits to the right of name and e-mail');
-  assert(!w.document.querySelector('.topbar .menu [title="System"]') && w.document.querySelectorAll('.topbar .menu .theme-toggle').length === 1, 'only one theme button, no System option');
+  assert(!w.document.querySelector('.topbar .menu [aria-label="System"]') && w.document.querySelectorAll('.topbar .menu .theme-toggle').length === 1, 'only one theme button, no System option');
   assert(!w.document.querySelector('.topbar .menu .item.switch') && !w.document.querySelector('.topbar .menu input[type=checkbox]'), 'demo data switch removed from the profile menu');
   { // Directory sync is an icon left of the theme toggle; its tooltip carries the old row's text
     const sync = head.querySelector('.sync-dir');
     assert(sync && sync.nextElementSibling === toggle && !html().includes('>Sync directory now<'), 'sync icon sits left of the theme toggle and the menu row is gone');
-    assert(/^Sync directory now — Directory: \d+ people, updated /.test(sync.getAttribute('title')), 'sync icon tooltip shows the directory info');
+    assert(!sync.hasAttribute('title') && !w.document.querySelector('[title]:not([title=""])'), 'no native title tooltips left anywhere: every info box uses the shared card');
+    { const txt = await tipText(sync); const box = w.document.querySelector('.tip');
+      assert(box && box.classList.contains('tip') && box.querySelector('.tip-title').textContent === 'Sync directory now' && /Directory: \d+ people/.test(txt), 'sync icon hover box (same card as the free/busy lists) shows the action and the directory size');
+      assert(box.querySelector('.sync-state .dot') && /Updated (this minute|now|\d+ minutes? ago|never)/i.test(box.querySelector('.sync-state').textContent) || /Never synced/.test(txt), `hover box has the "Updated …" status line with the dot like the top bar (${box.querySelector('.sync-state') && box.querySelector('.sync-state').textContent})`); }
     const before = calls.length;
     sync.click(); await tick(60);
     assert(calls.slice(before).some((c) => c === 'POST /api/sync/directory') && w.document.querySelector('.topbar .menu'), 'clicking the icon syncs and keeps the menu open');
-    assert(head.querySelector('.sync-dir').getAttribute('title').includes('4 people'), 'tooltip updates after the sync');
+    { const txt = await tipText(head.querySelector('.sync-dir')); assert(txt.includes('4 people') && /Updated this minute|Updated now/.test(txt), `hover box updates after the sync (${txt})`); }
   }
   assert(store.prefs.theme === 'system' || store.prefs.theme === 'light', 'theme still system/light before clicking');
   toggle.click(); await tick();
@@ -351,14 +356,14 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   w.document.querySelector('.menu-section.vacation .btn').click(); await tick(120);
   assert(store.modal && store.modal.name === 'vacation' && html().includes(t('Vacation calendar')), 'vacation modal opens');
   const bars = w.document.querySelectorAll('.vac-row .vac-bar');
-  assert(w.document.querySelectorAll('.vac-row').length === 1 && bars.length === 1 && bars[0].title.includes('Anna Andersen') && bars[0].title.includes(t('{n} days', { n: 2 })), 'timeline shows one person with a 2-day vacation bar');
+  assert(w.document.querySelectorAll('.vac-row').length === 1 && bars.length === 1 && (await tipText(bars[0])).includes('Anna Andersen') && (await tipText(bars[0])).includes(t('{n} days', { n: 2 })), 'timeline shows one person with a 2-day vacation bar');
   assert(w.document.querySelectorAll('.vac-month').length >= 3 && html().includes(t('{n} people without vacation in this period', { n: 2 })), 'month header and footer count rendered');
   { const nums = [...w.document.querySelectorAll('.vac-daynum')].map((e) => e.textContent);
     assert(nums.length >= 15 && nums[0] === '1' && nums.includes('15') && nums.includes('25'), `day numbers shown in the header (${nums.slice(0, 8).join(' ')})`);
     assert(w.document.querySelector('.vac.grid') && /px$/.test(w.document.querySelector('.vac').style.getPropertyValue('--vac-step')), 'day grid on by default');
     store.prefs.vacation_grid = false; await tick(); assert(!w.document.querySelector('.vac.grid'), 'day grid can be switched off'); store.prefs.vacation_grid = true; await tick(); }
   { const wk = [...w.document.querySelectorAll('.vac-week')];
-    assert(wk.length >= 12 && wk[0].textContent === '36' && wk[0].title === t('Week') + ' 36' && w.document.querySelector('.vac.with-weeks'), `ISO week numbers in the header (${wk.slice(0, 4).map((e) => e.textContent).join(' ')})`);
+    assert(wk.length >= 12 && wk[0].textContent === '36' && (await tipText(wk[0])) === t('Week') + ' 36' && w.document.querySelector('.vac.with-weeks'), `ISO week numbers in the header (${wk.slice(0, 4).map((e) => e.textContent).join(' ')})`);
     store.prefs.vacation_week_numbers = false; await tick(); assert(!w.document.querySelector('.vac-week') && !w.document.querySelector('.vac.with-weeks'), 'week numbers can be switched off'); store.prefs.vacation_week_numbers = true; await tick();
     w.document.querySelector('.vac-spans button').click(); await tick(120); // one month: every day labelled
     let nums = [...w.document.querySelectorAll('.vac-daynum')].map((e) => e.textContent);
@@ -429,7 +434,7 @@ w.document.querySelector('.lookup-row').click(); await tick(120);
 { // The calendar covers the next 30 days from today, in a scroll box, and grows by 30 days at the end
   const t0 = new Date(); t0.setHours(0, 0, 0, 0);
   const inWindow = (n) => availability.users[0].work.filter((x) => { const d = new Date(x.s); return d >= t0 && d < new Date(t0.getTime() + n * 86400000); }).length;
-  assert(w.document.querySelectorAll('.lookup-date .hours').length === inWindow(30) && (inWindow(30) === 0 || (w.document.querySelector('.lookup-date .hours .loc[title="Office"]') && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.lookup-date .hours').textContent))), 'lookup shows working hours and location per day');
+  assert(w.document.querySelectorAll('.lookup-date .hours').length === inWindow(30) && (inWindow(30) === 0 || (w.document.querySelector('.lookup-date .hours .loc[aria-label="Office"]') && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.lookup-date .hours').textContent))), 'lookup shows working hours and location per day');
   const lastCall = () => calls.filter((c) => c.includes('/api/availability')).pop();
   const pad = (n) => String(n).padStart(2, '0');
   const ymdLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
