@@ -61,12 +61,13 @@ export default {
     <div class="minical">
       <div class="minical-head">
         <button type="button" class="btn ghost icon sm" @click="browse(-1)" :title="t('Previous')"><icon name="chevron-left" :size="14"></icon></button>
+        <span class="minical-title">{{ months[0].label }}</span>
         <button type="button" class="btn ghost icon sm" @click="browse(1)" :title="t('Next')"><icon name="chevron-right" :size="14"></icon></button>
         <span class="grow"></span>
         <button type="button" class="expand" :class="{ open: store.prefs.mini_months === 2 }" @click="toggleMonths" :title="store.prefs.mini_months === 2 ? t('1 month') : t('2 months')" :aria-label="store.prefs.mini_months === 2 ? t('1 month') : t('2 months')"><icon name="chevron-down" :size="14"></icon></button>
       </div>
-      <div v-for="m in months" :key="m.first" class="minical-month">
-        <div class="minical-title">{{ m.label }}</div>
+      <div v-for="(m, i) in months" :key="m.first" class="minical-month">
+        <div class="minical-title" v-if="i > 0">{{ m.label }}</div>
         <div class="minical-grid" :class="{ 'no-wk': !store.prefs.show_week_numbers }">
           <span class="wk" v-if="store.prefs.show_week_numbers"></span>
           <span v-for="(w, i) in weekdays" :key="i" class="dow" :class="{ weekend: i >= 5 }">{{ w }}</span>
