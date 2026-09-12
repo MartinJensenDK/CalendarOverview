@@ -74,9 +74,16 @@ export default {
     function freeCount(day, start, end) {
       return users.value.filter((u) => isFree(u.id, day, start, end)).length;
     }
+    // Red (nobody free) → amber (half) → green (everyone free), in muted modern tones.
+    const STOPS = [[229, 85, 96], [245, 190, 60], [46, 176, 114]];
+    function mix(a, b, f) { return a.map((v, i) => Math.round(v + (b[i] - v) * f)); }
+    function heatColor(p) {
+      const rgb = p < 0.5 ? mix(STOPS[0], STOPS[1], p * 2) : mix(STOPS[1], STOPS[2], (p - 0.5) * 2);
+      return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`;
+    }
     function cellStyle(day, m) {
       const total = users.value.length || 1;
-      return { '--p': (freeCount(day, m, m + form.slot) / total).toFixed(2) };
+      return { background: heatColor(freeCount(day, m, m + form.slot) / total) };
     }
     function isSel(day, m) { return sel.value && sel.value.day === day && m >= sel.value.start && m < sel.value.end; }
     function down(day, m) { dragging = { day, anchor: m }; sel.value = { day, start: m, end: m + form.slot }; }
@@ -130,7 +137,7 @@ export default {
     return { store, t, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
-    <modal :title="t('When is everyone free?')" width="900px" @close="closeModal">
+    <modal :title="t('Find a time')" width="900px" @close="closeModal">
       <div class="heat-toolbar">
         <label class="field"><span>{{ t('From') }}</span><input class="input" type="date" v-model="form.from"></label>
         <label class="field"><span>{{ t('To') }}</span><input class="input" type="date" v-model="form.to" :min="form.from"></label>

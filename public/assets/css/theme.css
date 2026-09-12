@@ -445,15 +445,16 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .heat .hh .date { font-family: var(--font-display); font-weight: 600; }
 .heat .hh.weekend { color: var(--muted); }
 .heat .ht { font-family: var(--font-mono); font-size: 11px; color: var(--muted); padding: 0 6px; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid var(--line); height: 22px; }
-.heat .hc { height: 22px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; background: color-mix(in srgb, var(--ok) calc(var(--p) * 100%), var(--surface-2)); position: relative; }
+.heat .hc { height: 22px; border-right: 1px solid rgba(255, 255, 255, .45); border-bottom: 1px solid rgba(255, 255, 255, .45); cursor: pointer; position: relative; }
+[data-theme="dark"] .heat .hc { border-color: rgba(0, 0, 0, .35); }
 .heat .hc.hour { border-top: 1px solid var(--line-strong); }
-.heat .hc.weekend { background: repeating-linear-gradient(135deg, var(--weekend) 0 5px, var(--surface-2) 5px 6px); }
-.heat .hc.sel { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1; }
+.heat .hc.weekend { background-image: repeating-linear-gradient(135deg, rgba(0, 0, 0, .10) 0 5px, transparent 5px 6px); }
+.heat .hc.sel { box-shadow: inset 0 0 0 2px var(--ink); z-index: 1; }
 .heat .hc:hover { filter: brightness(.96); }
 .suggest { margin: 0 0 12px; }
 .suggest-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .heat-legend { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); margin-top: 10px; }
-.heat-legend .bar { width: 120px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--surface-2), var(--ok)); }
+.heat-legend .bar { width: 140px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(229 85 96), rgb(245 190 60), rgb(46 176 114)); }
 .heat-detail { margin: 0 0 12px; padding: 12px; border-radius: var(--radius); background: var(--surface-2); }
 .heat-detail h3 { font-size: 15px; margin-bottom: 8px; }
 .heat-detail ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
