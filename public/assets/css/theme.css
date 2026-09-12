@@ -288,7 +288,7 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .selection-bar .avatars { display: flex; }
 .selection-bar .avatars .avatar { width: 22px; height: 22px; margin-left: -6px; border: 2px solid var(--accent-soft); }
 .selection-bar .avatars .avatar:first-child { margin-left: 0; }
-.findtime { padding: 4px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.findtime, .menu-section { padding: 4px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
 .findtime-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .findtime-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
 .findtime-head .muted { font-size: 12px; font-family: var(--font-mono); }
@@ -297,6 +297,35 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .findtime .avatars { display: flex; }
 .findtime .avatars .avatar { width: 26px; height: 26px; margin-left: -6px; border: 2px solid var(--surface); }
 .findtime .avatars .avatar:first-child { margin-left: 0; }
+.btn.warm { background: var(--today-soft); border-color: transparent; color: var(--ink); }
+.btn.warm:hover { background: color-mix(in srgb, var(--today) 35%, var(--surface)); }
+/* Vacation calendar timeline */
+.vac-toolbar { margin-bottom: 12px; gap: 10px; }
+.vac-toolbar .vac-range { font-family: var(--font-display); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.vac-spans { margin: 0; max-width: 340px; }
+.vac-today { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 12px; padding: 8px 10px; border-radius: var(--radius); background: var(--surface-2); }
+.vac-today .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 2px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 12px; }
+.vac-wrap { border: 1px solid var(--line); border-radius: var(--radius); overflow: auto; max-height: 60vh; }
+.vac-wrap.reloading { opacity: .55; transition: opacity .2s; pointer-events: none; }
+.vac { min-width: 640px; --vac-name-w: 200px; }
+.vac-head, .vac-row { display: grid; grid-template-columns: var(--vac-name-w) 1fr; border-bottom: 1px solid var(--line); }
+.vac-head { position: sticky; top: 0; background: var(--surface); z-index: 2; font-size: 12px; }
+.vac-head .vac-track { height: 28px; }
+.vac-head .vac-name { display: flex; align-items: center; padding: 0 10px; font-size: 12px; }
+.vac-month { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding-left: 6px; border-left: 1px solid var(--line); font-family: var(--font-display); font-weight: 600; text-transform: capitalize; white-space: nowrap; overflow: hidden; }
+.vac-row:last-child { border-bottom: 0; }
+.vac-row.me .vac-name { box-shadow: inset 3px 0 0 var(--accent); }
+.vac-name { display: flex; align-items: center; gap: 10px; padding: 6px 10px; position: sticky; left: 0; background: var(--surface); z-index: 1; border-right: 1px solid var(--line); min-width: 0; }
+.vac-name .txt { min-width: 0; line-height: 1.25; }
+.vac-name .txt b { display: block; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vac-name .txt small { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vac-track { position: relative; min-height: 44px; background: var(--offhours); overflow: hidden; }
+.vac-weekend { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--weekend) 0 5px, var(--surface-2) 5px 6px); }
+.vac-now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--today-line); z-index: 1; }
+.vac-bar { position: absolute; top: 10px; height: 24px; border-radius: 6px; background: var(--vac-bar, #e5484d); color: #fff; font-size: 11px; display: flex; align-items: center; padding: 0 6px; overflow: hidden; white-space: nowrap; box-shadow: 0 0 0 1px rgba(255, 255, 255, .5); z-index: 1; cursor: default; }
+.vac-bar.current { box-shadow: 0 0 0 2px var(--today); }
+.vac-bar.sk { background: var(--surface-2); color: transparent; box-shadow: none; }
+.vac-empty { padding: 30px; text-align: center; grid-column: 1 / -1; }
 .menu-toggle { display: none; }
 
 /* --------------------------------------------------------------------------

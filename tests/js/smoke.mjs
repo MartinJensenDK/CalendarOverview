@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -61,6 +61,7 @@ globalThis.fetch = async (url, opts = {}) => {
   let body = {};
   if (path === '/api/me') body = me;
   else if (path === '/api/overview') body = overview;
+  else if (path === '/api/vacations') body = { from: '2026-09-01', to: '2026-12-02', tz: 'UTC', fetched_at: '', users: [{ ...member('me', 'Anna Andersen', 'Designer'), is_me: true, periods: [{ from: '2026-09-15', to: '2026-09-16', days: 2, sub: 'Vacation' }] }], without: 2 };
   else if (path === '/api/availability') { await new Promise((r) => setTimeout(r, 40)); body = availability; } // slow enough to see the skeleton
   else if (path === '/api/settings/reset') body = { preferences: { ...defaultPrefs }, menu: null };
   else if (path === '/api/settings') body = { preferences: { ...me.preferences, ...JSON.parse(opts.body) }, menu: null };
@@ -243,6 +244,20 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   rows[2].dispatchEvent(new w.Event('drop', { bubbles: true })); await tick(60);
   assert(calls.some((c) => c === 'POST /api/groups/reorder') && store.menu[0].id === 8, 'dragging My team below a group reorders the menu (got ' + store.menu.map((g) => g.id).join(',') + ')');
 }
+
+// Vacation calendar
+{ assert(w.document.querySelector('.menu-section.vacation') && w.document.querySelector('.menu-section.vacation .btn').textContent.includes(t('Open vacation calendar')), 'sidebar has the vacation calendar section');
+  w.document.querySelector('.menu-section.vacation .btn').click(); await tick(120);
+  assert(store.modal && store.modal.name === 'vacation' && html().includes(t('Vacation calendar')), 'vacation modal opens');
+  const bars = w.document.querySelectorAll('.vac-row .vac-bar');
+  assert(w.document.querySelectorAll('.vac-row').length === 1 && bars.length === 1 && bars[0].title.includes('Anna Andersen') && bars[0].title.includes(t('{n} days', { n: 2 })), 'timeline shows one person with a 2-day vacation bar');
+  assert(w.document.querySelectorAll('.vac-month').length >= 3 && html().includes(t('{n} people without vacation in this period', { n: 2 })), 'month header and footer count rendered');
+  w.document.querySelector('.vac-toolbar input').value = 'zzz'; w.document.querySelector('.vac-toolbar input').dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
+  assert(w.document.querySelectorAll('.vac-row').length === 0 && html().includes(t('No vacation in this period.')), 'filter hides non-matching people');
+  closeModal(); await tick();
+  store.prefs.vacation_enabled = false; await tick();
+  assert(!w.document.querySelector('.menu-section.vacation'), 'vacation section hidden when disabled');
+  store.prefs.vacation_enabled = true; await tick(); }
 
 // Always start on a Monday
 { const { setFrom, shiftDays } = await import(`${ROOT}/js/actions.js`);

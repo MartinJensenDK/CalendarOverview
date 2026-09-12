@@ -380,6 +380,26 @@ class ApiTest extends TestCase
         $this->assertGreaterThan(0, $groupId);
     }
 
+    public function test_vacation_calendar_lists_people_with_vacation_periods(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
+        $data = $this->actingAs($user)->getJson('/api/vacations?from=2026-09-14&days=92&tz=Europe/Copenhagen')->assertOk()->json();
+        $this->assertSame('2026-09-01', $data['from']); // snapped to the start of the month
+        $this->assertNotEmpty($data['users']);
+        $first = $data['users'][0];
+        $this->assertTrue($first['is_demo']);
+        $longest = max(array_map(fn ($u) => max(array_column($u['periods'], 'days')), $data['users']));
+        $this->assertGreaterThanOrEqual(5, $longest); // demo vacations are whole weeks (single out-of-office days also count)
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $first['periods'][0]['from']);
+        $this->assertSame(151, count($data['users']) + $data['without']);
+        $starts = array_map(fn ($u) => $u['periods'][0]['from'], $data['users']);
+        $sorted = $starts;
+        sort($sorted);
+        $this->assertSame($sorted, $starts); // earliest vacation first
+        $this->actingAs($user)->getJson('/api/vacations?days=400')->assertStatus(422);
+    }
+
     public function test_demo_people_leave_the_lookup_when_demo_is_off_or_hidden(): void
     {
         $user = Fixtures::user();

@@ -93,6 +93,11 @@ export default {
             <button type="button" class="btn sm success" :disabled="!store.selected.length" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
           </div>
         </div>
+        <div class="menu-section vacation" v-if="store.prefs.vacation_enabled">
+          <div class="findtime-head"><h2>{{ t('Vacation calendar') }}</h2></div>
+          <div class="findtime-body"><span class="muted hint">{{ t('See when your colleagues are on vacation.') }}</span></div>
+          <div class="row"><span class="grow"></span><button type="button" class="btn sm warm" @click="openModal('vacation')"><icon name="sun" :size="14"></icon>{{ t('Open vacation calendar') }}</button></div>
+        </div>
         <mini-calendar></mini-calendar>
       </div>
     </aside>`,

@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/overview', [Api\OverviewController::class, 'index']);
         Route::get('/availability', [Api\AvailabilityController::class, 'index']);
+        Route::get('/vacations', [Api\VacationController::class, 'index']);
 
         Route::post('/sync/directory', [Api\SyncController::class, 'directory']);
         Route::post('/sync/photos', [Api\SyncController::class, 'photos']);

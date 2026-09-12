@@ -11,6 +11,7 @@ import GroupModal from './components/GroupModal.js';
 import ColorRulesModal from './components/ColorRulesModal.js';
 import SettingsModal from './components/SettingsModal.js';
 import HeatmapModal from './components/HeatmapModal.js';
+import VacationModal from './components/VacationModal.js';
 import PersonLookupModal from './components/PersonLookupModal.js';
 import ConfirmDialog from './components/ConfirmDialog.js';
 import Toasts from './components/Toasts.js';
@@ -19,7 +20,7 @@ import Tooltip from './components/Tooltip.js';
 const { createApp, onMounted } = Vue;
 
 const App = {
-  components: { TopBar, SideMenu, OverviewGrid, GroupModal, ColorRulesModal, SettingsModal, HeatmapModal, PersonLookupModal, ConfirmDialog, Toasts, Tooltip },
+  components: { TopBar, SideMenu, OverviewGrid, GroupModal, ColorRulesModal, SettingsModal, HeatmapModal, VacationModal, PersonLookupModal, ConfirmDialog, Toasts, Tooltip },
   setup() {
     onMounted(async () => {
       try {
@@ -51,6 +52,7 @@ const App = {
       <color-rules-modal v-if="store.modal && store.modal.name === 'rules'"></color-rules-modal>
       <settings-modal v-if="store.modal && store.modal.name === 'settings'"></settings-modal>
       <heatmap-modal v-if="store.modal && store.modal.name === 'heatmap'" v-bind="store.modal.props"></heatmap-modal>
+      <vacation-modal v-if="store.modal && store.modal.name === 'vacation'"></vacation-modal>
       <person-lookup-modal v-if="store.modal && store.modal.name === 'lookup'" v-bind="store.modal.props"></person-lookup-modal>
       <confirm-dialog></confirm-dialog>
       <toasts></toasts>
