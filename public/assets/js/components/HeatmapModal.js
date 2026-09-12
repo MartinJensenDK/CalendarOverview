@@ -153,6 +153,16 @@ export default {
         <div class="muted" style="font-size:12px" v-else>{{ t('No common free time in this period.') }}</div>
       </div>
       <p class="muted" style="margin:0 0 10px;font-size:12px">{{ t('Click a slot to see who is free. Drag to select a longer time.') }}</p>
+      <div class="heat-detail" v-if="detail">
+        <h3>{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3>
+        <ul>
+          <li v-for="u in detail.list" :key="u.id" :class="{ busy: !u.free }"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="st">{{ u.free ? t('free') : t('busy') }}</span></li>
+        </ul>
+        <div class="row" style="margin-top:12px">
+          <input class="input" v-model="form.subject" :placeholder="t('Meeting subject')" style="max-width:320px">
+          <a class="btn primary" :href="outlookUrl" target="_blank" rel="noopener"><icon name="external"></icon>{{ t('Open in Outlook') }}</a>
+        </div>
+      </div>
       <div class="heat-wrap" @mouseup="up" @mouseleave="up">
         <div class="heat" :style="{ '--hdays': days.length }" v-if="data">
           <div class="hh"></div>
@@ -165,16 +175,6 @@ export default {
         <div v-else style="padding:40px;text-align:center" class="muted">…</div>
       </div>
       <div class="heat-legend"><span>{{ t('nobody free') }}</span><span class="bar"></span><span>{{ t('everyone free') }}</span></div>
-      <div class="heat-detail" v-if="detail">
-        <h3>{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3>
-        <ul>
-          <li v-for="u in detail.list" :key="u.id" :class="{ busy: !u.free }"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="st">{{ u.free ? t('free') : t('busy') }}</span></li>
-        </ul>
-        <div class="row" style="margin-top:12px">
-          <input class="input" v-model="form.subject" :placeholder="t('Meeting subject')" style="max-width:320px">
-          <a class="btn primary" :href="outlookUrl" target="_blank" rel="noopener"><icon name="external"></icon>{{ t('Open in Outlook') }}</a>
-        </div>
-      </div>
       <template #foot>
         <span class="grow"></span>
         <button type="button" class="btn" @click="closeModal">{{ t('Close') }}</button>
