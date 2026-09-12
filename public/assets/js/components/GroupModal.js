@@ -7,13 +7,13 @@ const { ref, reactive, computed } = Vue;
 
 export default {
   name: 'GroupModal',
-  props: { group: { type: Object, default: null } },
+  props: { group: { type: Object, default: null }, presetMembers: { type: Array, default: () => [] } },
   setup(props) {
     const g = props.group;
     const form = reactive({
       name: g ? g.name : '',
       type: g ? g.type : 'manual',
-      members: g ? [...(g.manual_members || [])] : [],
+      members: g ? [...(g.manual_members || [])] : [...props.presetMembers],
       managers: g ? [...(g.managers || [])] : [],
       entra: g && g.entra_group_id ? { id: g.entra_group_id, name: g.entra_group_name } : null,
     });

@@ -1,6 +1,6 @@
 import { store } from './store.js';
 import { t } from './i18n.js';
-import { loadMe, loadOverview, closeModal } from './actions.js';
+import { loadMe, loadOverview, closeModal, openModal } from './actions.js';
 import Icon from './components/Icon.js';
 import Modal from './components/Modal.js';
 import UserPicker from './components/UserPicker.js';
@@ -11,6 +11,7 @@ import GroupModal from './components/GroupModal.js';
 import ColorRulesModal from './components/ColorRulesModal.js';
 import SettingsModal from './components/SettingsModal.js';
 import HeatmapModal from './components/HeatmapModal.js';
+import PersonLookupModal from './components/PersonLookupModal.js';
 import ConfirmDialog from './components/ConfirmDialog.js';
 import Toasts from './components/Toasts.js';
 import Tooltip from './components/Tooltip.js';
@@ -18,7 +19,7 @@ import Tooltip from './components/Tooltip.js';
 const { createApp, onMounted } = Vue;
 
 const App = {
-  components: { TopBar, SideMenu, OverviewGrid, GroupModal, ColorRulesModal, SettingsModal, HeatmapModal, ConfirmDialog, Toasts, Tooltip },
+  components: { TopBar, SideMenu, OverviewGrid, GroupModal, ColorRulesModal, SettingsModal, HeatmapModal, PersonLookupModal, ConfirmDialog, Toasts, Tooltip },
   setup() {
     onMounted(async () => {
       try {
@@ -27,6 +28,15 @@ const App = {
       } catch (e) {
         store.error = e.message || t('Something went wrong');
       }
+      // Start typing anywhere to look up a person.
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || !/[a-zA-ZæøåÆØÅ]/.test(e.key)) return;
+        const el = document.activeElement;
+        if (el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable)) return;
+        if (store.modal || store.confirm || !store.ready) return;
+        e.preventDefault();
+        openModal('lookup', { initial: e.key });
+      });
     });
     return { store, closeModal, t };
   },
@@ -41,6 +51,7 @@ const App = {
       <color-rules-modal v-if="store.modal && store.modal.name === 'rules'"></color-rules-modal>
       <settings-modal v-if="store.modal && store.modal.name === 'settings'"></settings-modal>
       <heatmap-modal v-if="store.modal && store.modal.name === 'heatmap'" v-bind="store.modal.props"></heatmap-modal>
+      <person-lookup-modal v-if="store.modal && store.modal.name === 'lookup'" v-bind="store.modal.props"></person-lookup-modal>
       <confirm-dialog></confirm-dialog>
       <toasts></toasts>
       <tooltip></tooltip>

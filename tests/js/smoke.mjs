@@ -191,6 +191,19 @@ store.prefs.locale = 'da'; await tick();
 assert(html().includes('Kalenderoversigt') && html().includes('Mit team'), 'Danish translation applied');
 assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
 
+// Type-to-search person lookup
+store.prefs.locale = 'en'; await tick();
+w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'x', bubbles: true }));
+await tick(250);
+assert(store.modal && store.modal.name === 'lookup' && w.document.querySelector('.lookup-search input').value === 'x', 'typing a letter opens the lookup modal with the letter');
+assert(w.document.querySelectorAll('.lookup-row').length === 1 && html().includes('Xenia Search'), 'lookup shows search results');
+w.document.querySelector('.lookup-row').click(); await tick(120);
+assert(w.document.querySelector('.lookup-person') && w.document.querySelectorAll('.lookup-day').length === store.prefs.days, `selecting a person shows their calendar for the overview range (${w.document.querySelectorAll('.lookup-day').length} days)`);
+assert([...w.document.querySelectorAll('.lookup-add option')].some((o) => o.textContent.includes('Sales')), 'manual groups offered for adding the person');
+w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'q', bubbles: true })); await tick();
+assert(store.modal && store.modal.name === 'lookup', 'typing while a modal is open does not open another');
+closeModal(); await tick();
+
 // Theme toggle path
 const { applyTheme } = await import(`${ROOT}/js/store.js`);
 applyTheme('dark');

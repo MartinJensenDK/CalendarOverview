@@ -460,6 +460,33 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .heat-detail li .st { margin-left: auto; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .heat-detail li.busy .st { color: var(--danger); }
 
+/* Person lookup */
+.lookup-search { position: relative; display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.lookup-search .input { padding-left: 34px; height: 40px; font-size: 15px; }
+.lookup-search .lookup-icon { position: absolute; left: 11px; top: 12px; color: var(--muted); }
+.lookup-results { display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow: auto; }
+.lookup-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; background: transparent; border-radius: var(--radius); cursor: pointer; text-align: left; color: var(--ink); width: 100%; }
+.lookup-row.active, .lookup-row:hover { background: var(--surface-2); }
+.lookup-row .txt { flex: 1; min-width: 0; line-height: 1.25; }
+.lookup-row .txt b, .lookup-head .txt b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lookup-row .txt small, .lookup-head .txt small { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lookup-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.lookup-head .txt b { font-family: var(--font-display); font-size: 18px; }
+.lookup-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border-radius: var(--radius); background: var(--surface-2); margin-bottom: 12px; }
+.lookup-days { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.lookup-day { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.lookup-day:last-child { border-bottom: 0; }
+.lookup-day.weekend { background: var(--surface-2); }
+.lookup-day.today .lookup-date .date { color: var(--today-line); }
+.lookup-date .dow { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.lookup-date .date { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+.lookup-items { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; }
+.lookup-items .free { font-size: 12px; align-self: center; }
+.lookup-item { display: inline-flex; gap: 6px; align-items: center; padding: 2px 8px; border-radius: 5px; background: var(--event); color: var(--event-ink); font-size: 12px; max-width: 100%; }
+.lookup-item .mono { font-size: 11px; opacity: .85; }
+.lookup-item.free { background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1.5px var(--free-outline); }
+.lookup-item.tentative { background: repeating-linear-gradient(135deg, var(--event) 0 4px, color-mix(in srgb, var(--event) 55%, transparent) 4px 8px); }
+
 /* Toasts */
 .toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 70; }
 .toast { background: var(--ink); color: var(--ground); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow-2); font-size: 13px; max-width: 360px; animation: rise .18s var(--ease); display: flex; gap: 10px; align-items: center; }
