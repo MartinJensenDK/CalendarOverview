@@ -29,8 +29,8 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
-  options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], page_sizes: [25, 50, 100, 200], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
     { id: 'my_team', kind: 'builtin', type: 'my_team', name: null, visible: true, has_manager: true, members: [member('me', 'Anna Andersen', 'Designer'), member('p1', 'Peter Peer', 'Engineer')] },
@@ -41,7 +41,7 @@ const me = {
   app: { name: 'Calendar overview', version: '1.0.0', admin_consent_url: null },
 };
 const overview = {
-  from: '2026-09-14', to: '2026-09-21', days, tz: 'UTC', page: 1, per_page: 50, total: 3, fetched_at: new Date().toISOString(),
+  from: '2026-09-14', to: '2026-09-21', days, tz: 'UTC', total: 3, fetched_at: new Date().toISOString(),
   users: [
     { ...member('me', 'Anna Andersen', 'Designer'), is_me: true, error: null, items: [
       { s: '2026-09-14T07:00:00Z', e: '2026-09-14T08:30:00Z', st: 'busy', sub: 'Team sync', loc: 'Teams', ad: false, pr: false },
@@ -86,6 +86,7 @@ assert(store.ready, 'store ready after loadMe');
 assert(html().includes('Calendar overview'), 'headline rendered');
 assert(html().includes('My team') && html().includes('Sales') && html().includes('Board'), 'menu groups rendered');
 assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows rendered');
+assert(w.document.querySelector('.pager') && w.document.querySelector('.pager').textContent.includes('3 people') && !w.document.querySelector('.pager .pages'), 'footer shows the total count and no page buttons');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
 const blocks = w.document.querySelectorAll('.grid .blk');
 assert(blocks.length === 3, `three event blocks rendered (got ${blocks.length})`);
@@ -118,7 +119,7 @@ assert(html().includes('Add rule') && w.document.querySelector('.swatches'), 'ru
 closeModal(); await tick();
 
 openModal('settings'); await tick();
-assert(html().includes('Rows per page'), 'settings modal renders');
+assert(html().includes('Days to show') && !html().includes('Rows per page'), 'settings modal renders without paging option');
 store.prefs.days = 14; w.document.querySelector('.modal-foot .btn.danger').click(); await tick();
 assert(w.document.querySelectorAll('.modal').length === 2 && html().includes('Reset all settings?'), 'reset asks for confirmation');
 [...w.document.querySelectorAll('.modal-foot .btn')].find((b) => b.className.includes('danger') && b.textContent.includes('Reset all settings') && b.closest('.modal') !== w.document.querySelector('.modal')).click(); await tick(60);

@@ -14,12 +14,10 @@ class Preferences
 
     public const ROW_HEIGHTS = ['sm', 'md', 'lg'];
 
-    public const PAGE_SIZES = [25, 50, 100, 200];
-
     public const DAY_OPTIONS = [1, 3, 5, 7, 10, 14, 21, 31];
 
     /** Keys shown on the Settings page; only these are touched by "Reset all settings". */
-    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'page_size', 'work_start', 'work_end', 'show_weekends', 'mini_months', 'show_week_numbers', 'find_time_enabled', 'demo_enabled'];
+    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'work_start', 'work_end', 'show_weekends', 'mini_months', 'show_week_numbers', 'find_time_enabled', 'demo_enabled'];
 
     public static function defaults(): array
     {
@@ -28,7 +26,6 @@ class Preferences
             'locale' => 'en',
             'days' => 7,
             'row_height' => 'md',
-            'page_size' => 50,
             'show_weekends' => true,
             'work_start' => '08:00',
             'work_end' => '17:00',
@@ -63,7 +60,6 @@ class Preferences
             'locale' => ['sometimes', 'in:'.implode(',', self::LOCALES)],
             'days' => ['sometimes', 'integer', 'min:1', 'max:31'],
             'row_height' => ['sometimes', 'in:'.implode(',', self::ROW_HEIGHTS)],
-            'page_size' => ['sometimes', 'integer', 'in:'.implode(',', self::PAGE_SIZES)],
             'show_weekends' => ['sometimes', 'boolean'],
             'work_start' => ['sometimes', 'date_format:H:i'],
             'work_end' => ['sometimes', 'date_format:H:i'],

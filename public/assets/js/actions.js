@@ -32,16 +32,10 @@ export async function loadOverview({ refresh = false } = {}) {
     const data = await api.get('/api/overview', {
       from: store.from,
       days: store.prefs.days,
-      page: store.page,
-      per_page: store.prefs.page_size,
       tz: store.tz,
       refresh: refresh ? 1 : 0,
     }, { signal: overviewController.signal });
     store.overview = data;
-    if (data.total > 0 && data.users.length === 0 && store.page > 1) {
-      store.page = Math.max(1, Math.ceil(data.total / data.per_page));
-      return loadOverview();
-    }
   } catch (e) {
     if (e.name === 'AbortError') return;
     store.error = e.body && e.body.message ? e.body.message : t('Could not load the overview.');
@@ -67,8 +61,7 @@ export async function savePrefs(patch) {
     throw e;
   }
   if (store.prefs.find_time_enabled === false) store.selected = [];
-  const reload = ['days', 'page_size', 'demo_enabled', 'demo_visible', 'my_team_visible'].some((k) => k in patch && patch[k] !== before[k]);
-  if ('page_size' in patch) store.page = 1;
+  const reload = ['days', 'demo_enabled', 'demo_visible', 'my_team_visible'].some((k) => k in patch && patch[k] !== before[k]);
   if (reload) loadOverview();
 }
 
@@ -79,7 +72,6 @@ export async function resetSettings() {
   applyTheme(store.prefs.theme);
   document.documentElement.lang = store.prefs.locale;
   store.selected = [];
-  store.page = 1;
   loadOverview();
 }
 
@@ -112,7 +104,6 @@ export function clearSelection() {
 
 export function setFrom(ymd) {
   store.from = ymd;
-  store.page = 1;
   loadOverview();
 }
 
@@ -122,11 +113,6 @@ export function shiftDays(n) {
 
 export function goToday() {
   setFrom(todayYmd());
-}
-
-export function setPage(p) {
-  store.page = p;
-  loadOverview();
 }
 
 export async function syncDirectory() {

@@ -2,7 +2,7 @@ import { store } from '../store.js';
 import { t } from '../i18n.js';
 import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd, isoWeek } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
-import { loadOverview, setPage, savePrefs, openModal, toggleSelect, setSelection } from '../actions.js';
+import { loadOverview, savePrefs, openModal, toggleSelect, setSelection } from '../actions.js';
 
 const { computed, ref, watch, onMounted, onBeforeUnmount } = Vue;
 
@@ -83,19 +83,7 @@ export default {
     function moveTip(e) { if (store.tooltip) { store.tooltip.x = e.clientX; store.tooltip.y = e.clientY; } }
     function hideTip() { store.tooltip = null; }
 
-    const totalPages = computed(() => (store.overview ? Math.max(1, Math.ceil(store.overview.total / store.overview.per_page)) : 1));
-    const pages = computed(() => {
-      const total = totalPages.value; const cur = store.page;
-      const set = new Set([1, total, cur, cur - 1, cur + 1, cur - 2, cur + 2].filter((p) => p >= 1 && p <= total));
-      return [...set].sort((a, b) => a - b);
-    });
-    const rangeText = computed(() => {
-      const o = store.overview;
-      if (!o || !o.total) return '';
-      const from = (o.page - 1) * o.per_page + 1;
-      const to = Math.min(o.total, o.page * o.per_page);
-      return t('Showing {from}–{to} of {total}', { from, to, total: o.total });
-    });
+    const countText = computed(() => (store.overview && store.overview.total ? t('{n} people', { n: store.overview.total }) : ''));
     function errorText(code) {
       if (code === 'no_mailbox') return t('No mailbox');
       if (code === 'consent_required' || code === 'ErrorAccessDenied') return t('Consent needed');
@@ -104,7 +92,7 @@ export default {
     function selectUser(u) { openModal('heatmap', { ids: [u.id] }); }
     function weekBadge(d, i) { return store.prefs.show_week_numbers && (i === 0 || parseYmd(d).getDay() === 1) ? isoWeek(d) : null; }
     function isSelected(id) { return store.selected.includes(id); }
-    // Corner checkbox: selects every row on the page, or clears when all are selected.
+    // Corner checkbox: selects every row, or clears when all are selected.
     const allState = computed(() => {
       const ids = users.value.map((u) => u.id);
       const count = ids.filter((id) => store.selected.includes(id)).length;
@@ -118,7 +106,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, countText, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -161,20 +149,8 @@ export default {
           </template>
         </div>
       </div>
-      <div class="pager" v-if="store.overview && store.overview.total">
-        <span>{{ rangeText }}</span>
-        <span class="grow"></span>
-        <select class="select inline" :value="store.prefs.page_size" @change="savePrefs({ page_size: Number($event.target.value) })" :aria-label="t('Rows per page')">
-          <option v-for="n in store.options.page_sizes" :key="n" :value="n">{{ n }} {{ t('per page') }}</option>
-        </select>
-        <span class="pages" v-if="totalPages > 1">
-          <button type="button" :disabled="store.page <= 1" @click="setPage(store.page - 1)"><icon name="chevron-left" :size="14"></icon></button>
-          <template v-for="(p, i) in pages" :key="p">
-            <span v-if="i > 0 && pages[i - 1] !== p - 1" class="muted">…</span>
-            <button type="button" :class="{ active: p === store.page }" @click="setPage(p)">{{ p }}</button>
-          </template>
-          <button type="button" :disabled="store.page >= totalPages" @click="setPage(store.page + 1)"><icon name="chevron-right" :size="14"></icon></button>
-        </span>
+      <div class="pager" v-if="countText">
+        <span>{{ countText }}</span>
       </div>
     </section>`,
 };

@@ -376,12 +376,6 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 @keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
 
 .pager { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--muted); }
-.pager .grow { flex: 1; }
-.pager .pages { display: inline-flex; gap: 2px; }
-.pager .pages button { min-width: 30px; height: 30px; border: 0; background: transparent; border-radius: 6px; cursor: pointer; color: var(--ink); font-family: var(--font-mono); }
-.pager .pages button:hover { background: var(--surface-2); }
-.pager .pages button.active { background: var(--accent); color: var(--accent-ink); }
-.pager .pages button:disabled { opacity: .4; cursor: default; }
 
 .tooltip { position: fixed; z-index: 60; background: var(--ink); color: var(--ground); padding: 8px 10px; border-radius: 8px; font-size: 12px; max-width: 280px; pointer-events: none; box-shadow: var(--shadow-2); animation: pop .12s var(--ease); }
 [data-theme="dark"] .tooltip { background: #f1f3f7; color: #1b1f26; }

@@ -33,8 +33,6 @@ export default {
           </select></label>
         <label class="field"><span>{{ t('Days to show') }}</span>
           <select class="select" :value="store.prefs.days" @change="set({ days: Number($event.target.value) })"><option v-for="d in store.options.day_options" :key="d" :value="d">{{ d }}</option></select></label>
-        <label class="field"><span>{{ t('Rows per page') }}</span>
-          <select class="select" :value="store.prefs.page_size" @change="set({ page_size: Number($event.target.value) })"><option v-for="n in store.options.page_sizes" :key="n" :value="n">{{ n }}</option></select></label>
         <label class="field"><span>{{ t('Working hours') }}</span>
           <span class="row"><input class="input" type="time" :value="store.prefs.work_start" @change="set({ work_start: $event.target.value })"><span class="muted">–</span><input class="input" type="time" :value="store.prefs.work_end" @change="set({ work_end: $event.target.value })"></span></label>
       </div>

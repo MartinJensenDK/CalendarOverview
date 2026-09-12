@@ -24,7 +24,7 @@ class ApiTest extends TestCase
         $names = array_column($data['menu'][0]['members'], 'name');
         $this->assertSame(['Test Person', 'Paula Peer', 'Peter Peer'], $names);
         $this->assertCount(4, $data['color_rules']);
-        $this->assertSame(50, $data['preferences']['page_size']);
+        $this->assertSame(7, $data['preferences']['days']);
     }
 
     public function test_settings_are_saved_and_validated(): void
@@ -33,7 +33,7 @@ class ApiTest extends TestCase
         $this->actingAs($user)->putJson('/api/settings', ['theme' => 'dark', 'locale' => 'da', 'days' => 14, 'row_height' => 'lg'])->assertOk()
             ->assertJsonPath('preferences.theme', 'dark')->assertJsonPath('preferences.days', 14);
         $this->assertSame('da', $user->fresh()->pref('locale'));
-        $this->actingAs($user)->putJson('/api/settings', ['page_size' => 33])->assertStatus(422);
+        $this->actingAs($user)->putJson('/api/settings', ['days' => 400])->assertStatus(422);
         $this->actingAs($user)->putJson('/api/settings', ['theme' => 'blue'])->assertStatus(422);
     }
 
@@ -52,7 +52,7 @@ class ApiTest extends TestCase
         $this->assertSame(5, $user->colorRules()->count());
     }
 
-    public function test_enabling_demo_seeds_150_users_and_pages_50(): void
+    public function test_enabling_demo_seeds_150_users_and_shows_all_at_once(): void
     {
         $user = Fixtures::user();
         $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
@@ -60,17 +60,14 @@ class ApiTest extends TestCase
 
         $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk()->json();
         $this->assertSame(151, $data['total']); // me + 150 demo users
-        $this->assertCount(50, $data['users']);
+        $this->assertCount(151, $data['users']); // no paging: everyone is on one scrollable page
         $this->assertCount(7, $data['days']);
-        $this->assertSame(50, $data['per_page']);
+        $this->assertArrayNotHasKey('per_page', $data);
         $demoRow = collect($data['users'])->first(fn ($u) => $u['is_demo']);
         $this->assertNotEmpty($demoRow['items']);
         $first = $demoRow['items'][0];
         $this->assertArrayHasKey('st', $first);
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $first['s']);
-
-        $page2 = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&page=2&per_page=100')->assertOk()->json();
-        $this->assertCount(51, $page2['users']);
     }
 
     public function test_signed_in_user_is_always_first_in_overview(): void

@@ -12,7 +12,7 @@ class PreferencesTest extends TestCase
         $merged = Preferences::merge(['theme' => 'dark', 'bogus' => 1]);
         $this->assertSame('dark', $merged['theme']);
         $this->assertArrayNotHasKey('bogus', $merged);
-        $this->assertSame(50, $merged['page_size']);
+        $this->assertArrayNotHasKey('page_size', $merged);
         $this->assertSame(7, $merged['days']);
     }
 }

@@ -6,8 +6,8 @@ const boot = window.__APP__ || {};
 export const store = reactive({
   ready: false,
   me: null,
-  prefs: { theme: boot.theme || 'system', locale: boot.locale || 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: !!boot.menuCollapsed, mini_months: 1, show_week_numbers: false, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7, menu_order: [] },
-  options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], page_sizes: [25, 50, 100, 200], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
+  prefs: { theme: boot.theme || 'system', locale: boot.locale || 'en', days: 7, row_height: 'md', show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: !!boot.menuCollapsed, mini_months: 1, show_week_numbers: false, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7, menu_order: [] },
+  options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   rules: [],
   menu: [],
   directory: { synced_at: null, user_count: 0, has_managers: false, error: null },
@@ -15,7 +15,6 @@ export const store = reactive({
 
   // Overview
   from: null,           // 'YYYY-MM-DD' first visible day
-  page: 1,
   overview: null,       // last API response
   loading: false,
   error: null,

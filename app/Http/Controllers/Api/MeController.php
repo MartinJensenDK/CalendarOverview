@@ -55,7 +55,6 @@ class MeController extends Controller
                 'themes' => Preferences::THEMES,
                 'locales' => Preferences::LOCALES,
                 'row_heights' => Preferences::ROW_HEIGHTS,
-                'page_sizes' => Preferences::PAGE_SIZES,
                 'day_options' => Preferences::DAY_OPTIONS,
                 'max_days' => config('calendar.max_days'),
                 'statuses' => ColorRule::STATUSES,
