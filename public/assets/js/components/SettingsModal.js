@@ -47,7 +47,18 @@ export default {
         <label class="field"><span>{{ t('Days to show') }}</span>
           <select class="select" :value="store.prefs.days" @change="set({ days: Number($event.target.value) })"><option v-for="d in store.options.day_options" :key="d" :value="d">{{ d }}</option></select></label>
       </div>
-      <div class="field"><span class="field-label">{{ t('Working hours') }}</span>
+      <label class="switch block" style="margin-bottom:8px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers_overview" @change="set({ show_week_numbers_overview: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
+      <div class="field-label" style="margin-top:18px">{{ t('Month calendar') }}</div>
+      <div class="field"><span>{{ t('Months shown') }}</span>
+        <div class="steps compact" role="group" :aria-label="t('Months shown')">
+          <button type="button" :aria-pressed="store.prefs.mini_months === 1 ? 'true' : 'false'" @click="set({ mini_months: 1 })">{{ t('1 month') }}</button>
+          <button type="button" :aria-pressed="store.prefs.mini_months === 2 ? 'true' : 'false'" @click="set({ mini_months: 2 })">{{ t('2 months') }}</button>
+        </div></div>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers" @change="set({ show_week_numbers: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
+      <div class="field-label" style="margin-top:18px">{{ t('Find free time') }}</div>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.find_time_enabled" @change="set({ find_time_enabled: $event.target.checked })"><span class="track"></span>{{ t('Show the “Find free time” section in the menu') }}</label>
+      <div class="field" style="margin-top:4px;margin-bottom:14px"><span class="field-label">{{ t('Working hours') }}</span>
         <span class="hours-info" tabindex="0">{{ t('Working hours are read from Outlook') }}<span class="i"><icon name="info" :size="14"></icon></span>
           <div class="hours-pop" role="tooltip">
             <div class="hd">{{ t('Your working hours in the period shown') }}</div>
@@ -64,17 +75,6 @@ export default {
             <div v-else class="muted">{{ t('No data yet') }}</div>
           </div>
         </span></div>
-      <label class="switch block" style="margin-bottom:8px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
-      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers_overview" @change="set({ show_week_numbers_overview: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
-      <div class="field-label" style="margin-top:18px">{{ t('Month calendar') }}</div>
-      <div class="field"><span>{{ t('Months shown') }}</span>
-        <div class="steps compact" role="group" :aria-label="t('Months shown')">
-          <button type="button" :aria-pressed="store.prefs.mini_months === 1 ? 'true' : 'false'" @click="set({ mini_months: 1 })">{{ t('1 month') }}</button>
-          <button type="button" :aria-pressed="store.prefs.mini_months === 2 ? 'true' : 'false'" @click="set({ mini_months: 2 })">{{ t('2 months') }}</button>
-        </div></div>
-      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers" @change="set({ show_week_numbers: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
-      <div class="field-label" style="margin-top:18px">{{ t('Find free time') }}</div>
-      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.find_time_enabled" @change="set({ find_time_enabled: $event.target.checked })"><span class="track"></span>{{ t('Show the “Find free time” section in the menu') }}</label>
       <div class="field-label" style="margin-top:18px">{{ t('Demo data') }}</div>
       <label class="switch block" style="align-items:flex-start"><input type="checkbox" :checked="store.prefs.demo_enabled" @change="set({ demo_enabled: $event.target.checked })"><span class="track" style="margin-top:2px"></span><span>{{ t('Demo data') }}<br><small class="muted">{{ t('Show 150 fictional people with generated calendars. Handy for trying the app before your colleagues are in a group.') }}</small></span></label>
       <div class="row" style="margin-top:16px"><span class="muted" style="font-size:12px">{{ t('Version') }} {{ store.app.version }}</span></div>
