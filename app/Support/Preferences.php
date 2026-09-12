@@ -40,6 +40,10 @@ class Preferences
             'mini_months' => 1,
             'show_week_numbers' => false,
             'find_time_enabled' => true,
+            'heatmap_duration' => 60,
+            'heatmap_work_only' => true,
+            'heatmap_show_weekends' => true,
+            'heatmap_days' => 7,
         ];
     }
 
@@ -70,6 +74,10 @@ class Preferences
             'mini_months' => ['sometimes', 'integer', 'in:1,2'],
             'show_week_numbers' => ['sometimes', 'boolean'],
             'find_time_enabled' => ['sometimes', 'boolean'],
+            'heatmap_duration' => ['sometimes', 'integer', 'in:30,60,90,120'],
+            'heatmap_work_only' => ['sometimes', 'boolean'],
+            'heatmap_show_weekends' => ['sometimes', 'boolean'],
+            'heatmap_days' => ['sometimes', 'integer', 'min:1', 'max:366'],
         ];
     }
 }

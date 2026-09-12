@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 60, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], page_sizes: [25, 50, 100, 200], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -185,6 +185,8 @@ const weekendToggle = [...modalRef.querySelectorAll('.switch')].find((l) => l.te
 const before = w.document.querySelectorAll('.heat .hh').length;
 weekendToggle.click(); await tick();
 assert(w.document.querySelectorAll('.heat .hh').length !== before, 'weekend toggle changes the heatmap columns');
+await tick(500);
+assert(calls.some((c) => c === 'PUT /api/settings') && store.prefs.heatmap_show_weekends === false, 'heatmap choices are saved as preferences');
 closeModal(); await tick();
 
 // Confirm dialog IS dismissable

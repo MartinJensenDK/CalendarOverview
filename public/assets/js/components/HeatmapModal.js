@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
-import { closeModal } from '../actions.js';
+import { closeModal, savePrefs } from '../actions.js';
 import { todayYmd, addDays, isWeekend, weekday, dayLabel, hhmmToMinutes, minutesToHhmm, parseYmd, localIso } from '../util/date.js';
 
 const { ref, reactive, computed, watch, onMounted } = Vue;
@@ -16,7 +16,26 @@ export default {
   setup(props) {
     const ids = ref([...props.ids]);
     const addingMore = ref(false);
-    const form = reactive({ from: todayYmd(), to: addDays(todayYmd(), 7), slot: store.prefs.heatmap_slot || 30, workOnly: true, showWeekends: !!store.prefs.show_weekends, duration: 60, subject: '' });
+    const p = store.prefs;
+    const form = reactive({
+      from: todayYmd(),
+      to: addDays(todayYmd(), Math.min(MAX_DAYS, p.heatmap_days || 7)),
+      slot: p.heatmap_slot || 30,
+      workOnly: p.heatmap_work_only !== false,
+      showWeekends: p.heatmap_show_weekends !== false,
+      duration: p.heatmap_duration || 60,
+      subject: '',
+    });
+    // Remember the choices on the server (they follow the user to other devices).
+    let saveTimer = null;
+    watch(() => [form.slot, form.workOnly, form.showWeekends, form.duration, form.from, form.to], () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        const span = Math.max(1, Math.min(MAX_DAYS, Math.round((parseYmd(form.to) - parseYmd(form.from)) / 86400000)));
+        const patch = { heatmap_slot: form.slot, heatmap_work_only: form.workOnly, heatmap_show_weekends: form.showWeekends, heatmap_duration: form.duration, heatmap_days: span };
+        if (Object.keys(patch).some((k) => store.prefs[k] !== patch[k])) savePrefs(patch).catch(() => {});
+      }, 400);
+    });
     const data = ref(null);
     const loading = ref(false);
     const sel = ref(null); // { day, start, end } minutes
