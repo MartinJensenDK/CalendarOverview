@@ -255,11 +255,11 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .member.me .txt b::after { content: "•"; color: var(--accent); margin-left: 5px; }
 .members-empty { padding: 4px 6px 8px 30px; color: var(--muted); font-size: 12px; }
 .sidebar-foot { border-top: 1px solid var(--line); padding: 8px 10px 10px; }
+.minical { padding-right: 0; }
 .minical-head { display: flex; align-items: center; gap: 2px; margin-bottom: 2px; }
 .minical-head .expand { width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; display: grid; place-items: center; }
 .minical-head .expand:hover { background: var(--surface-2); color: var(--ink); }
-.minical-head .expand .icon { transition: transform .16s var(--ease); transform: rotate(180deg); }
-.minical-head .expand.open .icon { transform: rotate(0deg); }
+.minical-head .expand { margin-left: auto; margin-right: -4px; }
 .minical-head .minical-title { padding: 0 4px; min-width: 0; white-space: nowrap; }
 .minical-month + .minical-month { margin-top: 8px; }
 .minical-title { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: capitalize; padding: 2px 4px 4px; }
