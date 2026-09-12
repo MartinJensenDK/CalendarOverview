@@ -289,7 +289,9 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .selection-bar .avatars .avatar { width: 22px; height: 22px; margin-left: -6px; border: 2px solid var(--accent-soft); }
 .selection-bar .avatars .avatar:first-child { margin-left: 0; }
 .findtime, .menu-section { padding: 4px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
-.findtime-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.findtime-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.findtime-head h2 { flex: 1; }
+.findtime.collapsed { padding-bottom: 6px; }
 .findtime-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
 .findtime-head .muted { font-size: 12px; font-family: var(--font-mono); }
 .findtime-head .expand { width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; display: grid; place-items: center; margin-right: -4px; }
@@ -374,6 +376,7 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid .cell.weekend { background: repeating-linear-gradient(135deg, var(--weekend) 0 6px, var(--surface-2) 6px 7px); }
 .grid .cell.today { box-shadow: inset 0 0 0 999px rgba(255, 178, 36, .07); }
 .grid .cell .band { position: absolute; top: 0; bottom: 0; background: var(--workband); }
+.grid.hour-grid .cell::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1; background-image: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px var(--hour-w)); background-position: var(--hour-off) 0; background-size: 100% 100%; opacity: .9; }
 .grid .cell .band .loc { position: absolute; top: 3px; left: 4px; line-height: 0; color: var(--muted); opacity: .8; pointer-events: auto; }
 .grid.rh-sm .cell .band .loc { display: none; }
 .hours-info { position: relative; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); cursor: help; height: 34px; }

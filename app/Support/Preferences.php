@@ -17,7 +17,7 @@ class Preferences
     public const DAY_OPTIONS = [1, 3, 5, 7, 10, 14, 21, 31];
 
     /** Keys shown on the Settings page; only these are touched by "Reset all settings". */
-    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'show_week_numbers_overview', 'start_monday', 'find_time_enabled', 'vacation_enabled', 'demo_enabled'];
+    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'show_week_numbers_overview', 'start_monday', 'show_hour_grid', 'find_time_enabled', 'vacation_enabled', 'demo_enabled'];
 
     public static function defaults(): array
     {
@@ -36,6 +36,8 @@ class Preferences
             'show_week_numbers' => false,
             'show_week_numbers_overview' => false,
             'start_monday' => false,
+            'show_hour_grid' => true,
+            'find_time_collapsed' => false,
             'find_time_enabled' => true,
             'vacation_enabled' => true,
             'vacation_days' => 92,
@@ -73,6 +75,8 @@ class Preferences
             'show_week_numbers' => ['sometimes', 'boolean'],
             'show_week_numbers_overview' => ['sometimes', 'boolean'],
             'start_monday' => ['sometimes', 'boolean'],
+            'show_hour_grid' => ['sometimes', 'boolean'],
+            'find_time_collapsed' => ['sometimes', 'boolean'],
             'find_time_enabled' => ['sometimes', 'boolean'],
             'vacation_enabled' => ['sometimes', 'boolean'],
             'vacation_days' => ['sometimes', 'integer', 'in:31,92,183,366'],

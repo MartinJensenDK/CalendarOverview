@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, show_hour_grid: true, find_time_collapsed: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -244,6 +244,14 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   rows[2].dispatchEvent(new w.Event('drop', { bubbles: true })); await tick(60);
   assert(calls.some((c) => c === 'POST /api/groups/reorder') && store.menu[0].id === 8, 'dragging My team below a group reorders the menu (got ' + store.menu.map((g) => g.id).join(',') + ')');
 }
+
+// Hour grid + collapsible Find free time
+{ assert(w.document.querySelector('.grid.hour-grid') && w.document.querySelector('.grid.hour-grid').style.getPropertyValue('--hour-w'), 'hour grid on by default with computed hour width');
+  store.prefs.show_hour_grid = false; await tick(); assert(!w.document.querySelector('.grid.hour-grid'), 'hour grid can be switched off'); store.prefs.show_hour_grid = true; await tick();
+  w.document.querySelector('.findtime h2').click(); await tick(60);
+  assert(store.prefs.find_time_collapsed === true && !w.document.querySelector('.findtime .btn.success') && w.document.querySelector('.findtime h2'), 'find free time collapses to its heading');
+  w.document.querySelector('.findtime .expand').click(); await tick(60);
+  assert(store.prefs.find_time_collapsed === false && w.document.querySelector('.findtime .btn.success'), 'find free time expands again'); }
 
 // Vacation calendar
 { assert(w.document.querySelector('.menu-section.vacation') && w.document.querySelector('.menu-section.vacation .btn').textContent.includes(t('Open vacation calendar')), 'sidebar has the vacation calendar section');

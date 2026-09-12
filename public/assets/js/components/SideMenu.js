@@ -52,8 +52,9 @@ export default {
     }
     function onDragEnd() { dragId.value = null; dropTarget.value = null; }
 
+    function toggleFindTime() { savePrefs({ find_time_collapsed: !store.prefs.find_time_collapsed }).catch(() => {}); }
     function toggleVacation() { savePrefs({ vacation_collapsed: !store.prefs.vacation_collapsed }).catch(() => {}); }
-    return { store, t, entries, selectedUsers, clearSelection, toggleVacation, label, kindLabel, hint, toggleGroup, remove, resyncGroup, openModal, dragId, dropTarget, onDragStart, onDragOver, onDrop, onDragEnd };
+    return { store, t, entries, selectedUsers, clearSelection, toggleVacation, toggleFindTime, label, kindLabel, hint, toggleGroup, remove, resyncGroup, openModal, dragId, dropTarget, onDragStart, onDragOver, onDrop, onDragEnd };
   },
   template: `
     <aside class="sidebar">
@@ -82,8 +83,11 @@ export default {
         </div>
       </div>
       <div class="sidebar-foot">
-        <div class="findtime" v-if="store.prefs.find_time_enabled">
-          <div class="findtime-head"><h2>{{ t('Find free time') }}</h2><span class="muted" v-if="store.selected.length">{{ t('{n} selected', { n: store.selected.length }) }}</span></div>
+        <div class="findtime" :class="{ collapsed: store.prefs.find_time_collapsed }" v-if="store.prefs.find_time_enabled">
+          <div class="findtime-head clickable" @click="toggleFindTime"><h2>{{ t('Find free time') }}</h2><span class="muted" v-if="store.selected.length">{{ t('{n} selected', { n: store.selected.length }) }}</span>
+            <button type="button" class="expand" @click.stop="toggleFindTime" :title="store.prefs.find_time_collapsed ? t('Expand') : t('Collapse')" :aria-label="store.prefs.find_time_collapsed ? t('Expand') : t('Collapse')" :aria-expanded="store.prefs.find_time_collapsed ? 'false' : 'true'"><icon :name="store.prefs.find_time_collapsed ? 'chevrons-up' : 'chevrons-down'" :size="14"></icon></button>
+          </div>
+          <template v-if="!store.prefs.find_time_collapsed">
           <div class="findtime-body">
             <span class="avatars" v-if="selectedUsers.length"><img v-for="u in selectedUsers.slice(0, 8)" :key="u.id" class="avatar" :src="u.photo_url" :title="u.name" alt=""></span>
             <span class="muted hint" v-else>{{ t('Select people in the overview to compare their availability.') }}</span>
@@ -93,6 +97,7 @@ export default {
             <span class="grow"></span>
             <button type="button" class="btn sm success" :disabled="!store.selected.length" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
           </div>
+          </template>
         </div>
         <div class="menu-section vacation" :class="{ collapsed: store.prefs.vacation_collapsed }" v-if="store.prefs.vacation_enabled">
           <div class="findtime-head clickable" @click="toggleVacation"><h2>{{ t('Vacation calendar') }}</h2>

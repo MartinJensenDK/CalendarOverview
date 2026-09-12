@@ -28,7 +28,7 @@ const overviewUsers = Array.from({ length: USERS }, (_, i) => user(i, DAYS));
 const availUsers = Array.from({ length: USERS }, (_, i) => user(i, HDAYS));
 const me = {
   user: { id: 'u0', name: 'User 0', email: 'u0@x.dk', initials: 'U', photo_url: '/api/photos/u0', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: DAYS, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: true, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: HDAYS },
+  preferences: { theme: 'light', locale: 'en', days: DAYS, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: true, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, show_hour_grid: true, find_time_collapsed: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: HDAYS },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 366, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [], menu: [], directory: { synced_at: null, user_count: USERS, has_managers: true, error: null }, app: { name: 'Calendar overview', version: 'b', admin_consent_url: null },
 };

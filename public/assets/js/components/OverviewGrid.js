@@ -33,6 +33,11 @@ export default {
       const end = Math.min(1440, Math.max(r.end + 60, start + 120));
       return { start, end, len: end - start };
     });
+    // Vertical line at every full hour inside the strip (Settings › Show hour grid).
+    const hourGrid = computed(() => {
+      const s = strip.value;
+      return { '--hour-w': `${(60 / s.len) * 100}%`, '--hour-off': `${(((60 - (s.start % 60)) % 60) / s.len) * 100}%` };
+    });
     // Working-hours bands per person and day: each person's own hours, which can differ per day.
     const bandIndex = computed(() => {
       const map = new Map();
@@ -155,7 +160,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, skDays, skBlocks, bandsFor, locIcon, locLabel, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, hourGrid, skDays, skBlocks, bandsFor, locIcon, locLabel, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -177,7 +182,7 @@ export default {
             <div v-for="(d, j) in skDays" :key="d" class="cell" :class="{ weekend: isWeekend(d) }"><div class="band" v-if="!isWeekend(d)" style="left:10%;width:70%"></div><span v-for="(b, k) in skBlocks(i, j)" :key="k" class="sk sk-blk" :style="b"></span></div>
           </template>
         </div>
-        <div v-else class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid }]" :style="{ '--days': days.length }">
+        <div v-else class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid, 'hour-grid': store.prefs.show_hour_grid }]" :style="{ '--days': days.length, ...hourGrid }">
           <div class="h corner">
             <label class="pick-all" v-if="store.prefs.find_time_enabled" :title="allState.all ? t('Clear selection') : t('Select everyone on this page')">
               <input type="checkbox" ref="allBox" :checked="allState.all" @change="toggleAll" :aria-label="allState.all ? t('Clear selection') : t('Select everyone on this page')">
