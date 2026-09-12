@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -43,12 +43,12 @@ const me = {
 const overview = {
   from: '2026-09-14', to: '2026-09-21', days, tz: 'UTC', total: 3, fetched_at: new Date().toISOString(),
   users: [
-    { ...member('me', 'Anna Andersen', 'Designer'), is_me: true, error: null, items: [
+    { ...member('me', 'Anna Andersen', 'Designer'), is_me: true, error: null, work: ['14', '15', '16', '17', '18'].map((d) => ({ s: `2026-09-${d}T06:00:00Z`, e: `2026-09-${d}T14:00:00Z`, loc: 'office' })), items: [
       { s: '2026-09-14T07:00:00Z', e: '2026-09-14T08:30:00Z', st: 'busy', sub: 'Team sync', loc: 'Teams', ad: false, pr: false },
       { s: '2026-09-15T00:00:00Z', e: '2026-09-16T00:00:00Z', st: 'oof', sub: 'Vacation', loc: null, ad: true, pr: false },
     ] },
-    { ...member('p1', 'Peter Peer', 'Engineer'), is_me: false, error: null, items: [{ s: '2026-09-16T11:00:00Z', e: '2026-09-16T12:00:00Z', st: 'tentative', sub: null, loc: null, ad: false, pr: true }] },
-    { ...member('o1', 'Otto Other', 'Account Manager'), is_me: false, error: 'no_mailbox', items: [] },
+    { ...member('p1', 'Peter Peer', 'Engineer'), is_me: false, error: null, work: [{ s: '2026-09-14T06:00:00Z', e: '2026-09-14T14:00:00Z', loc: null }, { s: '2026-09-15T06:00:00Z', e: '2026-09-15T14:00:00Z', loc: null }, { s: '2026-09-16T06:00:00Z', e: '2026-09-16T14:00:00Z', loc: null }, { s: '2026-09-17T07:00:00Z', e: '2026-09-17T13:00:00Z', loc: 'remote' }], items: [{ s: '2026-09-16T11:00:00Z', e: '2026-09-16T12:00:00Z', st: 'tentative', sub: null, loc: null, ad: false, pr: true }] },
+    { ...member('o1', 'Otto Other', 'Account Manager'), is_me: false, error: 'no_mailbox', work: [], items: [] },
   ],
 };
 const availability = { from: '2026-09-14', to: '2026-09-21', days, fetched_at: '', users: overview.users.slice(0, 2) };
@@ -90,6 +90,12 @@ assert(store.ready, 'store ready after loadMe');
 assert(html().includes('Calendar overview'), 'headline rendered');
 assert(html().includes('My team') && html().includes('Sales') && html().includes('Board'), 'menu groups rendered');
 assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows rendered');
+{ const cells = w.document.querySelectorAll('.grid .cell');
+  const bands = (i) => cells[i].querySelectorAll('.band').length;
+  assert(bands(0) === 1 && bands(5) === 0, 'own row: working-hours band on Monday, none on Saturday');
+  assert(bands(7 + 3) === 1 && bands(7 + 4) === 0, 'colleague: band on Thursday, none on the Friday off (hours differ per day)');
+  assert(bands(14 + 0) === 1 && bands(14 + 5) === 0, 'person without reported hours falls back to weekday default');
+  assert(cells[7 + 3].querySelector('.band').style.left !== cells[7].querySelector('.band').style.left, 'band position follows that day\'s start time'); }
 assert(!w.document.querySelector('.pager'), 'no footer bar under the grid');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
 const blocks = w.document.querySelectorAll('.grid .blk');
@@ -172,7 +178,11 @@ assert(allBox.indeterminate === true, 'corner checkbox shows indeterminate for p
 toggleSelect('me'); await tick();
 openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
 const cells = w.document.querySelectorAll('.heat .hc');
-assert(cells.length === 7 * 18, `heatmap cells for 7 days x 18 slots (got ${cells.length})`);
+assert(cells.length === 7 * 16, `heatmap range spans everyone's hours 08–16: 7 days x 16 slots (got ${cells.length})`);
+cells[4].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
+assert([...w.document.querySelectorAll('.tooltip')].some((el) => /1 of 2 free/.test(el.textContent)), 'Friday 08:00: only one person works, so 1 of 2 free');
+cells[5].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
+assert([...w.document.querySelectorAll('.tooltip')].some((el) => /0 of 2 free/.test(el.textContent)), 'Saturday: nobody works, so 0 of 2 free');
 cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick();
 assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/0/deeplink/compose'), 'slot selection shows Outlook link');
 cells[3].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();

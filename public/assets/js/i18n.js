@@ -98,7 +98,7 @@ const da = {
   'Comfortable': 'Rummelig',
   'Days to show': 'Antal dage',
   'Show weekends': 'Vis weekender',
-  'Working hours': 'Arbejdstid',
+  'Working hours are read from Microsoft 365 for each person and day (Outlook › Work hours and location), so they are not set here.': 'Arbejdstider hentes fra Microsoft 365 for hver person og dag (Outlook › Arbejdstider og placering), så de indstilles ikke her.',
   'from': 'fra',
   'to': 'til',
   'Demo data': 'Demodata',

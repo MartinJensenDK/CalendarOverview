@@ -36,6 +36,7 @@ class AvailabilityController extends Controller
             'fetched_at' => $result['fetched_at'],
             'users' => $users->map(fn (DirectoryUser $u) => $u->toSummary() + [
                 'items' => $result['items'][$u->id] ?? [],
+                'work' => $result['work'][$u->id] ?? [],
                 'error' => $result['errors'][$u->id] ?? null,
             ])->values(),
         ]);

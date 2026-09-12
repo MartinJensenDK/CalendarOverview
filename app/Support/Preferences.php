@@ -17,7 +17,7 @@ class Preferences
     public const DAY_OPTIONS = [1, 3, 5, 7, 10, 14, 21, 31];
 
     /** Keys shown on the Settings page; only these are touched by "Reset all settings". */
-    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'work_start', 'work_end', 'show_weekends', 'mini_months', 'show_week_numbers', 'find_time_enabled', 'demo_enabled'];
+    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'find_time_enabled', 'demo_enabled'];
 
     public static function defaults(): array
     {
@@ -27,8 +27,6 @@ class Preferences
             'days' => 7,
             'row_height' => 'md',
             'show_weekends' => true,
-            'work_start' => '08:00',
-            'work_end' => '17:00',
             'heatmap_slot' => 30,
             'demo_enabled' => false,
             'my_team_visible' => true,
@@ -61,8 +59,6 @@ class Preferences
             'days' => ['sometimes', 'integer', 'min:1', 'max:31'],
             'row_height' => ['sometimes', 'in:'.implode(',', self::ROW_HEIGHTS)],
             'show_weekends' => ['sometimes', 'boolean'],
-            'work_start' => ['sometimes', 'date_format:H:i'],
-            'work_end' => ['sometimes', 'date_format:H:i'],
             'heatmap_slot' => ['sometimes', 'integer', 'in:15,30,60'],
             'demo_enabled' => ['sometimes', 'boolean'],
             'my_team_visible' => ['sometimes', 'boolean'],

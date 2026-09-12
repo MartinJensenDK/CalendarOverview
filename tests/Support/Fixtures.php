@@ -53,13 +53,30 @@ class Fixtures
         SyncState::touchKey('directory_synced_at');
     }
 
-    public static function scheduleResponse(array $schedules): array
+    public static function scheduleResponse(array $schedules, ?array $workingHours = null): array
     {
         return ['value' => array_map(fn ($mail, $items) => [
             'scheduleId' => $mail,
             'availabilityView' => '',
             'scheduleItems' => $items,
+            'workingHours' => $workingHours ?? self::workingHours(),
         ], array_keys($schedules), $schedules)];
+    }
+
+    /** getSchedule's weekly working-hours pattern, as Graph reports it. */
+    public static function workingHours(array $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], string $start = '08:00:00.0000000', string $end = '16:00:00.0000000'): array
+    {
+        return ['daysOfWeek' => $days, 'startTime' => $start, 'endTime' => $end, 'timeZone' => ['name' => 'Romance Standard Time']];
+    }
+
+    /** One workHoursAndLocations occurrence (your own per-day plan). */
+    public static function occurrence(string $day, string $start, string $end, string $location = 'office'): array
+    {
+        return [
+            'id' => 'occ-'.$day, 'workLocationType' => $location,
+            'start' => ['dateTime' => $day.'T'.$start.':00.0000000', 'timeZone' => 'Romance Standard Time'],
+            'end' => ['dateTime' => $day.'T'.$end.':00.0000000', 'timeZone' => 'Romance Standard Time'],
+        ];
     }
 
     public static function item(string $start, string $end, string $status = 'busy', ?string $subject = null, string $tz = 'Europe/Copenhagen'): array

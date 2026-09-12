@@ -23,12 +23,12 @@ const mkDays = (n) => Array.from({ length: n }, (_, i) => ymd(new Date(Date.UTC(
 const days = mkDays(DAYS), hdays = mkDays(HDAYS);
 let seed = 1; const rnd = () => (seed = (seed * 48271) % 2147483647) / 2147483647;
 const items = (n) => { const out = []; for (const d of mkDays(n)) { for (let k = 0; k < 3; k++) { const h = 8 + Math.floor(rnd() * 8); out.push({ s: `${d}T${String(h).padStart(2, '0')}:00:00Z`, e: `${d}T${String(h + 1).padStart(2, '0')}:00:00Z`, st: 'busy', sub: 'Meeting ' + k, loc: null, ad: false, pr: false }); } } return out; };
-const user = (i, n) => ({ id: 'u' + i, name: 'User ' + i, email: `u${i}@x.dk`, title: 'T', department: 'D', initials: 'U', has_photo: false, photo_url: '/api/photos/u' + i, is_demo: true, is_me: i === 0, error: null, items: items(n) });
+const user = (i, n) => ({ id: 'u' + i, name: 'User ' + i, email: `u${i}@x.dk`, title: 'T', department: 'D', initials: 'U', has_photo: false, photo_url: '/api/photos/u' + i, is_demo: true, is_me: i === 0, error: null, work: [], items: items(n) });
 const overviewUsers = Array.from({ length: USERS }, (_, i) => user(i, DAYS));
 const availUsers = Array.from({ length: USERS }, (_, i) => user(i, HDAYS));
 const me = {
   user: { id: 'u0', name: 'User 0', email: 'u0@x.dk', initials: 'U', photo_url: '/api/photos/u0', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: DAYS, row_height: 'md', show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: true, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: HDAYS },
+  preferences: { theme: 'light', locale: 'en', days: DAYS, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: true, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: HDAYS },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 366, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [], menu: [], directory: { synced_at: null, user_count: USERS, has_managers: true, error: null }, app: { name: 'Calendar overview', version: 'b', admin_consent_url: null },
 };

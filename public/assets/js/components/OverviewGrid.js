@@ -1,7 +1,8 @@
 import { store } from '../store.js';
 import { t } from '../i18n.js';
-import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd, isoWeek, addDays } from '../util/date.js';
+import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, timeLabel, parseYmd, isoWeek, addDays } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
+import { hoursFor, hoursRange, DEFAULT_HOURS } from '../util/hours.js';
 import { loadOverview, savePrefs, openModal, toggleSelect, setSelection } from '../actions.js';
 
 const { computed, ref, watch, onMounted, onBeforeUnmount } = Vue;
@@ -25,18 +26,30 @@ export default {
       return store.overview.users.filter((u) => `${u.name} ${u.title || ''} ${u.email || ''} ${u.department || ''}`.toLowerCase().includes(q));
     });
 
-    // The day strip covers working hours ± 1 h so early/late meetings stay visible.
+    // The day strip spans everyone's working hours (from Graph) ± 1 h so early/late meetings stay visible.
     const strip = computed(() => {
-      const ws = hhmmToMinutes(store.prefs.work_start);
-      const we = hhmmToMinutes(store.prefs.work_end);
-      const start = Math.max(0, ws - 60);
-      const end = Math.min(1440, Math.max(we + 60, start + 120));
-      return { start, end, len: end - start, ws, we };
+      const r = (store.overview && hoursRange(store.overview.users, days.value)) || DEFAULT_HOURS;
+      const start = Math.max(0, r.start - 60);
+      const end = Math.min(1440, Math.max(r.end + 60, start + 120));
+      return { start, end, len: end - start };
     });
-    const bandStyle = computed(() => {
+    // Working-hours bands per person and day: each person's own hours, which can differ per day.
+    const bandIndex = computed(() => {
+      const map = new Map();
+      if (!store.overview) return map;
       const s = strip.value;
-      return { '--band-l': `${((s.ws - s.start) / s.len) * 100}%`, '--band-w': `${((s.we - s.ws) / s.len) * 100}%` };
+      for (const u of store.overview.users) {
+        for (const d of days.value) {
+          map.set(`${u.id}|${d}`, hoursFor(u, d).map((h) => {
+            const a = Math.max(h.sm, s.start); const b = Math.min(h.em, s.end);
+            return b > a ? { left: `${((a - s.start) / s.len) * 100}%`, width: `${((b - a) / s.len) * 100}%` } : null;
+          }).filter(Boolean));
+        }
+      }
+      return map;
     });
+    const NO_BANDS = [];
+    function bandsFor(user, day) { return bandIndex.value.get(`${user.id}|${day}`) || NO_BANDS; }
     const today = computed(() => todayYmd());
     const nowPct = computed(() => {
       const s = strip.value;
@@ -139,7 +152,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, skDays, skBlocks, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, skDays, skBlocks, bandsFor, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -158,10 +171,10 @@ export default {
           <div v-for="d in skDays" :key="d" class="h"><span class="sk" style="width:26px;height:9px"></span><span class="sk" style="width:46px;height:11px"></span></div>
           <template v-for="i in 12" :key="i">
             <div class="name"><span class="avatar sk circle"></span><span class="txt" style="flex:1"><span class="sk" :style="{ width: (70 + (i * 37) % 60) + 'px', height: '11px' }"></span><span class="sk" style="width:56px;height:8px"></span></span></div>
-            <div v-for="(d, j) in skDays" :key="d" class="cell" :class="{ weekend: isWeekend(d) }"><div class="band"></div><span v-for="(b, k) in skBlocks(i, j)" :key="k" class="sk sk-blk" :style="b"></span></div>
+            <div v-for="(d, j) in skDays" :key="d" class="cell" :class="{ weekend: isWeekend(d) }"><div class="band" v-if="!isWeekend(d)" style="left:10%;width:70%"></div><span v-for="(b, k) in skBlocks(i, j)" :key="k" class="sk sk-blk" :style="b"></span></div>
           </template>
         </div>
-        <div v-else class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid }]" :style="{ '--days': days.length, ...bandStyle }">
+        <div v-else class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid }]" :style="{ '--days': days.length }">
           <div class="h corner">
             <label class="pick-all" v-if="store.prefs.find_time_enabled" :title="allState.all ? t('Clear selection') : t('Select everyone on this page')">
               <input type="checkbox" ref="allBox" :checked="allState.all" @change="toggleAll" :aria-label="allState.all ? t('Clear selection') : t('Select everyone on this page')">
@@ -178,8 +191,8 @@ export default {
               <img class="avatar" :src="u.photo_url" alt="" loading="lazy">
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
             </div>
-            <div v-for="d in days" :key="u.id + d" v-memo="[blocksFor(u, d), d === today ? nowPct : null, u.error]" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
-              <div class="band"></div>
+            <div v-for="d in days" :key="u.id + d" v-memo="[blocksFor(u, d), bandsFor(u, d), d === today ? nowPct : null, u.error]" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
+              <div v-for="(b, k) in bandsFor(u, d)" :key="k" class="band" :style="b"></div>
               <div class="now" v-if="d === today && nowPct" :style="{ '--now-pct': nowPct }"></div>
               <div class="strip">
                 <div v-for="b in blocksFor(u, d)" :key="b.key" :class="b.cls" :style="b.style" @mouseenter="showTip($event, b, u)" @mousemove="moveTip" @mouseleave="hideTip">

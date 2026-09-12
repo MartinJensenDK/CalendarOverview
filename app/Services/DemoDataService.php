@@ -173,6 +173,50 @@ class DemoDataService
         return $items;
     }
 
+    /**
+     * Demo working hours: a handful of weekly patterns, some with shorter Fridays or a day off,
+     * plus an occasional late start, so hours visibly differ per person and per day.
+     */
+    public function workHours(DirectoryUser $user, CarbonImmutable $from, CarbonImmutable $to, string $tz): array
+    {
+        $index = (int) substr($user->id, strlen(self::PREFIX)) - 1;
+        $patterns = [
+            [[8, 0], [16, 0], null],   // 08–16
+            [[9, 0], [17, 0], null],   // 09–17
+            [[7, 30], [15, 30], null], // 07:30–15:30
+            [[8, 0], [16, 0], [[8, 0], [13, 0]]], // short Friday
+            [[8, 30], [16, 30], false], // Friday off
+        ];
+        [$start, $end, $friday] = $patterns[$index % count($patterns)];
+        $out = [];
+        $cursor = $from->setTimezone($tz)->startOfDay();
+        $limit = $to->setTimezone($tz);
+        while ($cursor->lt($limit)) {
+            if (! $cursor->isWeekend()) {
+                $rand = $this->rng('wh'.$user->id.$cursor->toDateString());
+                [$s, $e] = [$start, $end];
+                $skip = false;
+                if ($cursor->isFriday()) {
+                    if ($friday === false) {
+                        $skip = true;
+                    } elseif (is_array($friday)) {
+                        [$s, $e] = $friday;
+                    }
+                }
+                if (! $skip && $rand() < 0.12) {
+                    $s = [$s[0] + 1, $s[1]]; // a late start now and then
+                }
+                if (! $skip) {
+                    $loc = $rand() < 0.35 ? 'remote' : 'office';
+                    $out[] = ScheduleService::formatHours($cursor->setTime($s[0], $s[1])->utc(), $cursor->setTime($e[0], $e[1])->utc(), $loc);
+                }
+            }
+            $cursor = $cursor->addDay();
+        }
+
+        return $out;
+    }
+
     private function item(CarbonImmutable $start, CarbonImmutable $end, string $status, ?string $subject, ?string $location, bool $allDay, bool $private = false): array
     {
         return ScheduleService::format($start->utc(), $end->utc(), $status, $subject, $location, $allDay, $private);

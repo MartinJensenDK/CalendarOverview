@@ -2,7 +2,8 @@ import { api } from '../api.js';
 import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, savePrefs } from '../actions.js';
-import { todayYmd, addDays, isWeekend, weekday, dayLabel, hhmmToMinutes, minutesToHhmm, parseYmd, localIso } from '../util/date.js';
+import { todayYmd, addDays, isWeekend, weekday, dayLabel, minutesToHhmm, parseYmd, localIso } from '../util/date.js';
+import { hoursRange, isWorking, DEFAULT_HOURS } from '../util/hours.js';
 
 const { ref, reactive, computed, watch, onMounted } = Vue;
 
@@ -78,18 +79,20 @@ export default {
       load();
     }
 
+    const users = computed(() => (data.value ? data.value.users : []));
     const days = computed(() => (data.value ? data.value.days.filter((d) => form.showWeekends || !isWeekend(d)) : []));
+    // Visible range: everyone's working hours (from Graph) when "Working hours only" is on, else the whole day.
     const range = computed(() => {
-      const ws = form.workOnly ? hhmmToMinutes(store.prefs.work_start) : 0;
-      const we = form.workOnly ? hhmmToMinutes(store.prefs.work_end) : 1440;
-      return { start: ws, end: Math.max(we, ws + form.slot) };
+      if (!form.workOnly) return { start: 0, end: 1440 };
+      const r = hoursRange(users.value, days.value) || DEFAULT_HOURS;
+      const start = Math.floor(r.start / form.slot) * form.slot;
+      return { start, end: Math.max(Math.ceil(r.end / form.slot) * form.slot, start + form.slot) };
     });
     const slots = computed(() => {
       const out = [];
       for (let m = range.value.start; m < range.value.end; m += form.slot) out.push(m);
       return out;
     });
-    const users = computed(() => (data.value ? data.value.users : []));
 
     // Busy intervals per user per day in minutes since local midnight.
     const busyIndex = computed(() => {
@@ -108,12 +111,14 @@ export default {
       }
       return idx;
     });
-    function isFree(uid, day, start, end) {
-      const list = (busyIndex.value[uid] || {})[day] || [];
+    // Free = inside the person's own working hours that day (they can differ per day) and no busy item.
+    function isFree(user, day, start, end) {
+      if (!isWorking(user, day, start, end)) return false;
+      const list = (busyIndex.value[user.id] || {})[day] || [];
       return !list.some(([a, b]) => a < end && b > start);
     }
     function freeCount(day, start, end) {
-      return users.value.filter((u) => isFree(u.id, day, start, end)).length;
+      return users.value.filter((u) => isFree(u, day, start, end)).length;
     }
     // Red (nobody free) → amber (half) → green (everyone free), in muted modern tones.
     const STOPS = [[229, 85, 96], [245, 190, 60], [46, 176, 114]];
@@ -176,7 +181,7 @@ export default {
         let start = range.value.start;
         if (d === todayS) start = Math.max(start, Math.ceil(nowMin / step) * step);
         for (let m = start; m + form.duration <= range.value.end; m += step) {
-          windows.push({ day: d, start: m, end: m + form.duration, free: users.value.filter((u) => isFree(u.id, d, m, m + form.duration)).length });
+          windows.push({ day: d, start: m, end: m + form.duration, free: users.value.filter((u) => isFree(u, d, m, m + form.duration)).length });
         }
       }
       // Best attendance first, earliest first among equals; never two overlapping windows.
@@ -196,7 +201,7 @@ export default {
     const detail = computed(() => {
       if (!sel.value) return null;
       const s = sel.value;
-      const list = users.value.map((u) => ({ ...u, free: isFree(u.id, s.day, s.start, s.end) }));
+      const list = users.value.map((u) => ({ ...u, free: isFree(u, s.day, s.start, s.end) }));
       return { ...s, list, free: list.filter((x) => x.free).length, label: `${weekday(s.day, 'long')} ${dayLabel(s.day)} · ${minutesToHhmm(s.start)}–${minutesToHhmm(s.end)}` };
     });
     const outlookUrl = computed(() => {

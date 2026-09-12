@@ -43,6 +43,7 @@ class OverviewController extends Controller
             'users' => $users->map(fn ($u) => $u->toSummary() + [
                 'is_me' => $u->id === $user->entra_id,
                 'items' => $result['items'][$u->id] ?? [],
+                'work' => $result['work'][$u->id] ?? [],
                 'error' => $result['errors'][$u->id] ?? null,
             ])->values(),
         ]);

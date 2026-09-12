@@ -65,6 +65,8 @@ class ApiTest extends TestCase
         $this->assertArrayNotHasKey('per_page', $data);
         $demoRow = collect($data['users'])->first(fn ($u) => $u['is_demo']);
         $this->assertNotEmpty($demoRow['items']);
+        $this->assertNotEmpty($demoRow['work']);
+        $this->assertLessThanOrEqual(5, count($demoRow['work'])); // weekdays only; some patterns skip Friday
         $first = $demoRow['items'][0];
         $this->assertArrayHasKey('st', $first);
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $first['s']);
@@ -216,12 +218,73 @@ class ApiTest extends TestCase
         $this->assertNull($me['sub']);
         $this->assertTrue($byName['Test Person']['is_me']);
 
-        Http::assertSentCount(3);
+        Http::assertSentCount(4); // getSchedule, calendarView, own work plan, photo batch
         $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk();
-        Http::assertSentCount(3); // served from cache
+        Http::assertSentCount(4); // served from cache
 
         $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen&refresh=1')->assertOk();
-        $this->assertGreaterThan(3, count(Http::recorded()));
+        $this->assertGreaterThan(4, count(Http::recorded()));
+    }
+
+    public function test_working_hours_come_from_graph_per_person_and_day(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        Http::fake([
+            'graph.microsoft.com/v1.0/me/calendar/getSchedule' => Http::response(Fixtures::scheduleResponse([
+                'peter@example.com' => [],
+                'paula@example.com' => [],
+                'test@example.com' => [],
+            ], Fixtures::workingHours(['monday', 'tuesday', 'wednesday', 'thursday'], '07:00:00.0000000', '15:00:00.0000000'))),
+            'graph.microsoft.com/v1.0/me/calendarView*' => Http::response(['value' => []]),
+            // Your own plan differs per day: a short Friday, remote on Tuesday.
+            'graph.microsoft.com/v1.0/me/settings/workHoursAndLocations/occurrencesView*' => Http::response(['value' => [
+                Fixtures::occurrence('2026-09-14', '08:00', '16:00'),
+                Fixtures::occurrence('2026-09-15', '09:00', '17:00', 'remote'),
+                Fixtures::occurrence('2026-09-18', '08:00', '12:00'),
+            ]]),
+            'graph.microsoft.com/v1.0/$batch' => Http::response(['responses' => []]),
+        ]);
+
+        $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk()->json();
+        $byName = collect($data['users'])->keyBy('name');
+
+        // Colleague: the mailbox pattern expanded to concrete days (Mon–Thu 07–15 CEST = 05–13 UTC), no Friday.
+        $peter = $byName['Peter Peer']['work'];
+        $this->assertCount(4, $peter);
+        $this->assertSame('2026-09-14T05:00:00Z', $peter[0]['s']);
+        $this->assertSame('2026-09-14T13:00:00Z', $peter[0]['e']);
+        $this->assertSame('2026-09-17T05:00:00Z', $peter[3]['s']);
+
+        // Me: the per-day plan wins over the mailbox pattern.
+        $me = $byName['Test Person']['work'];
+        $this->assertCount(3, $me);
+        $this->assertSame(['2026-09-14T06:00:00Z', '2026-09-15T07:00:00Z', '2026-09-18T06:00:00Z'], array_column($me, 's'));
+        $this->assertSame('2026-09-18T10:00:00Z', $me[2]['e']);
+        $this->assertSame('remote', $me[1]['loc']);
+
+        // Cached: the second call does not hit Graph again.
+        $sent = count(Http::recorded());
+        $again = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk()->json();
+        $this->assertSame($sent, count(Http::recorded()));
+        $this->assertCount(3, collect($again['users'])->keyBy('name')['Test Person']['work']);
+    }
+
+    public function test_working_hours_fall_back_to_mailbox_pattern_when_own_plan_is_unavailable(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        Http::fake([
+            'graph.microsoft.com/v1.0/me/calendar/getSchedule' => Http::response(Fixtures::scheduleResponse(['test@example.com' => [], 'peter@example.com' => [], 'paula@example.com' => []])),
+            'graph.microsoft.com/v1.0/me/calendarView*' => Http::response(['value' => []]),
+            'graph.microsoft.com/v1.0/me/settings/workHoursAndLocations/occurrencesView*' => Http::response(['error' => ['code' => 'ErrorInvalidRequest']], 404),
+            'graph.microsoft.com/v1.0/$batch' => Http::response(['responses' => []]),
+        ]);
+        $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=7&tz=Europe/Copenhagen')->assertOk()->json();
+        $me = collect($data['users'])->keyBy('name')['Test Person']['work'];
+        $this->assertCount(5, $me); // Mon–Fri 08–16 from the mailbox pattern
+        $this->assertSame('2026-09-14T06:00:00Z', $me[0]['s']);
+        $this->assertNull($me[0]['loc']);
     }
 
     public function test_long_ranges_are_split_into_graph_windows(): void
