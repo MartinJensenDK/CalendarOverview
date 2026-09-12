@@ -254,6 +254,7 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .minical-month + .minical-month { margin-top: 8px; }
 .minical-title { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: capitalize; padding: 2px 4px 4px; }
 .minical-grid { display: grid; grid-template-columns: 22px repeat(7, 1fr); gap: 1px; }
+.minical-grid.no-wk { grid-template-columns: repeat(7, 1fr); }
 .minical-grid .dow { text-align: center; font-size: 10px; color: var(--muted); text-transform: uppercase; padding: 2px 0; }
 .minical-grid .dow.weekend { color: var(--muted-2); }
 .minical-grid .wk { font-family: var(--font-mono); font-size: 9px; color: var(--muted-2); display: flex; align-items: center; justify-content: center; }

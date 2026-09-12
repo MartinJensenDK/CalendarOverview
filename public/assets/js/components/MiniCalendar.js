@@ -67,11 +67,11 @@ export default {
       </div>
       <div v-for="m in months" :key="m.first" class="minical-month">
         <div class="minical-title">{{ m.label }}</div>
-        <div class="minical-grid">
-          <span class="wk"></span>
+        <div class="minical-grid" :class="{ 'no-wk': !store.prefs.show_week_numbers }">
+          <span class="wk" v-if="store.prefs.show_week_numbers"></span>
           <span v-for="(w, i) in weekdays" :key="i" class="dow" :class="{ weekend: i >= 5 }">{{ w }}</span>
           <template v-for="w in m.weeks" :key="w.n + m.first">
-            <span class="wk">{{ w.n }}</span>
+            <span class="wk" v-if="store.prefs.show_week_numbers" :title="t('Week') + ' ' + w.n">{{ w.n }}</span>
             <button type="button" v-for="d in w.days" :key="d.ymd" class="day" :class="{ outside: d.outside, weekend: d.weekend, today: d.ymd === today, range: inRange(d.ymd), start: d.ymd === store.from }" @click="pick(d.ymd)" :aria-label="d.ymd">{{ d.day }}</button>
           </template>
         </div>
