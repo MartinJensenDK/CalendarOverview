@@ -271,7 +271,7 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .selection-bar .avatars { display: flex; }
 .selection-bar .avatars .avatar { width: 22px; height: 22px; margin-left: -6px; border: 2px solid var(--accent-soft); }
 .selection-bar .avatars .avatar:first-child { margin-left: 0; }
-.selection-bar.floating { position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 6; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2); padding: 8px 10px 8px 12px; min-width: 320px; }
+.selection-bar.floating { position: absolute; left: 50%; top: 54px; transform: translateX(-50%); z-index: 6; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2); padding: 8px 10px 8px 12px; min-width: 320px; }
 .selection-bar.floating .avatars .avatar { border-color: var(--surface); }
 .menu-toggle { display: none; }
 
