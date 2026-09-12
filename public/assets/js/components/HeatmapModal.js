@@ -6,13 +6,15 @@ import { todayYmd, addDays, isWeekend, weekday, dayLabel, hhmmToMinutes, minutes
 
 const { ref, reactive, computed, watch, onMounted } = Vue;
 
+const MAX_DAYS = 62; // Microsoft Graph getSchedule limit
+
 const BUSY = new Set(['busy', 'oof', 'tentative', 'unknown']);
 
 export default {
   name: 'HeatmapModal',
   props: { ids: { type: Array, required: true } },
   setup(props) {
-    const form = reactive({ from: todayYmd(), to: addDays(todayYmd(), 7), slot: store.prefs.heatmap_slot || 30, workOnly: true, subject: '' });
+    const form = reactive({ from: todayYmd(), to: addDays(todayYmd(), 7), slot: store.prefs.heatmap_slot || 30, workOnly: true, showWeekends: !!store.prefs.show_weekends, duration: 60, subject: '' });
     const data = ref(null);
     const loading = ref(false);
     const sel = ref(null); // { day, start, end } minutes
@@ -27,9 +29,15 @@ export default {
       } finally { loading.value = false; }
     }
     onMounted(load);
-    watch(() => [form.from, form.to], () => { if (form.to > form.from) load(); });
+    watch(() => [form.from, form.to], () => {
+      if (form.to <= form.from) return;
+      const span = Math.round((parseYmd(form.to) - parseYmd(form.from)) / 86400000);
+      if (span > MAX_DAYS) { form.to = addDays(form.from, MAX_DAYS); toast(t('Up to {n} days at a time', { n: MAX_DAYS })); return; }
+      load();
+    });
+    function preset(days) { form.to = addDays(form.from, days); }
 
-    const days = computed(() => (data.value ? data.value.days.filter((d) => store.prefs.show_weekends || !isWeekend(d)) : []));
+    const days = computed(() => (data.value ? data.value.days.filter((d) => form.showWeekends || !isWeekend(d)) : []));
     const range = computed(() => {
       const ws = form.workOnly ? hhmmToMinutes(store.prefs.work_start) : 0;
       const we = form.workOnly ? hhmmToMinutes(store.prefs.work_end) : 1440;
@@ -79,6 +87,30 @@ export default {
     }
     function up() { dragging = null; }
 
+    // The next three windows of the chosen length where everyone is free.
+    const suggestions = computed(() => {
+      if (!users.value.length || !days.value.length) return [];
+      const out = [];
+      const now = new Date();
+      const todayS = todayYmd();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const step = 15;
+      for (const d of days.value) {
+        if (d < todayS) continue;
+        let start = range.value.start;
+        if (d === todayS) start = Math.max(start, Math.ceil(nowMin / step) * step);
+        for (let m = start; m + form.duration <= range.value.end; m += step) {
+          if (users.value.every((u) => isFree(u.id, d, m, m + form.duration))) {
+            out.push({ day: d, start: m, end: m + form.duration, label: `${weekday(d, 'short')} ${dayLabel(d)} · ${minutesToHhmm(m)}–${minutesToHhmm(m + form.duration)}` });
+            m += form.duration - step; // continue after this window
+            if (out.length >= 3) return out;
+          }
+        }
+      }
+      return out;
+    });
+    function useSuggestion(s) { sel.value = { day: s.day, start: s.start, end: s.end }; }
+
     const detail = computed(() => {
       if (!sel.value) return null;
       const s = sel.value;
@@ -95,18 +127,30 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm };
+    return { store, t, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('When is everyone free?')" width="900px" @close="closeModal">
       <div class="heat-toolbar">
         <label class="field"><span>{{ t('From') }}</span><input class="input" type="date" v-model="form.from"></label>
         <label class="field"><span>{{ t('To') }}</span><input class="input" type="date" v-model="form.to" :min="form.from"></label>
+        <div class="seg" style="height:34px;align-self:end">
+          <button type="button" @click="preset(7)">{{ t('1 week') }}</button><button type="button" @click="preset(14)">{{ t('2 weeks') }}</button><button type="button" @click="preset(31)">{{ t('1 month') }}</button><button type="button" @click="preset(MAX_DAYS)">{{ t('2 months') }}</button>
+        </div>
         <label class="field"><span>{{ t('Slot') }}</span><select class="select" v-model.number="form.slot"><option :value="15">{{ t('{n} min', { n: 15 }) }}</option><option :value="30">{{ t('{n} min', { n: 30 }) }}</option><option :value="60">{{ t('{n} min', { n: 60 }) }}</option></select></label>
+        <label class="field"><span>{{ t('Meeting length') }}</span><select class="select" v-model.number="form.duration"><option :value="30">{{ t('{n} min', { n: 30 }) }}</option><option :value="60">{{ t('{n} min', { n: 60 }) }}</option><option :value="90">{{ t('{n} min', { n: 90 }) }}</option><option :value="120">{{ t('{n} min', { n: 120 }) }}</option></select></label>
         <label class="switch" style="height:34px"><input type="checkbox" v-model="form.workOnly"><span class="track"></span>{{ t('Working hours only') }}</label>
+        <label class="switch" style="height:34px"><input type="checkbox" v-model="form.showWeekends"><span class="track"></span>{{ t('Show weekends') }}</label>
         <span class="grow"></span>
         <span class="avatars row" style="gap:0"><img v-for="u in users.slice(0, 8)" :key="u.id" class="avatar sm" :src="u.photo_url" :title="u.name" alt="" style="margin-left:-6px;border:2px solid var(--surface)"></span>
         <span class="muted" style="font-size:12px">{{ t('{n} people', { n: users.length }) }}</span>
+      </div>
+      <div class="suggest" v-if="data">
+        <div class="field-label">{{ t('Next 3 times when everyone is free') }}</div>
+        <div class="row wrap" v-if="suggestions.length">
+          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: detail && detail.day === s.day && detail.start === s.start && detail.end === s.end }" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}</button>
+        </div>
+        <div class="muted" style="font-size:12px" v-else>{{ t('No common free time in this period.') }}</div>
       </div>
       <p class="muted" style="margin:0 0 10px;font-size:12px">{{ t('Click a slot to see who is free. Drag to select a longer time.') }}</p>
       <div class="heat-wrap" @mouseup="up" @mouseleave="up">

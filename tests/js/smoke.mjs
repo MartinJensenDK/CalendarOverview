@@ -51,7 +51,7 @@ const overview = {
     { ...member('o1', 'Otto Other', 'Account Manager'), is_me: false, error: 'no_mailbox', items: [] },
   ],
 };
-const availability = { from: '2026-09-14', to: '2026-09-19', days: days.slice(0, 5), fetched_at: '', users: overview.users.slice(0, 2) };
+const availability = { from: '2026-09-14', to: '2026-09-21', days, fetched_at: '', users: overview.users.slice(0, 2) };
 
 const defaultPrefs = { ...me.preferences };
 const calls = [];
@@ -156,9 +156,18 @@ assert(w.document.querySelector('.findtime') && w.document.querySelectorAll('.gr
 assert(w.document.querySelector('.findtime .btn.success'), 'find-time button uses the green success style');
 openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
 const cells = w.document.querySelectorAll('.heat .hc');
-assert(cells.length === 5 * 18, `heatmap cells for 5 days x 18 slots (got ${cells.length})`);
+assert(cells.length === 7 * 18, `heatmap cells for 7 days x 18 slots (got ${cells.length})`);
 cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick();
 assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/0/deeplink/compose'), 'slot selection shows Outlook link');
+const sugg = w.document.querySelectorAll('.suggest-btn');
+assert(sugg.length === 3, `three suggested times when everyone is free (got ${sugg.length})`);
+sugg[1].click(); await tick();
+assert(sugg[1].className.includes('active') && html().includes('Open in Outlook'), 'choosing a suggestion selects it in the heatmap');
+const modalRef = w.document.querySelector('.modal');
+const weekendToggle = [...modalRef.querySelectorAll('.switch')].find((l) => l.textContent.includes('Show weekends')).querySelector('input');
+const before = w.document.querySelectorAll('.heat .hh').length;
+weekendToggle.click(); await tick();
+assert(w.document.querySelectorAll('.heat .hh').length !== before, 'weekend toggle changes the heatmap columns');
 closeModal(); await tick();
 
 // Confirm dialog IS dismissable
