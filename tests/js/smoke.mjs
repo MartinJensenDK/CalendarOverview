@@ -305,6 +305,11 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   { const dates = w.document.querySelectorAll('.vac-toolbar input[type=date]'); const before = calls.length;
     dates[1].value = '2026-10-15'; dates[1].dispatchEvent(new w.Event('change', { bubbles: true })); await tick(120);
     assert(dates.length === 2 && calls.slice(before).some((c) => c.includes('/api/vacations?from=2026-09-01&to=2026-10-15')), 'start and end dates are editable and reload the timeline'); }
+  { const cal = w.document.querySelector('.vac-row .cal'); assert(cal && cal.getAttribute('aria-label').includes('Anna Andersen'), 'vacation rows have a calendar button');
+    cal.click(); await tick(120);
+    assert(w.document.querySelectorAll('.backdrop').length === 2 && w.document.querySelector('.lookup-person') && w.document.querySelector('.vac-wrap') && store.modal.name === 'vacation', 'calendar button opens the lookup on top of the vacation calendar');
+    w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' })); await tick(60);
+    assert(w.document.querySelectorAll('.backdrop').length === 1 && !w.document.querySelector('.lookup-person') && w.document.querySelector('.vac-wrap') && w.document.body.style.overflow === 'hidden', 'Escape closes only the lookup and keeps the timeline'); }
   w.document.querySelector('.vac-toolbar input:not([type=date])').value = 'zzz'; w.document.querySelector('.vac-toolbar input:not([type=date])').dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
   assert(w.document.querySelectorAll('.vac-row').length === 0 && html().includes(t('No vacation in this period.')), 'filter hides non-matching people');
   closeModal(); await tick();

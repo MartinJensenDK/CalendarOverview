@@ -13,8 +13,10 @@ const { ref, computed, watch, onMounted, nextTick } = Vue;
 
 export default {
   name: 'PersonLookupModal',
-  props: { initial: { type: String, default: '' }, person: { type: Object, default: null } }, // person: open straight on their calendar
-  setup(props) {
+  props: { initial: { type: String, default: '' }, person: { type: Object, default: null }, embedded: { type: Boolean, default: false } }, // person: open straight on their calendar; embedded: shown on top of another modal
+  emits: ['close'],
+  setup(props, { emit }) {
+    function close() { if (props.embedded) emit('close'); else closeModal(); }
     const q = ref(props.initial);
     const input = ref(null);
     const results = ref([]);
@@ -122,10 +124,10 @@ export default {
     }
     function newGroup() { const p = person.value; closeModal(); openModal('group', { presetMembers: [p] }); }
 
-    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, memberOf, groupId, adding, addToGroup, newGroup, closeModal, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
+    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, memberOf, groupId, adding, addToGroup, newGroup, close, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
   },
   template: `
-    <modal :title="t('Look up a person')" width="640px" dismissable @close="closeModal">
+    <modal :title="t('Look up a person')" width="640px" dismissable @close="close">
       <div class="lookup-search">
         <span class="lookup-icon"><icon name="search"></icon></span>
         <input ref="input" class="input" type="search" v-model="q" :placeholder="t('Type a name, title or department')" @keydown="onKey" autocomplete="off">
@@ -175,7 +177,7 @@ export default {
       <template #foot>
         <span class="modal-note">{{ t('Tip: just start typing anywhere to look someone up.') }}</span>
         <span class="grow"></span>
-        <button type="button" class="btn" @click="closeModal">{{ t('Close') }}</button>
+        <button type="button" class="btn" @click="close">{{ t('Close') }}</button>
       </template>
     </modal>`,
 };

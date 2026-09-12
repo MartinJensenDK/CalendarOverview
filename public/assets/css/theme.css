@@ -388,9 +388,9 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid .name.me { box-shadow: inset 3px 0 0 var(--accent); }
 .grid .name .pick { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); cursor: pointer; opacity: 0; transition: opacity .12s; flex: none; }
 .grid .name:hover .pick, .grid .name.selected .pick, .grid .name .pick:focus-visible { opacity: 1; }
-.grid .name .cal { margin-left: auto; flex: none; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity .12s, background .12s, color .12s; }
-.grid .name:hover .cal, .grid .name .cal:focus-visible { opacity: 1; }
-.grid .name .cal:hover { background: var(--surface-3); color: var(--ink); }
+.grid .name .cal, .vac-name .cal { margin-left: auto; flex: none; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity .12s, background .12s, color .12s; }
+.grid .name:hover .cal, .grid .name .cal:focus-visible, .vac-row:hover .cal, .vac-name .cal:focus-visible { opacity: 1; }
+.grid .name .cal:hover, .vac-name .cal:hover { background: var(--surface-3); color: var(--ink); }
 .grid.rh-sm .name .cal { width: 22px; height: 22px; }
 .grid .name.selectable { cursor: pointer; user-select: none; }
 .grid .name.selectable:hover { background: var(--surface-2); }
@@ -420,7 +420,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .hours-pop tr.today td.d { color: var(--today-line); font-weight: 600; }
 .steps.compact { margin-bottom: 12px; max-width: 260px; }
 .steps button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 2px 3px rgba(0, 0, 0, .14); }
-.grid .cell .now { position: absolute; top: 0; bottom: 0; left: var(--now-pct); width: 2px; background: var(--today-line); z-index: 2; opacity: .9; }
+.grid .cell .now { position: absolute; top: 0; bottom: 0; left: var(--now-pct); width: 2px; background: var(--today-line); z-index: 3; opacity: .9; }
+.grid .cell .blk { z-index: 2; } /* appointments sit on top of the hour grid */
 .grid .strip { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .grid .blk {
   position: absolute; border-radius: 4px; background: var(--blk, var(--event)); color: var(--blk-ink, var(--event-ink));

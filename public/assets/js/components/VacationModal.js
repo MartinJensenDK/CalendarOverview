@@ -4,6 +4,7 @@ import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, savePrefs } from '../actions.js';
 import { todayYmd, addDays, parseYmd, isWeekend, dayLabel, weekday, ymd } from '../util/date.js';
+import PersonLookupModal from './PersonLookupModal.js';
 
 const { ref, computed, onMounted, watch } = Vue;
 
@@ -14,7 +15,9 @@ function dayDiff(a, b) { return Math.round((parseYmd(b) - parseYmd(a)) / 8640000
 
 export default {
   name: 'VacationModal',
+  components: { PersonLookupModal },
   setup() {
+    const lookupPerson = ref(null); // a person's calendar, shown on top without losing the timeline
     const from = ref(monthStart(todayYmd()));
     const span = ref(SPANS.includes(store.prefs.vacation_days) ? store.prefs.vacation_days : 92);
     // Inclusive last day shown; presets and arrows keep it in step with the start.
@@ -109,7 +112,7 @@ export default {
     const onVacationToday = computed(() => (data.value ? data.value.users.filter((u) => u.periods.some((p) => p.from <= today && p.to >= today)) : []));
     const barColor = computed(() => (store.rules.find((r) => /vacation|ferie/i.test(r.name || '') && r.enabled !== false) || {}).color || '#e5484d');
 
-    return { store, t, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
+    return { store, t, lookupPerson, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
   },
   template: `
     <modal :title="t('Vacation calendar')" width="1040px" @close="closeModal">
@@ -155,7 +158,7 @@ export default {
           </div>
           <div class="vac-empty muted" v-if="!rows.length">{{ groupKeys.length ? t('No vacation in this period.') : t('Choose at least one group to show.') }}</div>
           <div v-for="u in rows" :key="u.id" class="vac-row" :class="{ me: u.is_me }">
-            <div class="vac-name"><img class="avatar" :src="u.photo_url" alt=""><span class="txt"><b>{{ u.name }}</b><small>{{ u.title || u.email }}</small></span></div>
+            <div class="vac-name"><img class="avatar" :src="u.photo_url" alt=""><span class="txt"><b>{{ u.name }}</b><small>{{ u.title || u.email }}</small></span><button type="button" class="cal" :title="t('Show calendar')" :aria-label="t('Show calendar') + ': ' + u.name" @click="lookupPerson = u"><icon name="calendar" :size="15"></icon></button></div>
             <div class="vac-track">
               <span v-for="w in weekends" :key="w.key" class="vac-weekend" :style="{ left: w.left + '%', width: w.width + '%' }"></span>
               <span class="vac-now" v-if="todayLeft !== null" :style="{ left: todayLeft + '%' }"></span>
@@ -169,5 +172,6 @@ export default {
         <span class="grow"></span>
         <button type="button" class="btn" @click="closeModal">{{ t('Close') }}</button>
       </template>
-    </modal>`,
+    </modal>
+    <person-lookup-modal v-if="lookupPerson" :person="lookupPerson" embedded @close="lookupPerson = null"></person-lookup-modal>`,
 };

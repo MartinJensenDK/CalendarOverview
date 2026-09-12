@@ -25,6 +25,9 @@ export default {
       if (e.target === e.currentTarget) attemptClose();
     }
     function onKey(e) {
+      // Only the topmost modal reacts (a lookup can sit on top of the vacation calendar).
+      const all = document.querySelectorAll('.modal');
+      if (box.value && all.length && all[all.length - 1] !== box.value) return;
       if (e.key === 'Escape') { e.stopPropagation(); attemptClose(); }
       if (e.key === 'Tab' && box.value) {
         const focusable = box.value.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -46,7 +49,7 @@ export default {
     });
     onBeforeUnmount(() => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+      document.body.style.overflow = document.querySelectorAll('.backdrop').length > 1 ? 'hidden' : '';
     });
     return { box, shaking, onBackdrop, attemptClose, t };
   },
