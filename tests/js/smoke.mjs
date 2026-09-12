@@ -98,6 +98,7 @@ assert(html().includes('Private'), 'private item labelled Private');
 // Modals
 openModal('group'); await tick();
 assert(w.document.querySelector('.modal') && html().includes('Create group'), 'group modal opens');
+{ const b = w.document.querySelector('.sidebar-head .btn'); assert(b && b.textContent.trim() === '' && b.getAttribute('aria-label') === 'Create group', 'sidebar create button is icon-only with an accessible label'); }
 // clicking the backdrop must NOT close an editing modal
 w.document.querySelector('.backdrop').dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true }));
 await tick();

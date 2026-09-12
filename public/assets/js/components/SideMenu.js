@@ -58,7 +58,7 @@ export default {
     <aside class="sidebar">
       <div class="sidebar-head">
         <h2>{{ t('Groups') }}</h2>
-        <button type="button" class="btn sm primary" @click="openModal('group')"><icon name="plus" :size="14"></icon>{{ t('Create group') }}</button>
+        <button type="button" class="btn sm icon primary" @click="openModal('group')" :title="t('Create group')" :aria-label="t('Create group')"><icon name="plus" :size="16"></icon></button>
       </div>
       <div class="sidebar-scroll">
         <div v-for="entry in entries" :key="entry.id" class="group" :class="{ dragging: dragId === entry.id, 'drop-before': dropTarget === entry.id && dragId !== entry.id }"
