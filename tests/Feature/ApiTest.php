@@ -358,6 +358,28 @@ class ApiTest extends TestCase
         $this->actingAs($user)->getJson('/api/directory/users?q=peer')->assertOk()->assertJsonCount(2, 'users');
     }
 
+    public function test_demo_people_are_hidden_everywhere_when_demo_is_off(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
+        $groupId = $this->actingAs($user)->postJson('/api/groups', ['name' => 'Mixed', 'type' => 'manual', 'members' => ['peer-0001', 'demo-001'], 'managers' => ['demo-002']])->assertCreated()->json('group.id');
+        $menu = $this->actingAs($user)->getJson('/api/me')->json('menu');
+        $mixed = collect($menu)->firstWhere('name', 'Mixed');
+        $this->assertGreaterThan(1, count($mixed['members']));
+        $this->assertTrue(collect($this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=1')->json('users'))->contains('is_demo', true));
+
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => false])->assertOk();
+        $menu = $this->actingAs($user)->getJson('/api/me')->json('menu');
+        $this->assertNull(collect($menu)->firstWhere('type', 'demo'));
+        $mixed = collect($menu)->firstWhere('name', 'Mixed');
+        $this->assertSame(['Peter Peer'], array_column($mixed['members'], 'name'));
+        $this->assertFalse(collect($this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=1')->json('users'))->contains('is_demo', true));
+        $avail = $this->actingAs($user)->getJson('/api/availability?users[]=demo-001&users[]=peer-0001&from=2026-09-14&to=2026-09-15')->assertOk()->json('users');
+        $this->assertSame(['peer-0001'], array_column($avail, 'id'));
+        $this->assertGreaterThan(0, $groupId);
+    }
+
     public function test_demo_people_leave_the_lookup_when_demo_is_off_or_hidden(): void
     {
         $user = Fixtures::user();

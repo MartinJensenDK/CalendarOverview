@@ -27,6 +27,9 @@ class AvailabilityController extends Controller
         abort_if($from->diffInDays($to) > config('calendar.max_days'), 422, 'Range too long');
 
         $users = DirectoryUser::whereIn('id', $data['users'])->get();
+        if (! $request->user()->pref('demo_enabled')) {
+            $users = $users->reject(fn (DirectoryUser $u) => $u->is_demo)->values();
+        }
         $result = $schedules->itemsFor($request->user(), $users, $from, $to, $tz, (bool) ($data['refresh'] ?? false));
 
         return response()->json([

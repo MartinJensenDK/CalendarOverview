@@ -61,6 +61,7 @@ export async function savePrefs(patch) {
     throw e;
   }
   if (store.prefs.find_time_enabled === false) store.selected = [];
+  if (store.prefs.demo_enabled === false) store.selected = store.selected.filter((id) => !String(id).startsWith('demo-'));
   const reload = ['days', 'demo_enabled', 'demo_visible', 'my_team_visible'].some((k) => k in patch && patch[k] !== before[k]);
   if (reload) loadOverview();
 }

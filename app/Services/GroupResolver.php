@@ -208,6 +208,11 @@ class GroupResolver
 
     private function sorted(Collection $users, User $actor): Collection
     {
+        // Demo people disappear everywhere (manual groups, managers' reports) when demo data is off.
+        if (! $actor->pref('demo_enabled')) {
+            $users = $users->reject(fn (DirectoryUser $u) => $u->is_demo);
+        }
+
         return $users->sortBy([
             fn (DirectoryUser $a, DirectoryUser $b) => ($b->id === $actor->entra_id) <=> ($a->id === $actor->entra_id),
             fn (DirectoryUser $a, DirectoryUser $b) => strcasecmp($a->display_name, $b->display_name),
