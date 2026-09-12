@@ -14,7 +14,7 @@ class AvailabilityController extends Controller
     public function index(Request $request, ScheduleService $schedules): JsonResponse
     {
         $data = $request->validate([
-            'users' => ['required', 'array', 'min:1', 'max:100'],
+            'users' => ['required', 'array', 'min:1', 'max:200'],
             'users.*' => ['string', 'max:64'],
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after:from'],

@@ -199,6 +199,22 @@ class ApiTest extends TestCase
         $this->assertGreaterThan(3, count(Http::recorded()));
     }
 
+    public function test_long_ranges_are_split_into_graph_windows(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        Http::fake([
+            'graph.microsoft.com/v1.0/me/calendar/getSchedule' => Http::response(Fixtures::scheduleResponse(['peter@example.com' => []])),
+            'graph.microsoft.com/v1.0/$batch' => Http::response(['responses' => []]),
+        ]);
+        $this->actingAs($user)->putJson('/api/settings', ['my_team_visible' => false]);
+
+        $data = $this->actingAs($user)->getJson('/api/availability?users[]=peer-0001&from=2026-09-14&to=2027-09-14&tz=Europe/Copenhagen')->assertOk()->json();
+        $this->assertCount(365, $data['days']);
+        Http::assertSentCount(6); // 365 days / 62 = 6 getSchedule windows
+        $this->actingAs($user)->getJson('/api/availability?users[]=peer-0001&from=2026-09-14&to=2027-09-16')->assertStatus(422);
+    }
+
     public function test_availability_endpoint_validates_range(): void
     {
         $user = Fixtures::user();

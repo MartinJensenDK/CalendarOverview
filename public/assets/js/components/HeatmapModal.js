@@ -6,7 +6,7 @@ import { todayYmd, addDays, isWeekend, weekday, dayLabel, hhmmToMinutes, minutes
 
 const { ref, reactive, computed, watch, onMounted } = Vue;
 
-const MAX_DAYS = 62; // Microsoft Graph getSchedule limit
+const MAX_DAYS = 366; // the server splits this into Graph-sized windows
 
 const BUSY = new Set(['busy', 'oof', 'tentative', 'unknown']);
 
@@ -135,7 +135,7 @@ export default {
         <label class="field"><span>{{ t('From') }}</span><input class="input" type="date" v-model="form.from"></label>
         <label class="field"><span>{{ t('To') }}</span><input class="input" type="date" v-model="form.to" :min="form.from"></label>
         <div class="seg" style="height:34px;align-self:end">
-          <button type="button" @click="preset(7)">{{ t('1 week') }}</button><button type="button" @click="preset(14)">{{ t('2 weeks') }}</button><button type="button" @click="preset(31)">{{ t('1 month') }}</button><button type="button" @click="preset(MAX_DAYS)">{{ t('2 months') }}</button>
+          <button type="button" @click="preset(7)">{{ t('1 week') }}</button><button type="button" @click="preset(14)">{{ t('2 weeks') }}</button><button type="button" @click="preset(31)">{{ t('1 month') }}</button><button type="button" @click="preset(92)">{{ t('3 months') }}</button><button type="button" @click="preset(183)">{{ t('6 months') }}</button><button type="button" @click="preset(365)">{{ t('1 year') }}</button>
         </div>
         <label class="field"><span>{{ t('Slot') }}</span><select class="select" v-model.number="form.slot"><option :value="15">{{ t('{n} min', { n: 15 }) }}</option><option :value="30">{{ t('{n} min', { n: 30 }) }}</option><option :value="60">{{ t('{n} min', { n: 60 }) }}</option></select></label>
         <label class="field"><span>{{ t('Meeting length') }}</span><select class="select" v-model.number="form.duration"><option :value="30">{{ t('{n} min', { n: 30 }) }}</option><option :value="60">{{ t('{n} min', { n: 60 }) }}</option><option :value="90">{{ t('{n} min', { n: 90 }) }}</option><option :value="120">{{ t('{n} min', { n: 120 }) }}</option></select></label>

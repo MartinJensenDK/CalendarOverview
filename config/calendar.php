@@ -31,8 +31,10 @@ return [
     'photo_sync_days' => (int) env('CALENDAR_PHOTO_SYNC_DAYS', 7),
     'group_sync_hours' => (int) env('CALENDAR_GROUP_SYNC_HOURS', 24),
 
-    // Maximum days that can be requested in one overview / heatmap call (Graph limit is 62).
-    'max_days' => 62,
+    // Maximum days per overview / availability request. Graph's getSchedule takes 62 days per call;
+    // longer ranges are split into several calls automatically.
+    'max_days' => 366,
+    'graph_window_days' => 62,
 
     'demo_user_count' => 150,
 

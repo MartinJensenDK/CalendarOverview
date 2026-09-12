@@ -23,6 +23,8 @@ class ScheduleService
 {
     public const SCHEDULES_PER_CALL = 20;
 
+    public const WINDOW_DAYS = 62;
+
     public const STATUSES = ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'];
 
     public function __construct(
@@ -119,17 +121,20 @@ class ScheduleService
         }
 
         $calls = [];
-        $startLocal = $from->setTimezone($tz)->format('Y-m-d\TH:i:s');
-        $endLocal = $to->setTimezone($tz)->format('Y-m-d\TH:i:s');
-        foreach (array_chunk($byMail->keys()->all(), self::SCHEDULES_PER_CALL) as $i => $mails) {
-            $calls['s'.$i] = fn (PendingRequest $req) => $req
-                ->withHeaders(['Prefer' => 'outlook.timezone="'.$tz.'"'])
-                ->post($graph->url('/me/calendar/getSchedule'), [
-                    'schedules' => $mails,
-                    'startTime' => ['dateTime' => $startLocal, 'timeZone' => $tz],
-                    'endTime' => ['dateTime' => $endLocal, 'timeZone' => $tz],
-                    'availabilityViewInterval' => 30,
-                ]);
+        // getSchedule accepts at most 62 days per call: split long ranges into windows.
+        foreach ($this->windows($from, $to) as $w => [$wFrom, $wTo]) {
+            $startLocal = $wFrom->setTimezone($tz)->format('Y-m-d\TH:i:s');
+            $endLocal = $wTo->setTimezone($tz)->format('Y-m-d\TH:i:s');
+            foreach (array_chunk($byMail->keys()->all(), self::SCHEDULES_PER_CALL) as $i => $mails) {
+                $calls['s'.$w.'_'.$i] = fn (PendingRequest $req) => $req
+                    ->withHeaders(['Prefer' => 'outlook.timezone="'.$tz.'"'])
+                    ->post($graph->url('/me/calendar/getSchedule'), [
+                        'schedules' => $mails,
+                        'startTime' => ['dateTime' => $startLocal, 'timeZone' => $tz],
+                        'endTime' => ['dateTime' => $endLocal, 'timeZone' => $tz],
+                        'availabilityViewInterval' => 30,
+                    ]);
+            }
         }
 
         $me = $users->first(fn (DirectoryUser $u) => $u->id === $actor->entra_id);
@@ -155,7 +160,15 @@ class ScheduleService
             }
             if ($key === 'me') {
                 if ($response->successful()) {
-                    $parsed[$me->id] = $this->parseCalendarView($response->json('value') ?? [], $tz);
+                    $events = $response->json('value') ?? [];
+                    $next = $response->json('@odata.nextLink');
+                    $pages = 0;
+                    while ($next && $pages++ < 20) {
+                        $page = $graph->get($next, [], ['Prefer' => 'outlook.timezone="'.$tz.'"']);
+                        $events = array_merge($events, $page['value'] ?? []);
+                        $next = $page['@odata.nextLink'] ?? null;
+                    }
+                    $parsed[$me->id] = $this->parseCalendarView($events, $tz);
                 } else {
                     Log::info('calendarView failed', ['status' => $response->status()]);
                 }
@@ -186,13 +199,30 @@ class ScheduleService
                 if ($me && $user->id === $me->id && isset($parsed[$me->id])) {
                     continue;
                 }
-                $parsed[$user->id] = $this->parseScheduleItems($schedule['scheduleItems'] ?? [], $tz);
+                $parsed[$user->id] = array_merge($parsed[$user->id] ?? [], $this->parseScheduleItems($schedule['scheduleItems'] ?? [], $tz));
             }
         }
 
         $this->store($parsed, $from, $to, $tz);
 
         return $errors;
+    }
+
+    /** @return list<array{0: CarbonImmutable, 1: CarbonImmutable}> consecutive windows of at most WINDOW_DAYS */
+    public function windows(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $out = [];
+        $cursor = $from;
+        while ($cursor->lt($to)) {
+            $next = $cursor->addDays(self::WINDOW_DAYS);
+            if ($next->gt($to)) {
+                $next = $to;
+            }
+            $out[] = [$cursor, $next];
+            $cursor = $next;
+        }
+
+        return $out ?: [[$from, $to]];
     }
 
     private function parseScheduleItems(array $scheduleItems, string $tz): array

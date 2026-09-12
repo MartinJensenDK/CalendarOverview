@@ -2,9 +2,9 @@ import { store } from '../store.js';
 import { t } from '../i18n.js';
 import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd, isoWeek } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
-import { loadOverview, setPage, savePrefs, openModal, toggleSelect } from '../actions.js';
+import { loadOverview, setPage, savePrefs, openModal, toggleSelect, setSelection } from '../actions.js';
 
-const { computed, ref, onMounted, onBeforeUnmount } = Vue;
+const { computed, ref, watch, onMounted, onBeforeUnmount } = Vue;
 
 export default {
   name: 'OverviewGrid',
@@ -104,8 +104,21 @@ export default {
     function selectUser(u) { openModal('heatmap', { ids: [u.id] }); }
     function weekBadge(d, i) { return store.prefs.show_week_numbers && (i === 0 || parseYmd(d).getDay() === 1) ? isoWeek(d) : null; }
     function isSelected(id) { return store.selected.includes(id); }
+    // Corner checkbox: selects every row on the page, or clears when all are selected.
+    const allState = computed(() => {
+      const ids = users.value.map((u) => u.id);
+      const count = ids.filter((id) => store.selected.includes(id)).length;
+      return { all: ids.length > 0 && count === ids.length, some: count > 0 && count < ids.length };
+    });
+    const allBox = ref(null);
+    watch(allState, (s) => { if (allBox.value) allBox.value.indeterminate = s.some; }, { immediate: true, flush: 'post' });
+    function toggleAll() {
+      const ids = users.value.map((u) => u.id);
+      if (allState.value.all) setSelection(store.selected.filter((id) => !ids.includes(id)));
+      else setSelection([...store.selected, ...ids]);
+    }
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -120,7 +133,12 @@ export default {
           <button type="button" class="btn primary" @click="openModal('group')"><icon name="plus"></icon>{{ t('Create group') }}</button>
         </div></div>
         <div v-else-if="store.overview" class="grid" :class="'rh-' + store.prefs.row_height" :style="{ '--days': days.length, ...bandStyle }">
-          <div class="h corner"><span class="count">{{ t('{n} people', { n: store.overview.total }) }}</span><span class="muted" style="font-size:11px">{{ t('Hover a block for details.') }}</span></div>
+          <div class="h corner">
+            <label class="pick-all" v-if="store.prefs.find_time_enabled" :title="allState.all ? t('Clear selection') : t('Select everyone on this page')">
+              <input type="checkbox" ref="allBox" :checked="allState.all" @change="toggleAll" :aria-label="allState.all ? t('Clear selection') : t('Select everyone on this page')">
+            </label>
+            <span class="txt"><span class="count">{{ t('{n} people', { n: store.overview.total }) }}</span><span class="muted" style="font-size:11px">{{ t('Hover a block for details.') }}</span></span>
+          </div>
           <div v-for="(d, i) in days" :key="d" class="h" :class="{ weekend: isWeekend(d), today: d === today }">
             <span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
             <span class="wkno" v-if="weekBadge(d, i)">{{ t('Week') }} {{ weekBadge(d, i) }}</span>

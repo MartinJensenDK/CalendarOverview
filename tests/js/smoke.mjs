@@ -154,6 +154,15 @@ assert(!w.document.querySelector('.findtime') && w.document.querySelectorAll('.g
 store.prefs.find_time_enabled = true; await tick();
 assert(w.document.querySelector('.findtime') && w.document.querySelectorAll('.grid .name .pick').length === 3, 'find-time section returns when enabled');
 assert(w.document.querySelector('.findtime .btn.success'), 'find-time button uses the green success style');
+const allBox = w.document.querySelector('.grid .h.corner .pick-all input');
+assert(allBox && allBox.indeterminate === false, 'corner select-all checkbox present');
+allBox.click(); await tick();
+assert(store.selected.length === 3 && allBox.checked, 'corner checkbox selects everyone on the page');
+allBox.click(); await tick();
+assert(store.selected.length === 0, 'corner checkbox clears the selection');
+toggleSelect('me'); await tick();
+assert(allBox.indeterminate === true, 'corner checkbox shows indeterminate for partial selection');
+toggleSelect('me'); await tick();
 openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
 const cells = w.document.querySelectorAll('.heat .hc');
 assert(cells.length === 7 * 18, `heatmap cells for 7 days x 18 slots (got ${cells.length})`);

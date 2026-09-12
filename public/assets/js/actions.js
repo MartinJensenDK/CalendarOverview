@@ -102,6 +102,10 @@ export function toggleSelect(id) {
   else store.selected.push(id);
 }
 
+export function setSelection(ids) {
+  store.selected = [...new Set(ids)];
+}
+
 export function clearSelection() {
   store.selected = [];
 }
