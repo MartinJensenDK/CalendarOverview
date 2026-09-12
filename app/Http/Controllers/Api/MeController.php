@@ -6,16 +6,18 @@ use App\Graph\GraphException;
 use App\Graph\GraphTokenProvider;
 use App\Http\Controllers\Controller;
 use App\Models\ColorRule;
+use App\Models\DirectoryUser;
 use App\Services\DemoDataService;
 use App\Services\DirectorySyncService;
 use App\Services\GroupResolver;
+use App\Services\PhotoSyncService;
 use App\Support\Preferences;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MeController extends Controller
 {
-    public function show(Request $request, DirectorySyncService $directory, GroupResolver $groups, DemoDataService $demo, GraphTokenProvider $tokens): JsonResponse
+    public function show(Request $request, DirectorySyncService $directory, GroupResolver $groups, DemoDataService $demo, GraphTokenProvider $tokens, PhotoSyncService $photos): JsonResponse
     {
         $user = $request->user();
         $directoryError = null;
@@ -30,6 +32,13 @@ class MeController extends Controller
             $demo->seed();
         }
 
+        // Keep the signed-in user's own photo fresh; it is shown in the top bar.
+        $meDir = DirectoryUser::find($user->entra_id);
+        if ($meDir) {
+            $retryMissing = ! $meDir->has_photo && (! $meDir->photo_synced_at || $meDir->photo_synced_at->lt(now()->subHour()));
+            $photos->ensure($user, collect([$meDir]), force: $retryMissing);
+        }
+
         return response()->json([
             'user' => [
                 'id' => $user->entra_id,
@@ -37,7 +46,7 @@ class MeController extends Controller
                 'email' => $user->email,
                 'given_name' => $user->given_name,
                 'title' => $user->job_title,
-                'photo_url' => '/api/photos/'.rawurlencode($user->entra_id),
+                'photo_url' => $meDir ? $meDir->toSummary()['photo_url'] : '/api/photos/'.rawurlencode($user->entra_id),
                 'has_manager' => (bool) $user->manager_entra_id,
                 'scopes' => preg_split('/\s+/', (string) $user->granted_scopes, -1, PREG_SPLIT_NO_EMPTY),
             ],

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Group;
+use App\Services\PhotoSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\Fixtures;
@@ -250,6 +251,24 @@ class ApiTest extends TestCase
         $data = $this->actingAs($user)->getJson('/api/availability?users[]=demo-001&users[]=demo-002&from=2026-09-14&to=2026-09-19&tz=Europe/Copenhagen')->assertOk()->json();
         $this->assertCount(2, $data['users']);
         $this->assertCount(5, $data['days']);
+    }
+
+    public function test_own_photo_is_synced_and_served_with_cache_buster(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $jpeg = "\xFF\xD8\xFF\xE0fake-jpeg";
+        Http::fake([
+            'graph.microsoft.com/v1.0/$batch' => Http::response(['responses' => [['id' => 'me-0001', 'status' => 200, 'headers' => ['Content-Type' => 'image/jpeg'], 'body' => base64_encode($jpeg)]]]),
+        ]);
+
+        $photoUrl = $this->actingAs($user)->getJson('/api/me')->assertOk()->json('user.photo_url');
+        $this->assertMatchesRegularExpression('#^/api/photos/me-0001\?v=\d+$#', $photoUrl);
+        $this->assertNotSame('/api/photos/me-0001?v=0', $photoUrl);
+        $this->assertDatabaseHas('directory_users', ['id' => 'me-0001', 'has_photo' => true]);
+
+        $response = $this->actingAs($user)->get($photoUrl)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->assertSame($jpeg, $response->getContent() ?: file_get_contents(PhotoSyncService::pathFor('me-0001')));
     }
 
     public function test_photo_endpoint_returns_avatar_svg_when_no_photo(): void
