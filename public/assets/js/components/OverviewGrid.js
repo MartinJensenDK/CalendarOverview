@@ -1,6 +1,6 @@
 import { store } from '../store.js';
 import { t } from '../i18n.js';
-import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd, isoWeek } from '../util/date.js';
+import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd, isoWeek, addDays } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
 import { loadOverview, savePrefs, openModal, toggleSelect, setSelection } from '../actions.js';
 
@@ -60,6 +60,24 @@ export default {
     function blocksFor(user, day) { return blockIndex.value.get(`${user.id}|${day}`) || NO_BLOCKS; }
     // Skip the fade-in when the grid is large; animating thousands of blocks costs more than it shows.
     const bigGrid = computed(() => blockIndex.value.size > 600);
+
+    // Skeleton for the first load: same columns as the real grid, twelve placeholder rows
+    // with a deterministic scatter of bars so it looks like a calendar, not a table.
+    const skDays = computed(() => {
+      const out = [];
+      for (let i = 0; i < Math.min(store.prefs.days, 14); i++) {
+        const d = addDays(store.from || todayYmd(), i);
+        if (store.prefs.show_weekends || !isWeekend(d)) out.push(d);
+      }
+      return out;
+    });
+    function skBlocks(row, col) {
+      const h = (row * 7 + col * 13) % 11;
+      const bars = [];
+      if (h % 3 !== 2) bars.push({ left: `${8 + (h * 9) % 30}%`, width: `${12 + (h * 5) % 22}%` });
+      if (h % 4 === 0 || h === 7) bars.push({ left: `${52 + (h * 4) % 18}%`, width: `${10 + (h * 3) % 18}%` });
+      return bars;
+    }
 
     function buildBlocks(user, day) {
       const dayStart = parseYmd(day).getTime();
@@ -121,7 +139,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, skDays, skBlocks, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -135,7 +153,15 @@ export default {
           <h3>{{ t('Nothing to show yet') }}</h3><p>{{ t('Show a group in the menu on the left, or create one with the people you want to follow.') }}</p>
           <button type="button" class="btn primary" @click="openModal('group')"><icon name="plus"></icon>{{ t('Create group') }}</button>
         </div></div>
-        <div v-else-if="store.overview" class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid }]" :style="{ '--days': days.length, ...bandStyle }">
+        <div v-else-if="!store.overview" class="grid skeleton" :class="'rh-' + store.prefs.row_height" :style="{ '--days': skDays.length }" aria-hidden="true">
+          <div class="h corner"></div>
+          <div v-for="d in skDays" :key="d" class="h"><span class="sk" style="width:26px;height:9px"></span><span class="sk" style="width:46px;height:11px"></span></div>
+          <template v-for="i in 12" :key="i">
+            <div class="name"><span class="avatar sk circle"></span><span class="txt" style="flex:1"><span class="sk" :style="{ width: (70 + (i * 37) % 60) + 'px', height: '11px' }"></span><span class="sk" style="width:56px;height:8px"></span></span></div>
+            <div v-for="(d, j) in skDays" :key="d" class="cell" :class="{ weekend: isWeekend(d) }"><div class="band"></div><span v-for="(b, k) in skBlocks(i, j)" :key="k" class="sk sk-blk" :style="b"></span></div>
+          </template>
+        </div>
+        <div v-else class="grid" :class="['rh-' + store.prefs.row_height, { 'no-anim': bigGrid }]" :style="{ '--days': days.length, ...bandStyle }">
           <div class="h corner">
             <label class="pick-all" v-if="store.prefs.find_time_enabled" :title="allState.all ? t('Clear selection') : t('Select everyone on this page')">
               <input type="checkbox" ref="allBox" :checked="allState.all" @change="toggleAll" :aria-label="allState.all ? t('Clear selection') : t('Select everyone on this page')">

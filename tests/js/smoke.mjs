@@ -83,6 +83,10 @@ const html = () => w.document.body.innerHTML;
 function assert(cond, msg) { if (!cond) { errors.push('ASSERT: ' + msg); } else console.log('ok -', msg); }
 
 assert(store.ready, 'store ready after loadMe');
+{ const saved = store.overview; const savedMe = store.me; store.overview = null; store.me = null; store.ready = false; await tick();
+  assert(w.document.querySelector('.grid.skeleton') && w.document.querySelectorAll('.grid.skeleton .name').length === 12 && w.document.querySelector('.sk-groups') && w.document.querySelector('.topbar .avatar.sk'), 'skeletons render while the first load is pending');
+  store.overview = saved; store.me = savedMe; store.ready = true; await tick();
+  assert(!w.document.querySelector('.grid.skeleton') && !w.document.querySelector('.sk-groups'), 'skeletons disappear once data is in'); }
 assert(html().includes('Calendar overview'), 'headline rendered');
 assert(html().includes('My team') && html().includes('Sales') && html().includes('Board'), 'menu groups rendered');
 assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows rendered');

@@ -61,6 +61,9 @@ export default {
         <button type="button" class="btn sm icon primary" @click="openModal('group')" :title="t('Create group')" :aria-label="t('Create group')"><icon name="plus" :size="16"></icon></button>
       </div>
       <div class="sidebar-scroll">
+        <div class="sk-groups" v-if="!store.ready" aria-hidden="true">
+          <div class="row" v-for="i in 4" :key="i"><span class="sk dot"></span><span class="sk" :style="{ width: (60 + (i * 41) % 70) + 'px', height: '11px' }"></span></div>
+        </div>
         <div v-for="entry in entries" :key="entry.id" class="group" :class="{ dragging: dragId === entry.id, 'drop-before': dropTarget === entry.id && dragId !== entry.id }"
              draggable="true" @dragstart="onDragStart(entry, $event)" @dragover="onDragOver(entry, $event)" @drop="onDrop(entry)" @dragend="onDragEnd">
           <div class="group-row" :class="{ 'hidden-group': !entry.visible }" :title="hint(entry)">

@@ -69,7 +69,8 @@ export default {
 
       <div class="dropdown" ref="rootEl">
         <button type="button" class="btn ghost" style="padding:0 6px 0 4px;height:38px" @click="profileOpen = !profileOpen" aria-haspopup="menu" :aria-expanded="profileOpen">
-          <img class="avatar" :src="store.me ? store.me.photo_url : ''" alt="">
+          <img class="avatar" v-if="store.me" :src="store.me.photo_url" alt="">
+          <span class="avatar sk circle" v-else aria-hidden="true"></span>
           <icon name="chevron-down" :size="14"></icon>
         </button>
         <div class="menu" v-if="profileOpen" role="menu">
