@@ -139,8 +139,9 @@ assert(w.document.querySelectorAll('.minical-month').length === 2, 'expands to t
 assert(w.document.querySelectorAll('.minical .wk').length === 0, 'week numbers hidden by default');
 store.prefs.show_week_numbers = true; await tick();
 assert(w.document.querySelectorAll('.minical .wk').length > 2, 'week numbers appear live when enabled');
+assert(w.document.querySelectorAll('.grid .h .wkno').length >= 1 && w.document.querySelector('.grid .h .wkno').textContent.includes('Week'), 'week badge shown in overview header');
 store.prefs.show_week_numbers = false; await tick();
-assert(w.document.querySelectorAll('.minical .wk').length === 0, 'week numbers disappear live when disabled');
+assert(w.document.querySelectorAll('.minical .wk').length === 0 && w.document.querySelectorAll('.grid .h .wkno').length === 0, 'week numbers disappear live when disabled');
 openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
 const cells = w.document.querySelectorAll('.heat .hc');
 assert(cells.length === 5 * 18, `heatmap cells for 5 days x 18 slots (got ${cells.length})`);

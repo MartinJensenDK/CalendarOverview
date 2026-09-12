@@ -287,6 +287,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid .h .dow { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
 .grid .h .date { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
 .grid .h.weekend .date { color: var(--muted); }
+.grid .h .wkno { position: absolute; top: 5px; right: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--muted); background: var(--surface-2); border-radius: 4px; padding: 1px 5px; }
+.grid .h { position: sticky; }
 .grid .h.today { background: var(--today-soft); }
 .grid .h.today .date { color: var(--ink); }
 .grid .h.today .date::after { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--today); margin-left: 7px; vertical-align: middle; }

@@ -1,6 +1,6 @@
 import { store } from '../store.js';
 import { t } from '../i18n.js';
-import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd } from '../util/date.js';
+import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd, isoWeek } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
 import { loadOverview, setPage, savePrefs, openModal, toggleSelect, clearSelection } from '../actions.js';
 
@@ -102,6 +102,7 @@ export default {
       return t('No access to this calendar');
     }
     function selectUser(u) { openModal('heatmap', { ids: [u.id] }); }
+    function weekBadge(d, i) { return store.prefs.show_week_numbers && (i === 0 || parseYmd(d).getDay() === 1) ? isoWeek(d) : null; }
     function isSelected(id) { return store.selected.includes(id); }
     const selectedUsers = computed(() => {
       const map = new Map();
@@ -110,7 +111,7 @@ export default {
       return store.selected.map((id) => map.get(id)).filter(Boolean);
     });
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal, isSelected, toggleSelect, clearSelection, selectedUsers };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, clearSelection, selectedUsers };
   },
   template: `
     <section class="main">
@@ -126,8 +127,9 @@ export default {
         </div></div>
         <div v-else-if="store.overview" class="grid" :class="'rh-' + store.prefs.row_height" :style="{ '--days': days.length, ...bandStyle }">
           <div class="h corner"><span class="count">{{ t('{n} people', { n: store.overview.total }) }}</span><span class="muted" style="font-size:11px">{{ t('Hover a block for details.') }}</span></div>
-          <div v-for="d in days" :key="d" class="h" :class="{ weekend: isWeekend(d), today: d === today }">
+          <div v-for="(d, i) in days" :key="d" class="h" :class="{ weekend: isWeekend(d), today: d === today }">
             <span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
+            <span class="wkno" v-if="weekBadge(d, i)">{{ t('Week') }} {{ weekBadge(d, i) }}</span>
           </div>
           <template v-for="u in users" :key="u.id">
             <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id) }">
