@@ -302,7 +302,9 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid .name.me { box-shadow: inset 3px 0 0 var(--accent); }
 .grid .name .pick { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); cursor: pointer; opacity: 0; transition: opacity .12s; flex: none; }
 .grid .name:hover .pick, .grid .name.selected .pick, .grid .name .pick:focus-visible { opacity: 1; }
-.grid .name .avatar { cursor: pointer; }
+.grid .name { cursor: pointer; user-select: none; }
+.grid .name:hover { background: var(--surface-2); }
+.grid .name.selected:hover { background: var(--accent-soft); }
 .grid .name.selected { background: var(--accent-soft); }
 .grid .cell { position: relative; height: var(--row-h); border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); background: var(--offhours); overflow: hidden; }
 .grid .cell.weekend { background: repeating-linear-gradient(135deg, var(--weekend) 0 6px, var(--surface-2) 6px 7px); }

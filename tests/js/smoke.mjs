@@ -122,7 +122,8 @@ closeModal(); await tick();
 assert(w.document.querySelectorAll('.sidebar .member').length === 0, 'menu does not list members');
 assert(w.document.querySelectorAll('.grid .name .pick').length === 3, 'each overview row has a selection checkbox');
 w.document.querySelectorAll('.grid .name .pick')[0].click(); await tick();
-toggleSelect('p1'); await tick();
+assert(store.selected.length === 1, 'checkbox selects without double toggling');
+w.document.querySelectorAll('.grid .name .txt b')[1].click(); await tick();
 assert(store.selected.length === 2 && html().includes('2 selected') && html().includes('Find a time'), 'floating selection bar appears');
 
 // Mini calendar in the menu footer
