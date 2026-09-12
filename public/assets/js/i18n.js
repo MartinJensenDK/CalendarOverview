@@ -156,7 +156,6 @@ const da = {
   'Page': 'Side',
   'Week': 'Uge',
   'Not synced yet': 'Ikke synkroniseret endnu',
-  'Manager-based': 'Lederbaseret',
   'Manual group': 'Manuel gruppe',
   'You': 'Dig',
   'Choose a group': 'Vælg en gruppe',

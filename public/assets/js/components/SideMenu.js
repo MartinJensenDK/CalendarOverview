@@ -25,8 +25,7 @@ export default {
     }
     function kindLabel(entry) {
       if (entry.kind !== 'group') return '';
-      if (entry.type === 'entra') return 'Entra';
-      return entry.managers && entry.managers.length ? t('Manager-based') : '';
+      return entry.type === 'entra' ? 'Entra' : ''; // manager-based groups show only their name
     }
     function hint(entry) {
       if (entry.type === 'my_team' && !entry.has_manager) return t('You have no manager set in Entra ID, so “My team” only shows you.');
