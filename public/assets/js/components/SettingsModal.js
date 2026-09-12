@@ -2,7 +2,7 @@ import { store, confirm, toast } from '../store.js';
 import { t } from '../i18n.js';
 import { closeModal, savePrefs, resetSettings } from '../actions.js';
 import { hoursFor } from '../util/hours.js';
-import { weekday, dayLabel, minutesToHhmm } from '../util/date.js';
+import { weekday, dayLabel, minutesToHhmm, todayYmd } from '../util/date.js';
 
 const { computed } = Vue;
 
@@ -21,10 +21,11 @@ export default {
       const o = store.overview;
       const me = o && o.users.find((u) => u.is_me);
       if (!o || !me) return null;
-      return o.days.map((d) => ({ day: d, spans: hoursFor(me, d).map((h) => `${minutesToHhmm(h.sm)}–${minutesToHhmm(h.em)}${h.loc ? ' · ' + locLabel(h.loc) : ''}`) }));
+      return o.days.map((d) => ({ day: d, today: d === todayYmd(), spans: hoursFor(me, d).map((h) => ({ time: `${minutesToHhmm(h.sm)}–${minutesToHhmm(h.em)}`, loc: h.loc })) }));
     });
+    function locIcon(loc) { return loc === 'remote' ? 'home' : 'building'; }
     function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
-    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel };
+    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel, locIcon, locLabel };
   },
   template: `
     <modal :title="t('Settings')" width="560px" @close="closeModal">
@@ -46,11 +47,20 @@ export default {
         <label class="field"><span>{{ t('Days to show') }}</span>
           <select class="select" :value="store.prefs.days" @change="set({ days: Number($event.target.value) })"><option v-for="d in store.options.day_options" :key="d" :value="d">{{ d }}</option></select></label>
       </div>
-      <div class="field"><span>{{ t('Working hours') }}</span>
+      <div class="field"><span class="field-label">{{ t('Working hours') }}</span>
         <span class="hours-info" tabindex="0">{{ t('Working hours are read from Outlook') }}<span class="i"><icon name="info" :size="14"></icon></span>
           <div class="hours-pop" role="tooltip">
             <div class="hd">{{ t('Your working hours in the period shown') }}</div>
-            <template v-if="myHours"><div v-for="r in myHours" :key="r.day" class="r" :class="{ off: !r.spans.length }"><span class="d">{{ weekday(r.day) }} {{ dayLabel(r.day) }}</span><span>{{ r.spans.length ? r.spans.join(', ') : t('No working hours') }}</span></div></template>
+            <table v-if="myHours">
+              <thead><tr><th>{{ t('Day') }}</th><th>{{ t('Hours') }}</th><th>{{ t('Location') }}</th></tr></thead>
+              <tbody>
+                <tr v-for="r in myHours" :key="r.day" :class="{ off: !r.spans.length, today: r.today }">
+                  <td class="d">{{ weekday(r.day) }} {{ dayLabel(r.day) }}</td>
+                  <td class="h"><template v-if="r.spans.length"><div v-for="(s, k) in r.spans" :key="k">{{ s.time }}</div></template><span v-else>{{ t('No working hours') }}</span></td>
+                  <td class="l"><div v-for="(s, k) in r.spans" :key="k"><span class="loc" v-if="s.loc"><icon :name="locIcon(s.loc)" :size="12"></icon>{{ locLabel(s.loc) }}</span><span v-else>–</span></div></td>
+                </tr>
+              </tbody>
+            </table>
             <div v-else class="muted">{{ t('No data yet') }}</div>
           </div>
         </span></div>

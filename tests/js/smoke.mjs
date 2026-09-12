@@ -132,7 +132,7 @@ closeModal(); await tick();
 
 openModal('settings'); await tick();
 assert(html().includes('Days to show') && !html().includes('Rows per page'), 'settings modal renders without paging option');
-assert(!html().includes('Sync photos') && html().includes('Working hours are read from Outlook') && /\d\d:\d\d–\d\d:\d\d · Office/.test(w.document.querySelector('.hours-pop').textContent) && w.document.querySelector('.hours-pop .r.off'), 'settings shows own working hours per day in the hover box, no sync-photos button');
+assert(!html().includes('Sync photos') && html().includes('Working hours are read from Outlook') && w.document.querySelectorAll('.hours-pop tbody tr').length === 7 && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.hours-pop td.h').textContent) && w.document.querySelector('.hours-pop td.l .loc').textContent.includes('Office') && w.document.querySelector('.hours-pop tr.off'), 'settings shows own working hours per day in the hover box, no sync-photos button');
 assert(w.document.querySelectorAll('.steps.compact button[aria-pressed="true"]').length === 1 && w.document.querySelector('.steps.compact button[aria-pressed="true"]').textContent.includes('1 month'), 'months shown is a pressed-button pair');
 store.prefs.days = 14; w.document.querySelector('.modal-foot .btn.danger').click(); await tick();
 assert(w.document.querySelectorAll('.modal').length === 2 && html().includes('Reset all settings?'), 'reset asks for confirmation');
@@ -239,6 +239,7 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
 }
 
 // Type-to-search person lookup
+store.from = '2026-09-14'; await tick(); // the mocked calendar data covers this week
 store.prefs.locale = 'en'; await tick();
 w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'x', bubbles: true }));
 await tick(250);
@@ -246,6 +247,7 @@ assert(store.modal && store.modal.name === 'lookup' && w.document.querySelector(
 assert(w.document.querySelectorAll('.lookup-row').length === 1 && html().includes('Xenia Search'), 'lookup shows search results');
 assert(w.document.activeElement === w.document.querySelector('.lookup-search input'), 'search field keeps focus after results arrive');
 w.document.querySelector('.lookup-row').click(); await tick(120);
+assert(w.document.querySelectorAll('.lookup-date .hours').length === 5 && w.document.querySelector('.lookup-date .hours .loc[title="Office"]') && /\d\d:\d\d–\d\d:\d\d/.test(w.document.querySelector('.lookup-date .hours').textContent), 'lookup shows working hours and location per day');
 assert(w.document.querySelector('.lookup-person') && w.document.querySelectorAll('.lookup-day').length === store.prefs.days, `selecting a person shows their calendar for the overview range (${w.document.querySelectorAll('.lookup-day').length} days)`);
 assert([...w.document.querySelectorAll('.lookup-add option')].some((o) => o.textContent.includes('Sales')), 'manual groups offered for adding the person');
 w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'q', bubbles: true })); await tick();

@@ -6,6 +6,8 @@ import { t } from '../i18n.js';
 import { closeModal, openModal, loadOverview } from '../actions.js';
 import { addDays, parseYmd, weekday, dayLabel, timeLabel, isWeekend, ymd } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
+import { hoursFor } from '../util/hours.js';
+import { minutesToHhmm } from '../util/date.js';
 
 const { ref, computed, watch, onMounted, nextTick } = Vue;
 
@@ -65,6 +67,13 @@ export default {
         toast(e.message || t('Something went wrong'), 'danger');
       } finally { loadingSchedule.value = false; }
     }
+    // Working hours and location for the day, from the person's plan in Microsoft 365.
+    function hoursOn(day) {
+      if (!schedule.value) return [];
+      return hoursFor(schedule.value, day).map((h) => ({ time: `${minutesToHhmm(h.sm)}–${minutesToHhmm(h.em)}`, loc: h.loc }));
+    }
+    function locIcon(loc) { return loc === 'remote' ? 'home' : 'building'; }
+    function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
     function itemsFor(day) {
       if (!schedule.value) return [];
       const ds = parseYmd(day).getTime(); const de = ds + 86400000;
@@ -110,7 +119,7 @@ export default {
     }
     function newGroup() { const p = person.value; closeModal(); openModal('group', { presetMembers: [p] }); }
 
-    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, pick, onKey, back, manualGroups, alreadyIn, groupId, adding, addToGroup, newGroup, closeModal, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
+    return { store, t, q, input, results, active, searching, person, schedule, loadingSchedule, days, itemsFor, hoursOn, locIcon, locLabel, pick, onKey, back, manualGroups, alreadyIn, groupId, adding, addToGroup, newGroup, closeModal, weekday, dayLabel, isWeekend, todayYmd: ymd(new Date()) };
   },
   template: `
     <modal :title="t('Look up a person')" width="640px" dismissable @close="closeModal">
@@ -149,7 +158,8 @@ export default {
         <div class="lookup-days" v-if="!loadingSchedule && schedule">
           <div v-if="schedule.error" class="callout warn">{{ t('No access to this calendar') }}</div>
           <div v-for="d in days" :key="d" class="lookup-day" :class="{ weekend: isWeekend(d), today: d === todayYmd }">
-            <div class="lookup-date"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span></div>
+            <div class="lookup-date"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
+              <span class="hours" v-for="(h, k) in hoursOn(d)" :key="k"><span class="loc" v-if="h.loc" :title="locLabel(h.loc)"><icon :name="locIcon(h.loc)" :size="11"></icon></span>{{ h.time }}</span></div>
             <div class="lookup-items">
               <span v-if="!itemsFor(d).length" class="muted free">{{ t('free') }}</span>
               <span v-for="it in itemsFor(d)" :key="it.key" class="lookup-item" :class="it.st" :style="it.style" :title="it.loc || ''"><span class="mono">{{ it.time }}</span> {{ it.label }}</span>
