@@ -149,15 +149,12 @@ export default {
           windows.push({ day: d, start: m, end: m + form.duration, free: users.value.filter((u) => isFree(u.id, d, m, m + form.duration)).length });
         }
       }
-      const best = Math.max(0, ...windows.map((w) => w.free));
-      if (best === 0) return [];
+      // Best attendance first, earliest first among equals; never two overlapping windows.
+      const ranked = windows.filter((w) => w.free > 0).sort((a, b) => b.free - a.free || a.day.localeCompare(b.day) || a.start - b.start);
       const out = [];
-      let lastEnd = null;
-      for (const w of windows) {
-        if (w.free !== best) continue;
-        if (lastEnd && w.day === lastEnd.day && w.start < lastEnd.end) continue; // skip overlapping windows
+      for (const w of ranked) {
+        if (out.some((o) => o.day === w.day && w.start < o.end && w.end > o.start)) continue;
         out.push({ ...w, total, label: `${weekday(w.day, 'short')} ${dayLabel(w.day)} · ${minutesToHhmm(w.start)}–${minutesToHhmm(w.end)}` });
-        lastEnd = w;
         if (out.length >= 3) break;
       }
       return out;
