@@ -100,6 +100,8 @@ assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows
   assert(cells[0].querySelector('.band .loc') && cells[0].querySelector('.band .loc').getAttribute('title') === 'Office' && cells[7 + 3].querySelector('.band .loc').getAttribute('title') === 'Home' && !cells[7].querySelector('.band .loc'), 'work location (office/home) shown on the band when known'); }
 assert(!w.document.querySelector('.pager'), 'no footer bar under the grid');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
+{ const hl = w.document.querySelectorAll('.grid .h')[1].querySelectorAll('.hl'); const labels = [...hl].filter((e) => !e.className.includes('minor')).map((e) => e.textContent);
+  assert(hl.length >= 9 && labels[0] === '05' && labels.includes('12') && hl[0].style.left === '0%', `day header shows an hour scale starting at the strip start (${labels.join(' ')})`); }
 const blocks = w.document.querySelectorAll('.grid .blk');
 assert(blocks.length === 5, `five event blocks rendered (got ${blocks.length})`);
 { const lane = (name) => [...blocks].find((b) => b.textContent.includes(name)).style.getPropertyValue('--lane');
