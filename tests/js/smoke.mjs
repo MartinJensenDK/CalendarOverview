@@ -238,8 +238,17 @@ assert([...w.document.querySelectorAll('.tooltip')].some((el) => /1 of 2 free/.t
 cells[5].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
 assert([...w.document.querySelectorAll('.tooltip')].some((el) => /0 of 2 free/.test(el.textContent)), 'Saturday: nobody works, so 0 of 2 free');
 cells[2].dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick();
-assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/0/deeplink/compose'), 'slot selection shows Outlook link');
-assert(w.document.querySelector('.heat-detail li .loc[title="Office"]') && w.document.querySelectorAll('.heat-detail li').length === 2, 'detail list shows each person\'s work location for that day');
+assert(html().includes('Open in Outlook') && w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/deeplink/compose'), 'slot selection shows Outlook link');
+{ const counts = [...w.document.querySelectorAll('.heat-count')]; const sum = counts.reduce((n, c) => n + Number(c.querySelector('b').textContent), 0);
+  assert(counts.length >= 2 && sum === 2 && counts[0].className.includes('free') && counts[1].className.includes('busy') && !w.document.querySelector('.heat-detail > ul'), 'selection shows free and busy counts instead of a list');
+  assert(w.document.querySelectorAll('.heat-pop li').length === 2 && w.document.querySelector('.heat-pop li .loc[title="Office"]'), 'the hover lists name the people with their work location');
+  const inp = w.document.querySelector('.heat-onbehalf .picker input'); assert(inp, 'book on behalf of has a person search');
+  inp.value = 'Xenia'; inp.dispatchEvent(new w.Event('input', { bubbles: true })); await tick(260);
+  const opt = [...w.document.querySelectorAll('.heat-onbehalf .picker .opt')].find((o) => o.textContent.includes('Xenia')); opt.dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true, cancelable: true })); await tick();
+  const href = w.document.querySelector('.heat-detail a').href;
+  assert(href.includes('outlook.office.com/calendar/x1%40example.com/deeplink/compose') && w.document.querySelector('.heat-onbehalf .chip') && w.document.querySelector('.heat-onbehalf .chip').textContent.includes('Xenia'), 'choosing a person opens Outlook in their calendar');
+  w.document.querySelector('.heat-onbehalf .chip button').click(); await tick();
+  assert(w.document.querySelector('.heat-detail a').href.includes('outlook.office.com/calendar/deeplink/compose') && w.document.querySelector('.heat-onbehalf .picker input'), 'removing the person goes back to your own calendar'); }
 cells[3].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();
 assert([...w.document.querySelectorAll('.tooltip')].some((el) => /of 2 free/.test(el.textContent)), 'hovering a heatmap cell shows "x of y free"');
 [...w.document.querySelectorAll('.heat-toolbar .btn')].find((b) => b.textContent.includes('Add more')).click(); await tick();

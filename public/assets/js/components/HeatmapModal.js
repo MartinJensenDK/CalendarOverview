@@ -216,8 +216,18 @@ export default {
         const loc = (hoursFor(u, s.day).find((h) => h.loc) || {}).loc || null;
         return { ...u, free: isFree(u, s.day, s.start, s.end), working, loc };
       });
-      return { ...s, list, free: list.filter((x) => x.free).length, label: `${weekday(s.day, 'long')} ${dayLabel(s.day)} · ${minutesToHhmm(s.start)}–${minutesToHhmm(s.end)}` };
+      const groups = [
+        { key: 'free', label: t('free'), list: list.filter((x) => x.free) },
+        { key: 'busy', label: t('busy'), list: list.filter((x) => !x.free && x.working) },
+        { key: 'off', label: t('not working'), list: list.filter((x) => !x.free && !x.working) },
+      ].filter((g) => g.key !== 'off' || g.list.length);
+      return { ...s, list, groups, free: list.filter((x) => x.free).length, label: `${weekday(s.day, 'long')} ${dayLabel(s.day)} · ${minutesToHhmm(s.start)}–${minutesToHhmm(s.end)}` };
     });
+    // Book on behalf of someone else: Outlook opens the compose form in that person's calendar
+    // (needs delegate access there; the app itself stays read-only).
+    const onBehalf = ref(null);
+    function pickOnBehalf(u) { onBehalf.value = u; }
+    function clearOnBehalf() { onBehalf.value = null; }
     function locIcon(loc) { return loc === 'remote' ? 'home' : 'building'; }
     function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
     const outlookUrl = computed(() => {
@@ -225,12 +235,14 @@ export default {
       const d = parseYmd(detail.value.day);
       const start = new Date(d); start.setMinutes(detail.value.start);
       const end = new Date(d); end.setMinutes(detail.value.end);
-      const to = users.value.map((u) => u.email).filter(Boolean).join(',');
+      const organizer = onBehalf.value && onBehalf.value.email ? onBehalf.value.email.toLowerCase() : null;
+      const to = users.value.map((u) => u.email).filter((e) => e && e.toLowerCase() !== organizer).join(',');
       const params = new URLSearchParams({ path: '/calendar/action/compose', rru: 'addevent', startdt: localIso(start), enddt: localIso(end), subject: form.subject || t('Meeting'), to });
-      return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
+      const mailbox = organizer ? `${encodeURIComponent(organizer)}/` : '';
+      return `https://outlook.office.com/calendar/${mailbox}deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, skDays, SK_SLOTS, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, locIcon, locLabel, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, skDays, SK_SLOTS, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, onBehalf, pickOnBehalf, clearOnBehalf, locIcon, locLabel, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -267,9 +279,22 @@ export default {
       <p class="muted" style="margin:0 0 10px;font-size:12px">{{ t('Click a slot to see who is free. Drag to select a longer time.') }}</p>
       <div class="heat-detail" v-if="detail">
         <div class="row" style="align-items:flex-start"><h3 class="grow">{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3><button type="button" class="btn ghost icon sm" :title="t('Clear selection')" @click="clearSel"><icon name="x" :size="14"></icon></button></div>
-        <ul>
-          <li v-for="u in detail.list" :key="u.id" :class="{ busy: !u.free }"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="loc" v-if="u.loc" :title="locLabel(u.loc)"><icon :name="locIcon(u.loc)" :size="12"></icon></span><span class="st">{{ u.free ? t('free') : (u.working ? t('busy') : t('not working')) }}</span></li>
-        </ul>
+        <div class="heat-counts">
+          <span v-for="g in detail.groups" :key="g.key" class="heat-count" :class="g.key" tabindex="0" :aria-label="g.list.length + ' ' + g.label">
+            <b>{{ g.list.length }}</b> {{ g.label }}
+            <div class="heat-pop" v-if="g.list.length">
+              <ul>
+                <li v-for="u in g.list" :key="u.id"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="loc" v-if="u.loc" :title="locLabel(u.loc)"><icon :name="locIcon(u.loc)" :size="12"></icon></span></li>
+              </ul>
+            </div>
+          </span>
+        </div>
+        <div class="heat-onbehalf">
+          <span class="field-label" style="margin:0">{{ t('Book on behalf of') }}</span>
+          <span class="chip" v-if="onBehalf"><img class="avatar" :src="onBehalf.photo_url" alt=""><span>{{ onBehalf.name }}</span><button type="button" @click="clearOnBehalf" :aria-label="t('Remove')"><icon name="x" :size="12"></icon></button></span>
+          <user-picker v-else endpoint="/api/directory/users" :placeholder="t('Search a person')" @pick="pickOnBehalf"></user-picker>
+          <span class="muted hint">{{ t('Requires delegate access to that person’s calendar in Outlook.') }}</span>
+        </div>
         <div class="row" style="margin-top:12px">
           <input class="input" v-model="form.subject" :placeholder="t('Meeting subject')" style="max-width:320px">
           <a class="btn primary" :href="outlookUrl" target="_blank" rel="noopener"><icon name="external"></icon>{{ t('Open in Outlook') }}</a>

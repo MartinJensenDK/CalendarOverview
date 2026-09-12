@@ -5,7 +5,7 @@ A modern, self-hosted web app that shows your colleagues' Microsoft 365 calendar
 - **Read-only.** Uses delegated Microsoft Graph permissions only; the app can never change a calendar. No application-level (tenant-wide) permissions.
 - **Groups.** A built-in *My team* (everyone with the same manager as you), manual groups (pick people, or "everyone reporting to …"), and Entra ID groups.
 - **Colour rules.** "Red if the subject contains Vacation", "orange when out of office", regex supported, first match wins.
-- **Find a time.** Select people, open the availability heatmap, pick a slot and open a pre-filled meeting in Outlook.
+- **Find a time.** Select people, open the availability heatmap, pick a slot, see how many are free or busy (hover for names) and open a pre-filled meeting in Outlook, optionally in a colleague’s calendar when you have delegate access to book on their behalf.
 - **Working hours from Microsoft 365.** Each person's working hours come from Graph and can differ per day: colleagues' from their mailbox pattern (`getSchedule`), your own from Outlook's *Work hours and location* plan. They shape the day strip in the overview and what counts as free in *Find a time*. Nothing to configure in the app.
 - **Vacation calendar.** A timeline of who is away when, for everyone in the overview or for any mix of your groups (My team, your own groups, the demo team) chosen with one click, with presets from one month to a year and a list of who is on vacation today. Vacation is read from whole-day out-of-office items and items called vacation/ferie/holiday.
 - **Your settings follow you.** Theme, language (English/Danish), row height, days shown, groups and rules are stored on the server.

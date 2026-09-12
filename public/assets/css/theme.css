@@ -567,6 +567,18 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .heat-detail li .loc { line-height: 0; color: var(--muted); }
 .heat-detail li .st { margin-left: auto; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .heat-detail li.busy .st { color: var(--danger); }
+.heat-counts { display: flex; flex-wrap: wrap; gap: 8px; }
+.heat-count { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; cursor: default; outline-offset: 2px; }
+.heat-count b { font-family: var(--font-display); font-size: 16px; line-height: 1; }
+.heat-count.free b { color: var(--ok); }
+.heat-count.busy b { color: var(--danger); }
+.heat-count.off b { color: var(--muted); }
+.heat-pop { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 6; min-width: 240px; max-height: 260px; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-2); padding: 8px 10px; }
+.heat-count:hover .heat-pop, .heat-count:focus .heat-pop, .heat-count:focus-within .heat-pop { display: block; }
+.heat-detail .heat-pop ul { grid-template-columns: 1fr; }
+.heat-onbehalf { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.heat-onbehalf .picker { flex: 1; min-width: 220px; max-width: 320px; }
+.heat-onbehalf .hint { font-size: 12px; flex-basis: 100%; }
 
 /* Person lookup */
 .lookup-search { position: relative; display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
