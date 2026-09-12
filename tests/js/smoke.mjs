@@ -177,7 +177,7 @@ pickerInput.dispatchEvent(new w.Event('focus')); await tick(250);
 w.document.querySelector('.modal .picker .opt').dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick(120);
 assert(store.selected.includes('x1') && calls.some((c) => c.includes('/api/availability') && c.includes('x1')), 'picked person is added to the search');
 const sugg = w.document.querySelectorAll('.suggest-btn');
-assert(sugg.length === 3, `three suggested times when everyone is free (got ${sugg.length})`);
+assert(sugg.length === 3 && /\d+ of \d+ free/.test(sugg[0].textContent), `three suggested times with attendance shown (got ${sugg.length}: ${sugg[0] && sugg[0].textContent})`);
 sugg[1].click(); await tick();
 assert(sugg[1].className.includes('active') && html().includes('Open in Outlook'), 'choosing a suggestion selects it in the heatmap');
 const modalRef = w.document.querySelector('.modal');

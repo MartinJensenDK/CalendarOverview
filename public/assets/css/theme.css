@@ -453,6 +453,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .heat .hc:hover { filter: brightness(.96); }
 .suggest { margin: 0 0 12px; }
 .suggest-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.suggest-btn .suggest-count { font-family: var(--font-mono); font-size: 11px; color: var(--ok); margin-left: 4px; }
+.suggest-btn.partial .suggest-count { color: var(--today-line); }
 .heat-legend { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); margin-top: 10px; }
 .heat-legend .bar { width: 140px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(229 85 96), rgb(245 190 60), rgb(46 176 114)); }
 .heat-detail { margin: 0 0 12px; padding: 12px; border-radius: var(--radius); background: var(--surface-2); }

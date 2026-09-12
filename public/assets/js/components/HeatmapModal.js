@@ -112,25 +112,34 @@ export default {
     function unhover() { hov.value = null; }
     const hovStyle = computed(() => hov.value ? { left: `${Math.min(hov.value.x + 14, window.innerWidth - 220)}px`, top: `${hov.value.y + 18}px` } : {});
 
-    // The next three windows of the chosen length where everyone is free.
+    // The next three windows of the chosen length where the most people are free
+    // (everyone, when possible; otherwise the best attendance in the period).
     const suggestions = computed(() => {
       if (!users.value.length || !days.value.length) return [];
-      const out = [];
-      const now = new Date();
+      const total = users.value.length;
       const todayS = todayYmd();
+      const now = new Date();
       const nowMin = now.getHours() * 60 + now.getMinutes();
       const step = 15;
+      const windows = [];
       for (const d of days.value) {
         if (d < todayS) continue;
         let start = range.value.start;
         if (d === todayS) start = Math.max(start, Math.ceil(nowMin / step) * step);
         for (let m = start; m + form.duration <= range.value.end; m += step) {
-          if (users.value.every((u) => isFree(u.id, d, m, m + form.duration))) {
-            out.push({ day: d, start: m, end: m + form.duration, label: `${weekday(d, 'short')} ${dayLabel(d)} · ${minutesToHhmm(m)}–${minutesToHhmm(m + form.duration)}` });
-            m += form.duration - step; // continue after this window
-            if (out.length >= 3) return out;
-          }
+          windows.push({ day: d, start: m, end: m + form.duration, free: users.value.filter((u) => isFree(u.id, d, m, m + form.duration)).length });
         }
+      }
+      const best = Math.max(0, ...windows.map((w) => w.free));
+      if (best === 0) return [];
+      const out = [];
+      let lastEnd = null;
+      for (const w of windows) {
+        if (w.free !== best) continue;
+        if (lastEnd && w.day === lastEnd.day && w.start < lastEnd.end) continue; // skip overlapping windows
+        out.push({ ...w, total, label: `${weekday(w.day, 'short')} ${dayLabel(w.day)} · ${minutesToHhmm(w.start)}–${minutesToHhmm(w.end)}` });
+        lastEnd = w;
+        if (out.length >= 3) break;
       }
       return out;
     });
@@ -176,9 +185,9 @@ export default {
         <button type="button" class="btn ghost sm" @click="addingMore = false">{{ t('Cancel') }}</button>
       </div>
       <div class="suggest" v-if="data">
-        <div class="field-label">{{ t('Next 3 times when everyone is free') }}</div>
+        <div class="field-label">{{ t('Next 3 times when most people can') }}</div>
         <div class="row wrap" v-if="suggestions.length">
-          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: detail && detail.day === s.day && detail.start === s.start && detail.end === s.end }" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}</button>
+          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: detail && detail.day === s.day && detail.start === s.start && detail.end === s.end, partial: s.free < s.total }" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
         </div>
         <div class="muted" style="font-size:12px" v-else>{{ t('No common free time in this period.') }}</div>
       </div>
