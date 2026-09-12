@@ -65,6 +65,7 @@ export default {
       </div>
       <label class="switch block" style="margin-bottom:8px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers_overview" @change="set({ show_week_numbers_overview: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.start_monday" @change="set({ start_monday: $event.target.checked })"><span class="track"></span>{{ t('Always start on a Monday') }}</label>
       <div class="field-label" style="margin-top:26px">{{ t('Month calendar') }}</div>
       <div class="field"><span>{{ t('Months shown') }}</span>
         <div class="steps compact" role="group" :aria-label="t('Months shown')">

@@ -2,7 +2,7 @@
 import { api } from './api.js';
 import { store, toast, applyTheme } from './store.js';
 import { t } from './i18n.js';
-import { todayYmd, addDays } from './util/date.js';
+import { todayYmd, addDays, parseYmd } from './util/date.js';
 
 export async function loadMe() {
   const data = await api.get('/api/me');
@@ -13,7 +13,7 @@ export async function loadMe() {
   store.menu = data.menu;
   store.directory = data.directory;
   store.app = data.app;
-  if (!store.from) store.from = todayYmd();
+  store.from = snapFrom(store.from || todayYmd());
   applyTheme(store.prefs.theme);
   document.documentElement.lang = store.prefs.locale;
   store.ready = true;
@@ -62,7 +62,8 @@ export async function savePrefs(patch) {
   }
   if (store.prefs.find_time_enabled === false) store.selected = [];
   if (store.prefs.demo_enabled === false) store.selected = store.selected.filter((id) => !String(id).startsWith('demo-'));
-  const reload = ['days', 'demo_enabled', 'demo_visible', 'my_team_visible'].some((k) => k in patch && patch[k] !== before[k]);
+  if (patch.start_monday && !before.start_monday) store.from = snapFrom(store.from);
+  const reload = ['days', 'start_monday', 'demo_enabled', 'demo_visible', 'my_team_visible'].some((k) => k in patch && patch[k] !== before[k]);
   if (reload) loadOverview();
 }
 
@@ -103,13 +104,22 @@ export function clearSelection() {
   store.selected = [];
 }
 
+// With "Always start on a Monday" the first visible day is the Monday of the chosen week.
+export function snapFrom(ymd) {
+  if (!store.prefs.start_monday) return ymd;
+  const dow = (parseYmd(ymd).getDay() + 6) % 7; // 0 = Monday
+  return addDays(ymd, -dow);
+}
+
 export function setFrom(ymd) {
-  store.from = ymd;
+  store.from = snapFrom(ymd);
   loadOverview();
 }
 
 export function shiftDays(n) {
-  setFrom(addDays(store.from, n));
+  let target = snapFrom(addDays(store.from, n));
+  if (target === store.from) target = snapFrom(addDays(store.from, n > 0 ? 7 : -7)); // never stand still
+  setFrom(target);
 }
 
 export function goToday() {

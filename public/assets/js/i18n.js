@@ -169,6 +169,7 @@ const da = {
   'Version': 'Version',
   '1 month': '1 måned',
   'Show week numbers': 'Vis ugenumre',
+  'Always start on a Monday': 'Start altid på en mandag',
   'Click to select': 'Klik for at vælge',
   'Find free time': 'Find ledig tid',
   'Month calendar': 'Månedskalender',
