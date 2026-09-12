@@ -166,6 +166,19 @@ closeModal(); await tick();
 
 openModal('settings'); await tick();
 assert(html().includes('Days to show') && !html().includes('Rows per page'), 'settings modal renders without paging option');
+{ // Five tabs; only the active panel is visible, and the choice sticks while the app is open
+  const tabs = [...w.document.querySelectorAll('.settings-tabs [role=tab]')];
+  assert(tabs.map((b) => b.textContent.trim()).join('|') === 'Site settings|Find free time|Calendar overview|Month calendar|Vacation calendar', 'settings has the five tabs in order');
+  const visible = () => [...w.document.querySelectorAll('.settings-panel')].filter((p) => !p.style.display || p.style.display !== 'none').map((p) => p.id);
+  assert(visible().join() === 'settings-panel-site' && tabs[0].getAttribute('aria-selected') === 'true', 'site settings tab is active first');
+  tabs[4].click(); await tick();
+  assert(visible().join() === 'settings-panel-vacation' && tabs[4].getAttribute('aria-selected') === 'true' && w.document.querySelector('#settings-panel-vacation input[type=checkbox]'), 'vacation tab shows only its panel');
+  tabs[1].click(); await tick();
+  assert(visible().join() === 'settings-panel-find' && w.document.querySelector('#settings-panel-find select'), 'find free time tab shows its defaults');
+  closeModal(); await tick(); openModal('settings'); await tick();
+  assert(visible().join() === 'settings-panel-find', 'the last tab is remembered while the app is open');
+  w.document.querySelector('.settings-tabs [role=tab]').click(); await tick();
+}
 assert(!w.document.querySelector('.hours-pop'), 'hours box hidden until hovered');
 w.document.querySelector('.hours-info').dispatchEvent(new w.MouseEvent('mouseenter')); await tick();
 assert(w.document.querySelector('.hours-pop').parentElement === w.document.body && w.document.querySelector('.hours-pop').style.position !== 'absolute', 'hours box is rendered on body, outside the modal scroll area');
