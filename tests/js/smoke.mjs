@@ -196,6 +196,15 @@ target.click(); await tick(60);
 assert(store.from === target.getAttribute('aria-label') && calls.slice(callsBefore).some((c) => c.includes('/api/overview?from=' + store.from)), 'clicking a day moves the overview');
 w.document.querySelector('.minical-head .expand').click(); await tick(60);
 assert(w.document.querySelectorAll('.minical-month').length === 2, 'expands to two months');
+{ assert(w.document.querySelectorAll('.minical-head .expand').length === 1 && w.document.querySelector('.minical-head .expand.down'), 'at two months only the down chevrons remain');
+  w.document.querySelector('.minical-head .expand.down').click(); await tick(60);
+  assert(w.document.querySelectorAll('.minical-month').length === 1 && w.document.querySelector('.minical-head .expand.up') && w.document.querySelector('.minical-head .expand.down'), 'one month shows chevrons up and down');
+  w.document.querySelector('.minical-head .expand.down').click(); await tick(60);
+  assert(store.prefs.mini_collapsed === true && !w.document.querySelector('.minical-month') && !w.document.querySelector('.minical-head') && w.document.querySelector('.minical h2').textContent === 'Month calendar', 'collapses to just the heading');
+  w.document.querySelector('.minical h2').click(); await tick(60);
+  assert(store.prefs.mini_collapsed === false && w.document.querySelectorAll('.minical-month').length === 1 && !w.document.querySelector('.minical h2'), 'clicking the heading expands again and hides it');
+  w.document.querySelector('.minical-head .expand.up').click(); await tick(60);
+  assert(w.document.querySelectorAll('.minical-month').length === 2, 'back to two months for the following checks'); }
 assert(w.document.querySelectorAll('.minical .wk').length === 0, 'week numbers hidden by default');
 store.prefs.show_week_numbers = true; await tick();
 assert(w.document.querySelectorAll('.minical .wk').length > 2, 'week numbers appear live when enabled');

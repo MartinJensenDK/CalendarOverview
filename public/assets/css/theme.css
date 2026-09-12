@@ -263,7 +263,9 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .minical-head { display: flex; align-items: center; gap: 2px; margin-bottom: 2px; }
 .minical-head .expand { width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; display: grid; place-items: center; }
 .minical-head .expand:hover { background: var(--surface-2); color: var(--ink); }
-.minical-head .expand { margin-left: auto; margin-right: -4px; }
+.minical-head .expand.up { margin-left: 0; }
+.minical-head .expand.down { margin-right: -4px; }
+.minical .findtime-head { margin-bottom: 0; }
 .minical-head .minical-title { padding: 0 4px; min-width: 0; white-space: nowrap; }
 .minical-month + .minical-month { margin-top: 8px; }
 .minical-title { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: capitalize; padding: 2px 4px 4px; }

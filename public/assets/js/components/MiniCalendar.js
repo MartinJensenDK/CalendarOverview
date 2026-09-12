@@ -53,18 +53,29 @@ export default {
     function inRange(s) { return range.value && s >= range.value.from && s <= range.value.to; }
     function pick(s) { setFrom(s); }
     function browse(n) { anchor.value = shiftMonth(anchor.value, n); }
-    function toggleMonths() { savePrefs({ mini_months: store.prefs.mini_months === 2 ? 1 : 2 }); }
+    // Three states: collapsed (heading only), one month, two months.
+    const collapsed = computed(() => !!store.prefs.mini_collapsed);
+    function setMonths(n) { savePrefs({ mini_months: n }); }
+    function collapse() { savePrefs({ mini_collapsed: true }); }
+    function expand() { savePrefs({ mini_collapsed: false }); }
+    function stepDown() { if (store.prefs.mini_months === 2) setMonths(1); else collapse(); }
 
-    return { store, t, months, weekdays, today, inRange, pick, browse, toggleMonths };
+    return { store, t, months, weekdays, today, inRange, pick, browse, collapsed, setMonths, collapse, expand, stepDown };
   },
   template: `
-    <div class="minical">
+    <div class="minical" :class="{ collapsed }">
+      <div v-if="collapsed" class="findtime-head clickable" @click="expand">
+        <h2>{{ t('Month calendar') }}</h2>
+        <button type="button" class="expand" @click.stop="expand" :title="t('Expand')" :aria-label="t('Expand')" aria-expanded="false"><icon name="chevrons-up" :size="14"></icon></button>
+      </div>
+      <template v-else>
       <div class="minical-head">
         <button type="button" class="btn ghost icon sm" @click="browse(-1)" :title="t('Previous')"><icon name="chevron-left" :size="14"></icon></button>
         <span class="minical-title">{{ months[0].label }}</span>
         <button type="button" class="btn ghost icon sm" @click="browse(1)" :title="t('Next')"><icon name="chevron-right" :size="14"></icon></button>
         <span class="grow"></span>
-        <button type="button" class="expand" @click="toggleMonths" :title="store.prefs.mini_months === 2 ? t('1 month') : t('2 months')" :aria-label="store.prefs.mini_months === 2 ? t('1 month') : t('2 months')"><icon :name="store.prefs.mini_months === 2 ? 'chevrons-down' : 'chevrons-up'" :size="14"></icon></button>
+        <button type="button" v-if="store.prefs.mini_months !== 2" class="expand up" @click="setMonths(2)" :title="t('2 months')" :aria-label="t('2 months')"><icon name="chevrons-up" :size="14"></icon></button>
+        <button type="button" class="expand down" @click="stepDown" :title="store.prefs.mini_months === 2 ? t('1 month') : t('Collapse')" :aria-label="store.prefs.mini_months === 2 ? t('1 month') : t('Collapse')" aria-expanded="true"><icon name="chevrons-down" :size="14"></icon></button>
       </div>
       <div v-for="(m, i) in months" :key="m.first" class="minical-month">
         <div class="minical-title" v-if="i > 0">{{ m.label }}</div>
@@ -77,5 +88,6 @@ export default {
           </template>
         </div>
       </div>
+      </template>
     </div>`,
 };
