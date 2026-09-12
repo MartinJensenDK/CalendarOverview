@@ -223,6 +223,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .group { border-radius: var(--radius); margin-bottom: 2px; }
 .group-row { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 4px; border-radius: var(--radius); }
 .group-row:hover { background: var(--surface-2); }
+.swatch-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); margin: 0 6px 0 8px; flex: none; }
+.swatch-dot.on { background: var(--accent); }
 .group-row .caret { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; flex: none; }
 .group-row .caret svg { width: 14px; height: 14px; transition: transform .16s var(--ease); }
 .group-row .caret.open svg { transform: rotate(90deg); }
@@ -247,18 +249,35 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .member .txt small { display: block; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
 .member.me .txt b::after { content: "•"; color: var(--accent); margin-left: 5px; }
 .members-empty { padding: 4px 6px 8px 30px; color: var(--muted); font-size: 12px; }
-.sidebar-foot { border-top: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.sidebar-foot { border-top: 1px solid var(--line); padding: 8px 10px 10px; }
+.minical-head { display: flex; align-items: center; gap: 2px; margin-bottom: 2px; }
+.minical-month + .minical-month { margin-top: 8px; }
+.minical-title { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: capitalize; padding: 2px 4px 4px; }
+.minical-grid { display: grid; grid-template-columns: 22px repeat(7, 1fr); gap: 1px; }
+.minical-grid .dow { text-align: center; font-size: 10px; color: var(--muted); text-transform: uppercase; padding: 2px 0; }
+.minical-grid .dow.weekend { color: var(--muted-2); }
+.minical-grid .wk { font-family: var(--font-mono); font-size: 9px; color: var(--muted-2); display: flex; align-items: center; justify-content: center; }
+.minical-grid .day { height: 26px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; font-family: var(--font-mono); font-size: 12px; color: var(--ink); padding: 0; position: relative; }
+.minical-grid .day:hover { background: var(--surface-2); }
+.minical-grid .day.outside { color: var(--muted-2); }
+.minical-grid .day.weekend:not(.outside) { color: var(--muted); }
+.minical-grid .day.range { background: var(--accent-soft); border-radius: 0; }
+.minical-grid .day.start { background: var(--accent); color: var(--accent-ink); border-radius: 6px 0 0 6px; }
+.minical-grid .day.today::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--today); transform: translateX(-50%); }
+.minical-grid .day.start.today::after { background: var(--accent-ink); }
 .selection-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius); background: var(--accent-soft); color: var(--ink); font-size: 13px; animation: pop .14s var(--ease); }
 .selection-bar .grow { flex: 1; }
 .selection-bar .avatars { display: flex; }
 .selection-bar .avatars .avatar { width: 22px; height: 22px; margin-left: -6px; border: 2px solid var(--accent-soft); }
 .selection-bar .avatars .avatar:first-child { margin-left: 0; }
+.selection-bar.floating { position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 6; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-2); padding: 8px 10px 8px 12px; min-width: 320px; }
+.selection-bar.floating .avatars .avatar { border-color: var(--surface); }
 .menu-toggle { display: none; }
 
 /* --------------------------------------------------------------------------
    Overview grid – the wall planner
    -------------------------------------------------------------------------- */
-.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
 .grid-wrap { flex: 1; overflow: auto; position: relative; }
 .grid { display: grid; grid-template-columns: var(--name-col-w) repeat(var(--days), minmax(var(--day-min-w), 1fr)); min-width: max-content; width: 100%; }
 .grid .h { position: sticky; top: 0; z-index: 3; background: var(--surface); border-bottom: 1px solid var(--line-strong); height: 44px; display: flex; flex-direction: column; justify-content: center; padding: 0 10px; }
@@ -278,6 +297,10 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .grid.rh-sm .name .txt small { display: none; }
 .grid.rh-sm .name .avatar { width: 22px; height: 22px; }
 .grid .name.me { box-shadow: inset 3px 0 0 var(--accent); }
+.grid .name .pick { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); cursor: pointer; opacity: 0; transition: opacity .12s; flex: none; }
+.grid .name:hover .pick, .grid .name.selected .pick, .grid .name .pick:focus-visible { opacity: 1; }
+.grid .name .avatar { cursor: pointer; }
+.grid .name.selected { background: var(--accent-soft); }
 .grid .cell { position: relative; height: var(--row-h); border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); background: var(--offhours); overflow: hidden; }
 .grid .cell.weekend { background: repeating-linear-gradient(135deg, var(--weekend) 0 6px, var(--surface-2) 6px 7px); }
 .grid .cell.today { box-shadow: inset 0 0 0 999px rgba(255, 178, 36, .07); }

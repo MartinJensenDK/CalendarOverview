@@ -6,7 +6,7 @@ const boot = window.__APP__ || {};
 export const store = reactive({
   ready: false,
   me: null,
-  prefs: { theme: boot.theme || 'system', locale: boot.locale || 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: !!boot.menuCollapsed },
+  prefs: { theme: boot.theme || 'system', locale: boot.locale || 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: !!boot.menuCollapsed, mini_months: 1 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], page_sizes: [25, 50, 100, 200], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   rules: [],
   menu: [],
@@ -24,7 +24,6 @@ export const store = reactive({
 
   // Selection for the heatmap
   selected: [],         // directory user ids
-  expanded: {},         // group id -> bool
 
   // UI
   modal: null,          // { name, props }

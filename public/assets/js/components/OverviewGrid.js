@@ -2,7 +2,7 @@ import { store } from '../store.js';
 import { t } from '../i18n.js';
 import { isWeekend, weekday, dayLabel, todayYmd, minutesInDay, hhmmToMinutes, timeLabel, parseYmd } from '../util/date.js';
 import { colorFor, readableText } from '../util/rules.js';
-import { loadOverview, setPage, savePrefs, openModal } from '../actions.js';
+import { loadOverview, setPage, savePrefs, openModal, toggleSelect, clearSelection } from '../actions.js';
 
 const { computed, ref, onMounted, onBeforeUnmount } = Vue;
 
@@ -102,8 +102,15 @@ export default {
       return t('No access to this calendar');
     }
     function selectUser(u) { openModal('heatmap', { ids: [u.id] }); }
+    function isSelected(id) { return store.selected.includes(id); }
+    const selectedUsers = computed(() => {
+      const map = new Map();
+      store.menu.forEach((g) => g.members.forEach((m) => map.set(m.id, m)));
+      (store.overview ? store.overview.users : []).forEach((u) => map.set(u.id, u));
+      return store.selected.map((id) => map.get(id)).filter(Boolean);
+    });
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, totalPages, pages, rangeText, setPage, savePrefs, loadOverview, errorText, selectUser, openModal, isSelected, toggleSelect, clearSelection, selectedUsers };
   },
   template: `
     <section class="main">
@@ -123,8 +130,9 @@ export default {
             <span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span>
           </div>
           <template v-for="u in users" :key="u.id">
-            <div class="name" :class="{ me: u.is_me }" @dblclick="selectUser(u)">
-              <img class="avatar" :src="u.photo_url" alt="" loading="lazy">
+            <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id) }">
+              <input type="checkbox" class="pick" :checked="isSelected(u.id)" @change="toggleSelect(u.id)" :aria-label="u.name">
+              <img class="avatar" :src="u.photo_url" alt="" loading="lazy" @click="toggleSelect(u.id)">
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
             </div>
             <div v-for="d in days" :key="u.id + d" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
@@ -138,6 +146,12 @@ export default {
             </div>
           </template>
         </div>
+      </div>
+      <div class="selection-bar floating" v-if="store.selected.length">
+        <span class="avatars"><img v-for="u in selectedUsers.slice(0, 6)" :key="u.id" class="avatar" :src="u.photo_url" alt=""></span>
+        <span class="grow">{{ t('{n} selected', { n: store.selected.length }) }}</span>
+        <button type="button" class="btn sm ghost" @click="clearSelection">{{ t('Clear') }}</button>
+        <button type="button" class="btn sm primary" @click="openModal('heatmap', { ids: store.selected.slice() })"><icon name="clock" :size="14"></icon>{{ t('Find a time') }}</button>
       </div>
       <div class="pager" v-if="store.overview && store.overview.total">
         <span>{{ rangeText }}</span>

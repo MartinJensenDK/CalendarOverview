@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', page_size: 50, show_weekends: true, work_start: '08:00', work_end: '17:00', heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], page_sizes: [25, 50, 100, 200], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -118,8 +118,24 @@ openModal('settings'); await tick();
 assert(html().includes('Rows per page'), 'settings modal renders');
 closeModal(); await tick();
 
-toggleSelect('me'); toggleSelect('p1'); await tick();
-assert(html().includes('2 selected') && html().includes('Find a time'), 'selection bar appears');
+// Members are not listed in the menu; selection happens on the overview rows
+assert(w.document.querySelectorAll('.sidebar .member').length === 0, 'menu does not list members');
+assert(w.document.querySelectorAll('.grid .name .pick').length === 3, 'each overview row has a selection checkbox');
+w.document.querySelectorAll('.grid .name .pick')[0].click(); await tick();
+toggleSelect('p1'); await tick();
+assert(store.selected.length === 2 && html().includes('2 selected') && html().includes('Find a time'), 'floating selection bar appears');
+
+// Mini calendar in the menu footer
+assert(w.document.querySelector('.minical'), 'mini calendar rendered');
+assert(w.document.querySelectorAll('.minical-month').length === 1, 'one month by default');
+const startBtn = w.document.querySelector('.minical .day.start');
+assert(startBtn && startBtn.getAttribute('aria-label') === store.from, 'overview start day highlighted');
+const callsBefore = calls.length;
+const target = [...w.document.querySelectorAll('.minical .day')].find((b) => !b.classList.contains('outside') && b.getAttribute('aria-label') !== store.from);
+target.click(); await tick(60);
+assert(store.from === target.getAttribute('aria-label') && calls.slice(callsBefore).some((c) => c.includes('/api/overview?from=' + store.from)), 'clicking a day moves the overview');
+w.document.querySelector('.minical-head .btn.ghost.sm:not(.icon)').click(); await tick(60);
+assert(w.document.querySelectorAll('.minical-month').length === 2, 'expands to two months');
 openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
 const cells = w.document.querySelectorAll('.heat .hc');
 assert(cells.length === 5 * 18, `heatmap cells for 5 days x 18 slots (got ${cells.length})`);

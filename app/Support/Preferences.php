@@ -34,6 +34,7 @@ class Preferences
             'my_team_visible' => true,
             'demo_visible' => true,
             'menu_collapsed' => false,
+            'mini_months' => 1,
         ];
     }
 
@@ -61,6 +62,7 @@ class Preferences
             'my_team_visible' => ['sometimes', 'boolean'],
             'demo_visible' => ['sometimes', 'boolean'],
             'menu_collapsed' => ['sometimes', 'boolean'],
+            'mini_months' => ['sometimes', 'integer', 'in:1,2'],
         ];
     }
 }

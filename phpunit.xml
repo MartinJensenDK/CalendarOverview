@@ -19,6 +19,13 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_URL" value="http://localhost"/>
+        <env name="APP_LOCALE" value="en"/>
+        <env name="APP_DEBUG" value="true"/>
+        <env name="MS_TENANT_ID" value=""/>
+        <env name="MS_CLIENT_ID" value=""/>
+        <env name="MS_CLIENT_SECRET" value=""/>
+        <env name="MS_ALLOWED_DOMAINS" value=""/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
