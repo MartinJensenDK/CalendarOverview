@@ -177,6 +177,7 @@ const da = {
   'already a member': 'allerede medlem',
   'Add': 'Tilføj',
   'Add more': 'Tilføj flere',
+  'Click again to deselect': 'Klik igen for at fravælge',
   '{free} of {total} free for the whole meeting ({time})': '{free} af {total} ledige i hele mødet ({time})',
   'New group with this person': 'Ny gruppe med denne person',
   '{name} added to {group}': '{name} er tilføjet til {group}',

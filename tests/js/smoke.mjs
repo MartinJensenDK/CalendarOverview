@@ -182,6 +182,9 @@ assert(sugg.length === 3 && /\d+ of \d+ free/.test(sugg[0].textContent), `three 
 { const counts = [...sugg].map((b) => Number(/(\d+) of/.exec(b.querySelector('.suggest-count').textContent)[1])); assert(counts[0] >= counts[1] && counts[1] >= counts[2], 'suggestions are ordered by attendance'); }
 sugg[1].click(); await tick();
 assert(sugg[1].className.includes('active') && html().includes('Open in Outlook'), 'choosing a suggestion selects it in the heatmap');
+sugg[1].click(); await tick();
+assert(!sugg[1].className.includes('active') && !w.document.querySelector('.heat-detail'), 'clicking the suggestion again deselects it');
+sugg[1].click(); await tick();
 const modalRef = w.document.querySelector('.modal');
 const weekendToggle = [...modalRef.querySelectorAll('.switch')].find((l) => l.textContent.includes('Show weekends')).querySelector('input');
 const before = w.document.querySelectorAll('.heat .hh').length;

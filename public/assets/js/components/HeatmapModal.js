@@ -164,7 +164,9 @@ export default {
       }
       return out;
     });
-    function useSuggestion(s) { sel.value = { day: s.day, start: s.start, end: s.end }; }
+    function isSuggestionActive(s) { return !!sel.value && sel.value.day === s.day && sel.value.start === s.start && sel.value.end === s.end; }
+    function useSuggestion(s) { sel.value = isSuggestionActive(s) ? null : { day: s.day, start: s.start, end: s.end }; }
+    function clearSel() { sel.value = null; }
 
     const detail = computed(() => {
       if (!sel.value) return null;
@@ -182,7 +184,7 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, ids, addingMore, addPerson, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, hov, hover, unhover, hovStyle, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cellStyle, isSel, down, enter, up, hov, hover, unhover, hovStyle, detail, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -208,13 +210,13 @@ export default {
       <div class="suggest" v-if="data">
         <div class="field-label">{{ t('Next 3 times when most people can') }}</div>
         <div class="row wrap" v-if="suggestions.length">
-          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: detail && detail.day === s.day && detail.start === s.start && detail.end === s.end, partial: s.free < s.total }" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
+          <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: isSuggestionActive(s), partial: s.free < s.total }" :aria-pressed="isSuggestionActive(s)" :title="isSuggestionActive(s) ? t('Click again to deselect') : ''" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
         </div>
         <div class="muted" style="font-size:12px" v-else>{{ t('No common free time in this period.') }}</div>
       </div>
       <p class="muted" style="margin:0 0 10px;font-size:12px">{{ t('Click a slot to see who is free. Drag to select a longer time.') }}</p>
       <div class="heat-detail" v-if="detail">
-        <h3>{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3>
+        <div class="row" style="align-items:flex-start"><h3 class="grow">{{ detail.label }} · {{ t('{free} of {total} free', { free: detail.free, total: users.length }) }}</h3><button type="button" class="btn ghost icon sm" :title="t('Clear selection')" @click="clearSel"><icon name="x" :size="14"></icon></button></div>
         <ul>
           <li v-for="u in detail.list" :key="u.id" :class="{ busy: !u.free }"><img class="avatar sm" :src="u.photo_url" alt=""><span>{{ u.name }}</span><span class="st">{{ u.free ? t('free') : t('busy') }}</span></li>
         </ul>
