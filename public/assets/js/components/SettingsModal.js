@@ -1,6 +1,10 @@
 import { store, confirm, toast } from '../store.js';
 import { t } from '../i18n.js';
-import { closeModal, savePrefs, syncPhotos, resetSettings } from '../actions.js';
+import { closeModal, savePrefs, resetSettings } from '../actions.js';
+import { hoursFor } from '../util/hours.js';
+import { weekday, dayLabel, minutesToHhmm } from '../util/date.js';
+
+const { computed } = Vue;
 
 export default {
   name: 'SettingsModal',
@@ -12,7 +16,15 @@ export default {
       await resetSettings();
       toast(t('Settings reset'));
     }
-    return { store, t, set, closeModal, syncPhotos, reset };
+    // Your own working hours for the days currently shown, straight from what Graph reported.
+    const myHours = computed(() => {
+      const o = store.overview;
+      const me = o && o.users.find((u) => u.is_me);
+      if (!o || !me) return null;
+      return o.days.map((d) => ({ day: d, spans: hoursFor(me, d).map((h) => `${minutesToHhmm(h.sm)}–${minutesToHhmm(h.em)}${h.loc ? ' · ' + locLabel(h.loc) : ''}`) }));
+    });
+    function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
+    return { store, t, set, closeModal, reset, myHours, weekday, dayLabel };
   },
   template: `
     <modal :title="t('Settings')" width="560px" @close="closeModal">
@@ -25,7 +37,7 @@ export default {
         <label class="field"><span>{{ t('Language') }}</span>
           <select class="select" :value="store.prefs.locale" @change="set({ locale: $event.target.value })"><option value="en">English</option><option value="da">Dansk</option></select></label>
       </div>
-      <div class="field-label" style="margin-top:6px">{{ t('Overview') }}</div>
+      <div class="field-label" style="margin-top:6px">{{ t('Calendar overview') }}</div>
       <div class="grid-2">
         <label class="field"><span>{{ t('Row height') }}</span>
           <select class="select" :value="store.prefs.row_height" @change="set({ row_height: $event.target.value })">
@@ -34,17 +46,28 @@ export default {
         <label class="field"><span>{{ t('Days to show') }}</span>
           <select class="select" :value="store.prefs.days" @change="set({ days: Number($event.target.value) })"><option v-for="d in store.options.day_options" :key="d" :value="d">{{ d }}</option></select></label>
       </div>
-      <label class="switch block" style="margin-bottom:10px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
-      <p class="muted" style="font-size:12px;margin:0 0 14px">{{ t('Working hours are read from Microsoft 365 for each person and day (Outlook › Work hours and location), so they are not set here.') }}</p>
+      <div class="field"><span>{{ t('Working hours') }}</span>
+        <span class="hours-info" tabindex="0">{{ t('Working hours are read from Outlook') }}<span class="i"><icon name="info" :size="14"></icon></span>
+          <div class="hours-pop" role="tooltip">
+            <div class="hd">{{ t('Your working hours in the period shown') }}</div>
+            <template v-if="myHours"><div v-for="r in myHours" :key="r.day" class="r" :class="{ off: !r.spans.length }"><span class="d">{{ weekday(r.day) }} {{ dayLabel(r.day) }}</span><span>{{ r.spans.length ? r.spans.join(', ') : t('No working hours') }}</span></div></template>
+            <div v-else class="muted">{{ t('No data yet') }}</div>
+          </div>
+        </span></div>
+      <label class="switch block" style="margin-bottom:8px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers_overview" @change="set({ show_week_numbers_overview: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
       <div class="field-label" style="margin-top:18px">{{ t('Month calendar') }}</div>
-      <label class="field"><span>{{ t('Months shown') }}</span>
-        <select class="select" style="max-width:200px" :value="store.prefs.mini_months" @change="set({ mini_months: Number($event.target.value) })"><option :value="1">{{ t('1 month') }}</option><option :value="2">{{ t('2 months') }}</option></select></label>
+      <div class="field"><span>{{ t('Months shown') }}</span>
+        <div class="steps compact" role="group" :aria-label="t('Months shown')">
+          <button type="button" :aria-pressed="store.prefs.mini_months === 1 ? 'true' : 'false'" @click="set({ mini_months: 1 })">{{ t('1 month') }}</button>
+          <button type="button" :aria-pressed="store.prefs.mini_months === 2 ? 'true' : 'false'" @click="set({ mini_months: 2 })">{{ t('2 months') }}</button>
+        </div></div>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers" @change="set({ show_week_numbers: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
       <div class="field-label" style="margin-top:18px">{{ t('Find free time') }}</div>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.find_time_enabled" @change="set({ find_time_enabled: $event.target.checked })"><span class="track"></span>{{ t('Show the “Find free time” section in the menu') }}</label>
       <div class="field-label" style="margin-top:18px">{{ t('Demo data') }}</div>
       <label class="switch block" style="align-items:flex-start"><input type="checkbox" :checked="store.prefs.demo_enabled" @change="set({ demo_enabled: $event.target.checked })"><span class="track" style="margin-top:2px"></span><span>{{ t('Demo data') }}<br><small class="muted">{{ t('Show 150 fictional people with generated calendars. Handy for trying the app before your colleagues are in a group.') }}</small></span></label>
-      <div class="row" style="margin-top:16px"><button type="button" class="btn sm" @click="syncPhotos"><icon name="image" :size="14"></icon>{{ t('Sync photos') }}</button><span class="muted" style="font-size:12px">{{ t('Version') }} {{ store.app.version }}</span></div>
+      <div class="row" style="margin-top:16px"><span class="muted" style="font-size:12px">{{ t('Version') }} {{ store.app.version }}</span></div>
       <template #foot>
         <button type="button" class="btn danger" @click="reset"><icon name="refresh" :size="14"></icon>{{ t('Reset all settings') }}</button>
         <span class="grow"></span>

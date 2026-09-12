@@ -29,7 +29,7 @@ const days = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-1
 const member = (id, name, title) => ({ id, name, email: `${id}@example.com`, title, department: 'Sales', initials: 'AB', has_photo: false, photo_url: `/api/photos/${id}`, is_demo: false });
 const me = {
   user: { id: 'me', name: 'Anna Andersen', email: 'anna@example.com', photo_url: '/api/photos/me', has_manager: true, scopes: [] },
-  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
+  preferences: { theme: 'light', locale: 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: false, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, find_time_enabled: true, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7 },
   options: { themes: ['system', 'light', 'dark'], locales: ['en', 'da'], row_heights: ['sm', 'md', 'lg'], day_options: [1, 3, 5, 7, 10, 14, 21, 31], max_days: 62, statuses: ['free', 'tentative', 'busy', 'oof', 'workingElsewhere', 'unknown'] },
   color_rules: [{ id: 1, name: 'Vacation', field: 'subject', operator: 'regex', value: 'vacation|ferie', color: '#e5484d', text_color: null, enabled: true, sort_order: 0 }, { id: 2, name: 'OOF', field: 'status', operator: 'is', value: 'oof', color: '#f76b15', text_color: null, enabled: true, sort_order: 1 }],
   menu: [
@@ -95,7 +95,8 @@ assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows
   assert(bands(0) === 1 && bands(5) === 0, 'own row: working-hours band on Monday, none on Saturday');
   assert(bands(7 + 3) === 1 && bands(7 + 4) === 0, 'colleague: band on Thursday, none on the Friday off (hours differ per day)');
   assert(bands(14 + 0) === 1 && bands(14 + 5) === 0, 'person without reported hours falls back to weekday default');
-  assert(cells[7 + 3].querySelector('.band').style.left !== cells[7].querySelector('.band').style.left, 'band position follows that day\'s start time'); }
+  assert(cells[7 + 3].querySelector('.band').style.left !== cells[7].querySelector('.band').style.left, 'band position follows that day\'s start time');
+  assert(cells[0].querySelector('.band .loc') && cells[0].querySelector('.band .loc').getAttribute('title') === 'Office' && cells[7 + 3].querySelector('.band .loc').getAttribute('title') === 'Home' && !cells[7].querySelector('.band .loc'), 'work location (office/home) shown on the band when known'); }
 assert(!w.document.querySelector('.pager'), 'no footer bar under the grid');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
 const blocks = w.document.querySelectorAll('.grid .blk');
@@ -131,6 +132,8 @@ closeModal(); await tick();
 
 openModal('settings'); await tick();
 assert(html().includes('Days to show') && !html().includes('Rows per page'), 'settings modal renders without paging option');
+assert(!html().includes('Sync photos') && html().includes('Working hours are read from Outlook') && /\d\d:\d\d–\d\d:\d\d · Office/.test(w.document.querySelector('.hours-pop').textContent) && w.document.querySelector('.hours-pop .r.off'), 'settings shows own working hours per day in the hover box, no sync-photos button');
+assert(w.document.querySelectorAll('.steps.compact button[aria-pressed="true"]').length === 1 && w.document.querySelector('.steps.compact button[aria-pressed="true"]').textContent.includes('1 month'), 'months shown is a pressed-button pair');
 store.prefs.days = 14; w.document.querySelector('.modal-foot .btn.danger').click(); await tick();
 assert(w.document.querySelectorAll('.modal').length === 2 && html().includes('Reset all settings?'), 'reset asks for confirmation');
 [...w.document.querySelectorAll('.modal-foot .btn')].find((b) => b.className.includes('danger') && b.textContent.includes('Reset all settings') && b.closest('.modal') !== w.document.querySelector('.modal')).click(); await tick(60);
@@ -159,8 +162,10 @@ assert(w.document.querySelectorAll('.minical-month').length === 2, 'expands to t
 assert(w.document.querySelectorAll('.minical .wk').length === 0, 'week numbers hidden by default');
 store.prefs.show_week_numbers = true; await tick();
 assert(w.document.querySelectorAll('.minical .wk').length > 2, 'week numbers appear live when enabled');
-assert(w.document.querySelectorAll('.grid .h .wkno').length >= 1 && w.document.querySelector('.grid .h .wkno').textContent.includes('Week'), 'week badge shown in overview header');
-store.prefs.show_week_numbers = false; await tick();
+assert(w.document.querySelectorAll('.grid .h .wkno').length === 0, 'overview week badge is controlled separately from the month calendar');
+store.prefs.show_week_numbers_overview = true; await tick();
+assert(w.document.querySelectorAll('.grid .h .wkno').length >= 1 && w.document.querySelector('.grid .h .wkno').textContent.includes('Week'), 'week badge shown in overview header when its own toggle is on');
+store.prefs.show_week_numbers = false; store.prefs.show_week_numbers_overview = false; await tick();
 assert(w.document.querySelectorAll('.minical .wk').length === 0 && w.document.querySelectorAll('.grid .h .wkno').length === 0, 'week numbers disappear live when disabled');
 store.prefs.find_time_enabled = false; await tick();
 assert(!w.document.querySelector('.findtime') && w.document.querySelectorAll('.grid .name .pick').length === 0, 'find-time section and row checkboxes hidden when disabled');

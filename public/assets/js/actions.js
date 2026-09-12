@@ -123,12 +123,6 @@ export async function syncDirectory() {
   loadOverview();
 }
 
-export async function syncPhotos() {
-  await api.post('/api/sync/photos');
-  toast(t('Photos synced'));
-  loadOverview();
-}
-
 export async function refreshFromGraph() {
   await loadOverview({ refresh: true });
 }

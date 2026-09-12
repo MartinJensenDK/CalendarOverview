@@ -17,7 +17,7 @@ class Preferences
     public const DAY_OPTIONS = [1, 3, 5, 7, 10, 14, 21, 31];
 
     /** Keys shown on the Settings page; only these are touched by "Reset all settings". */
-    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'find_time_enabled', 'demo_enabled'];
+    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'show_week_numbers_overview', 'find_time_enabled', 'demo_enabled'];
 
     public static function defaults(): array
     {
@@ -34,6 +34,7 @@ class Preferences
             'menu_collapsed' => false,
             'mini_months' => 1,
             'show_week_numbers' => false,
+            'show_week_numbers_overview' => false,
             'find_time_enabled' => true,
             'heatmap_duration' => 30,
             'heatmap_work_only' => true,
@@ -66,6 +67,7 @@ class Preferences
             'menu_collapsed' => ['sometimes', 'boolean'],
             'mini_months' => ['sometimes', 'integer', 'in:1,2'],
             'show_week_numbers' => ['sometimes', 'boolean'],
+            'show_week_numbers_overview' => ['sometimes', 'boolean'],
             'find_time_enabled' => ['sometimes', 'boolean'],
             'heatmap_duration' => ['sometimes', 'integer', 'in:30,60,90,120'],
             'heatmap_work_only' => ['sometimes', 'boolean'],

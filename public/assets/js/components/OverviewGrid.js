@@ -42,7 +42,7 @@ export default {
         for (const d of days.value) {
           map.set(`${u.id}|${d}`, hoursFor(u, d).map((h) => {
             const a = Math.max(h.sm, s.start); const b = Math.min(h.em, s.end);
-            return b > a ? { left: `${((a - s.start) / s.len) * 100}%`, width: `${((b - a) / s.len) * 100}%` } : null;
+            return b > a ? { style: { left: `${((a - s.start) / s.len) * 100}%`, width: `${((b - a) / s.len) * 100}%` }, loc: h.loc } : null;
           }).filter(Boolean));
         }
       }
@@ -50,6 +50,9 @@ export default {
     });
     const NO_BANDS = [];
     function bandsFor(user, day) { return bandIndex.value.get(`${user.id}|${day}`) || NO_BANDS; }
+    // Work location from the person's plan (Outlook › Work hours and location): office, remote/home, hybrid.
+    function locIcon(loc) { return loc === 'remote' ? 'home' : 'building'; }
+    function locLabel(loc) { return loc === 'remote' ? t('Home') : loc === 'office' ? t('Office') : loc === 'hybrid' ? t('Hybrid') : loc; }
     const today = computed(() => todayYmd());
     const nowPct = computed(() => {
       const s = strip.value;
@@ -136,7 +139,7 @@ export default {
       return t('No access to this calendar');
     }
     function selectUser(u) { openModal('heatmap', { ids: [u.id] }); }
-    function weekBadge(d, i) { return store.prefs.show_week_numbers && (i === 0 || parseYmd(d).getDay() === 1) ? isoWeek(d) : null; }
+    function weekBadge(d, i) { return store.prefs.show_week_numbers_overview && (i === 0 || parseYmd(d).getDay() === 1) ? isoWeek(d) : null; }
     function isSelected(id) { return store.selected.includes(id); }
     // Corner checkbox: selects every row, or clears when all are selected.
     const allState = computed(() => {
@@ -152,7 +155,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, skDays, skBlocks, bandsFor, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, bigGrid, skDays, skBlocks, bandsFor, locIcon, locLabel, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -192,7 +195,7 @@ export default {
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
             </div>
             <div v-for="d in days" :key="u.id + d" v-memo="[blocksFor(u, d), bandsFor(u, d), d === today ? nowPct : null, u.error]" class="cell" :class="{ weekend: isWeekend(d), today: d === today }">
-              <div v-for="(b, k) in bandsFor(u, d)" :key="k" class="band" :style="b"></div>
+              <div v-for="(b, k) in bandsFor(u, d)" :key="k" class="band" :style="b.style"><span class="loc" v-if="b.loc" :title="locLabel(b.loc)"><icon :name="locIcon(b.loc)" :size="11"></icon></span></div>
               <div class="now" v-if="d === today && nowPct" :style="{ '--now-pct': nowPct }"></div>
               <div class="strip">
                 <div v-for="b in blocksFor(u, d)" :key="b.key" :class="b.cls" :style="b.style" @mouseenter="showTip($event, b, u)" @mousemove="moveTip" @mouseleave="hideTip">
