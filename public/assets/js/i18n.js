@@ -179,6 +179,7 @@ const da = {
   '{n} people without vacation in this period': '{n} personer uden ferie i perioden',
   'Vacation is read from whole-day out-of-office items and items called vacation or holiday.': 'Ferie aflæses fra heldags “ikke på kontoret”-aftaler og aftaler, der hedder ferie eller holiday.',
   'Filter people': 'Filtrér personer',
+  'Choose an end date after the start, at most {n} days later.': 'Vælg en slutdato efter startdatoen, højst {n} dage senere.',
   'Period': 'Periode',
   '3 months': '3 måneder',
   '6 months': '6 måneder',

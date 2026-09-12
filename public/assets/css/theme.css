@@ -301,7 +301,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .btn.warm:hover { background: color-mix(in srgb, var(--today) 35%, var(--surface)); }
 /* Vacation calendar timeline */
 .vac-toolbar { margin-bottom: 12px; gap: 10px; }
-.vac-toolbar .vac-range { font-family: var(--font-display); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.vac-toolbar .field.inline { display: flex; align-items: center; gap: 6px; margin: 0; }
+.vac-toolbar .field.inline > span { margin: 0; }
 .vac-spans { margin: 0; max-width: 340px; }
 .vac-today { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 12px; padding: 8px 10px; border-radius: var(--radius); background: var(--surface-2); }
 .vac-today .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 2px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 12px; }

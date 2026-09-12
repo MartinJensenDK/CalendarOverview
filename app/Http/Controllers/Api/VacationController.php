@@ -18,13 +18,16 @@ class VacationController extends Controller
     {
         $data = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after:from'],
             'days' => ['nullable', 'integer', 'min:1', 'max:'.config('calendar.max_days')],
             'tz' => ['nullable', 'string', 'timezone:all'],
             'refresh' => ['nullable', 'boolean'],
         ]);
         $tz = $data['tz'] ?? 'UTC';
-        $from = CarbonImmutable::parse($data['from'] ?? 'today', $tz)->startOfMonth();
-        $to = $from->addDays((int) ($data['days'] ?? 92));
+        // Explicit start and end dates win; otherwise the current month plus the chosen span.
+        $from = isset($data['from']) ? CarbonImmutable::parse($data['from'], $tz)->startOfDay() : CarbonImmutable::now($tz)->startOfMonth();
+        $to = isset($data['to']) ? CarbonImmutable::parse($data['to'], $tz)->startOfDay()->addDay() : $from->addDays((int) ($data['days'] ?? 92));
+        abort_if($from->diffInDays($to) > config('calendar.max_days'), 422, 'Range too long');
 
         $user = $request->user();
         $users = $resolver->visibleUsers($user)->values();
@@ -38,7 +41,7 @@ class VacationController extends Controller
 
         return response()->json([
             'from' => $from->toDateString(),
-            'to' => $to->toDateString(),
+            'to' => $to->subDay()->toDateString(), // inclusive last day
             'tz' => $tz,
             'fetched_at' => $result['fetched_at'],
             'users' => $rows->filter(fn ($r) => $r['periods'] !== [])->sortBy(fn ($r) => $r['periods'][0]['from'])->values(),

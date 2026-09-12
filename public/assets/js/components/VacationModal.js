@@ -17,6 +17,10 @@ export default {
   setup() {
     const from = ref(monthStart(todayYmd()));
     const span = ref(SPANS.includes(store.prefs.vacation_days) ? store.prefs.vacation_days : 92);
+    // Inclusive last day shown; presets and arrows keep it in step with the start.
+    const to = ref(addDays(from.value, span.value - 1));
+    const MAX_DAYS = 366;
+    function spanDays() { return dayDiff(from.value, to.value) + 1; }
     const q = ref('');
     const data = ref(null);
     const loading = ref(false);
@@ -25,42 +29,49 @@ export default {
     async function load() {
       loading.value = true;
       try {
-        data.value = await api.get('/api/vacations', { from: from.value, days: span.value, tz: store.tz });
+        data.value = await api.get('/api/vacations', { from: from.value, to: to.value, tz: store.tz });
       } catch (e) {
         toast(e.message || t('Something went wrong'), 'danger');
       } finally { loading.value = false; }
     }
     onMounted(load);
-    watch([from, span], load);
-    watch(span, (v) => { if (store.prefs.vacation_days !== v) savePrefs({ vacation_days: v }).catch(() => {}); });
+    watch([from, to], () => { if (to.value > from.value && spanDays() <= MAX_DAYS) load(); });
+    function usePreset(s) {
+      span.value = s;
+      to.value = addDays(from.value, s - 1);
+      if (store.prefs.vacation_days !== s) savePrefs({ vacation_days: s }).catch(() => {});
+    }
+    function setFrom(v) { if (!v) return; from.value = v; if (to.value <= v || spanDays() > MAX_DAYS) to.value = addDays(v, Math.min(spanDays(), MAX_DAYS) - 1 || 30); }
+    function setTo(v) { if (!v) return; if (v <= from.value) from.value = addDays(v, -30); to.value = v; if (spanDays() > MAX_DAYS) from.value = addDays(v, -(MAX_DAYS - 1)); }
+    function shift(dir) { const n = spanDays(); from.value = addDays(from.value, dir * n); to.value = addDays(to.value, dir * n); }
+    function goToday() { const n = spanDays(); from.value = monthStart(today); to.value = addDays(from.value, n - 1); }
+    const rangeInvalid = computed(() => to.value <= from.value || spanDays() > MAX_DAYS);
+    const isPreset = (s) => spanDays() === s;
 
-    function shift(dir) { from.value = monthStart(addDays(from.value, dir * (span.value >= 183 ? span.value : span.value + 2))); }
-    function goToday() { from.value = monthStart(today); }
-
-    const to = computed(() => data.value ? data.value.to : addDays(from.value, span.value));
-    const total = computed(() => Math.max(1, dayDiff(from.value, to.value)));
+    const end = computed(() => addDays(to.value, 1)); // exclusive, for geometry
+    const total = computed(() => Math.max(1, dayDiff(from.value, end.value)));
     function pct(d) { return (dayDiff(from.value, d) / total.value) * 100; }
 
     // Header: one segment per month in the range, plus weekend shading and the today line.
     const months = computed(() => {
       const out = [];
       let cursor = from.value;
-      while (cursor < to.value) {
+      while (cursor < end.value) {
         const d = parseYmd(cursor);
         const next = ymd(new Date(d.getFullYear(), d.getMonth() + 1, 1));
-        const end = next < to.value ? next : to.value;
-        out.push({ key: cursor, label: d.toLocaleDateString(store.prefs.locale === 'da' ? 'da-DK' : 'en-GB', span.value > 183 ? { month: 'short' } : { month: 'long', year: 'numeric' }), left: pct(cursor), width: pct(end) - pct(cursor) });
+        const segEnd = next < end.value ? next : end.value;
+        out.push({ key: cursor, label: d.toLocaleDateString(store.prefs.locale === 'da' ? 'da-DK' : 'en-GB', total.value > 183 ? { month: 'short' } : { month: 'long', year: 'numeric' }), left: pct(cursor), width: pct(segEnd) - pct(cursor) });
         cursor = next;
       }
       return out;
     });
     const weekends = computed(() => {
       const out = [];
-      if (span.value > 183) return out; // too dense to be useful over a year
-      for (let d = from.value; d < to.value; d = addDays(d, 1)) if (isWeekend(d)) out.push({ key: d, left: pct(d), width: 100 / total.value });
+      if (total.value > 183) return out; // too dense to be useful over a year
+      for (let d = from.value; d < end.value; d = addDays(d, 1)) if (isWeekend(d)) out.push({ key: d, left: pct(d), width: 100 / total.value });
       return out;
     });
-    const todayLeft = computed(() => (today >= from.value && today < to.value) ? pct(today) : null);
+    const todayLeft = computed(() => (today >= from.value && today < end.value) ? pct(today) : null);
 
     const rows = computed(() => {
       if (!data.value) return [];
@@ -83,7 +94,7 @@ export default {
     const onVacationToday = computed(() => (data.value ? data.value.users.filter((u) => u.periods.some((p) => p.from <= today && p.to >= today)) : []));
     const barColor = computed(() => (store.rules.find((r) => /vacation|ferie/i.test(r.name || '') && r.enabled !== false) || {}).color || '#e5484d');
 
-    return { store, t, from, span, SPANS, q, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, closeModal, dayLabel, weekday, today, to };
+    return { store, t, from, to, span, SPANS, q, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
   },
   template: `
     <modal :title="t('Vacation calendar')" width="1040px" @close="closeModal">
@@ -93,10 +104,12 @@ export default {
           <button type="button" class="btn sm" @click="goToday">{{ t('Today') }}</button>
           <button type="button" class="btn icon sm" :title="t('Next')" @click="shift(1)"><icon name="chevron-right" :size="14"></icon></button>
         </div>
-        <span class="vac-range">{{ dayLabel(from) }} – {{ dayLabel(to) }}</span>
+        <label class="field inline"><span>{{ t('From') }}</span><input class="input" type="date" :value="from" @change="setFrom($event.target.value)"></label>
+        <label class="field inline"><span>{{ t('To') }}</span><input class="input" type="date" :value="to" @change="setTo($event.target.value)"></label>
         <div class="steps compact vac-spans" role="group" :aria-label="t('Period')">
-          <button type="button" v-for="s in SPANS" :key="s" :aria-pressed="span === s ? 'true' : 'false'" @click="span = s">{{ s === 31 ? t('1 month') : s === 92 ? t('3 months') : s === 183 ? t('6 months') : t('1 year') }}</button>
+          <button type="button" v-for="s in SPANS" :key="s" :aria-pressed="isPreset(s) ? 'true' : 'false'" @click="usePreset(s)">{{ s === 31 ? t('1 month') : s === 92 ? t('3 months') : s === 183 ? t('6 months') : t('1 year') }}</button>
         </div>
+        <span class="muted" style="font-size:12px;color:var(--danger)" v-if="rangeInvalid">{{ t('Choose an end date after the start, at most {n} days later.', { n: MAX_DAYS }) }}</span>
         <span class="grow"></span>
         <input class="input" v-model="q" :placeholder="t('Filter people')" style="max-width:220px">
       </div>

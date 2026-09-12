@@ -252,7 +252,10 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   const bars = w.document.querySelectorAll('.vac-row .vac-bar');
   assert(w.document.querySelectorAll('.vac-row').length === 1 && bars.length === 1 && bars[0].title.includes('Anna Andersen') && bars[0].title.includes(t('{n} days', { n: 2 })), 'timeline shows one person with a 2-day vacation bar');
   assert(w.document.querySelectorAll('.vac-month').length >= 3 && html().includes(t('{n} people without vacation in this period', { n: 2 })), 'month header and footer count rendered');
-  w.document.querySelector('.vac-toolbar input').value = 'zzz'; w.document.querySelector('.vac-toolbar input').dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
+  { const dates = w.document.querySelectorAll('.vac-toolbar input[type=date]'); const before = calls.length;
+    dates[1].value = '2026-10-15'; dates[1].dispatchEvent(new w.Event('change', { bubbles: true })); await tick(120);
+    assert(dates.length === 2 && calls.slice(before).some((c) => c.includes('/api/vacations?from=2026-09-01&to=2026-10-15')), 'start and end dates are editable and reload the timeline'); }
+  w.document.querySelector('.vac-toolbar input:not([type=date])').value = 'zzz'; w.document.querySelector('.vac-toolbar input:not([type=date])').dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
   assert(w.document.querySelectorAll('.vac-row').length === 0 && html().includes(t('No vacation in this period.')), 'filter hides non-matching people');
   closeModal(); await tick();
   store.prefs.vacation_enabled = false; await tick();

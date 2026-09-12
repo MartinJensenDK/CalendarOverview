@@ -384,8 +384,9 @@ class ApiTest extends TestCase
     {
         $user = Fixtures::user();
         $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
-        $data = $this->actingAs($user)->getJson('/api/vacations?from=2026-09-14&days=92&tz=Europe/Copenhagen')->assertOk()->json();
-        $this->assertSame('2026-09-01', $data['from']); // snapped to the start of the month
+        $data = $this->actingAs($user)->getJson('/api/vacations?from=2026-09-14&to=2026-12-13&tz=Europe/Copenhagen')->assertOk()->json();
+        $this->assertSame('2026-09-14', $data['from']);
+        $this->assertSame('2026-12-13', $data['to']); // inclusive
         $this->assertNotEmpty($data['users']);
         $first = $data['users'][0];
         $this->assertTrue($first['is_demo']);
@@ -398,6 +399,9 @@ class ApiTest extends TestCase
         sort($sorted);
         $this->assertSame($sorted, $starts); // earliest vacation first
         $this->actingAs($user)->getJson('/api/vacations?days=400')->assertStatus(422);
+        $this->actingAs($user)->getJson('/api/vacations?from=2026-09-14&to=2027-09-20')->assertStatus(422);
+        $this->actingAs($user)->getJson('/api/vacations?from=2026-09-14&to=2026-09-10')->assertStatus(422);
+        $this->assertSame(date('Y-m-01'), $this->actingAs($user)->getJson('/api/vacations')->assertOk()->json('from'));
     }
 
     public function test_demo_people_leave_the_lookup_when_demo_is_off_or_hidden(): void
