@@ -75,7 +75,7 @@ export default {
         </div>
       </div>
       <div class="sidebar-foot">
-        <div class="findtime">
+        <div class="findtime" v-if="store.prefs.find_time_enabled">
           <div class="findtime-head"><h2>{{ t('Find free time') }}</h2><span class="muted" v-if="store.selected.length">{{ t('{n} selected', { n: store.selected.length }) }}</span></div>
           <div class="findtime-body">
             <span class="avatars" v-if="selectedUsers.length"><img v-for="u in selectedUsers.slice(0, 8)" :key="u.id" class="avatar" :src="u.photo_url" :title="u.name" alt=""></span>

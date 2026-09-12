@@ -165,6 +165,7 @@ const da = {
   'Click to select': 'Klik for at vælge',
   'Find free time': 'Find ledig tid',
   'Month calendar': 'Månedskalender',
+  'Show the “Find free time” section in the menu': 'Vis sektionen “Find ledig tid” i menuen',
   'Months shown': 'Antal måneder',
   'Select people in the overview to compare their availability.': 'Vælg personer i oversigten for at sammenligne deres ledighed.',
   '2 months': '2 måneder',

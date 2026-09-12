@@ -66,6 +66,7 @@ export async function savePrefs(patch) {
     toast(t('Something went wrong'), 'danger');
     throw e;
   }
+  if (store.prefs.find_time_enabled === false) store.selected = [];
   const reload = ['days', 'page_size', 'demo_enabled', 'demo_visible', 'my_team_visible'].some((k) => k in patch && patch[k] !== before[k]);
   if ('page_size' in patch) store.page = 1;
   if (reload) loadOverview();

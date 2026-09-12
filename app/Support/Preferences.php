@@ -36,6 +36,7 @@ class Preferences
             'menu_collapsed' => false,
             'mini_months' => 1,
             'show_week_numbers' => false,
+            'find_time_enabled' => true,
         ];
     }
 
@@ -65,6 +66,7 @@ class Preferences
             'menu_collapsed' => ['sometimes', 'boolean'],
             'mini_months' => ['sometimes', 'integer', 'in:1,2'],
             'show_week_numbers' => ['sometimes', 'boolean'],
+            'find_time_enabled' => ['sometimes', 'boolean'],
         ];
     }
 }

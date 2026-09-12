@@ -37,7 +37,9 @@ export default {
       <label class="field"><span>{{ t('Months shown') }}</span>
         <select class="select" style="max-width:200px" :value="store.prefs.mini_months" @change="set({ mini_months: Number($event.target.value) })"><option :value="1">{{ t('1 month') }}</option><option :value="2">{{ t('2 months') }}</option></select></label>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers" @change="set({ show_week_numbers: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
-      <div class="field-label">{{ t('Demo data') }}</div>
+      <div class="field-label" style="margin-top:18px">{{ t('Find free time') }}</div>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.find_time_enabled" @change="set({ find_time_enabled: $event.target.checked })"><span class="track"></span>{{ t('Show the “Find free time” section in the menu') }}</label>
+      <div class="field-label" style="margin-top:18px">{{ t('Demo data') }}</div>
       <label class="switch block" style="align-items:flex-start"><input type="checkbox" :checked="store.prefs.demo_enabled" @change="set({ demo_enabled: $event.target.checked })"><span class="track" style="margin-top:2px"></span><span>{{ t('Demo data') }}<br><small class="muted">{{ t('Show 150 fictional people with generated calendars. Handy for trying the app before your colleagues are in a group.') }}</small></span></label>
       <div class="row" style="margin-top:16px"><button type="button" class="btn sm" @click="syncPhotos"><icon name="image" :size="14"></icon>{{ t('Sync photos') }}</button><span class="muted" style="font-size:12px">{{ t('Version') }} {{ store.app.version }}</span></div>
       <template #foot>

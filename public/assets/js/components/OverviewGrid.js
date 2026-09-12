@@ -126,8 +126,8 @@ export default {
             <span class="wkno" v-if="weekBadge(d, i)">{{ t('Week') }} {{ weekBadge(d, i) }}</span>
           </div>
           <template v-for="u in users" :key="u.id">
-            <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id) }" @click="toggleSelect(u.id)" :title="t('Click to select')">
-              <input type="checkbox" class="pick" :checked="isSelected(u.id)" @click.stop @change="toggleSelect(u.id)" :aria-label="u.name">
+            <div class="name" :class="{ me: u.is_me, selected: isSelected(u.id), selectable: store.prefs.find_time_enabled }" @click="store.prefs.find_time_enabled && toggleSelect(u.id)" :title="store.prefs.find_time_enabled ? t('Click to select') : ''">
+              <input v-if="store.prefs.find_time_enabled" type="checkbox" class="pick" :checked="isSelected(u.id)" @click.stop @change="toggleSelect(u.id)" :aria-label="u.name">
               <img class="avatar" :src="u.photo_url" alt="" loading="lazy">
               <span class="txt"><b>{{ u.name }}</b><small v-if="u.error" class="warn">{{ errorText(u.error) }}</small><small v-else>{{ u.title || u.email }}</small></span>
             </div>
