@@ -164,6 +164,8 @@ const da = {
   'Show week numbers': 'Vis ugenumre',
   'Click to select': 'Klik for at vælge',
   'Find free time': 'Find ledig tid',
+  'Month calendar': 'Månedskalender',
+  'Months shown': 'Antal måneder',
   'Select people in the overview to compare their availability.': 'Vælg personer i oversigten for at sammenligne deres ledighed.',
   '2 months': '2 måneder',
   'Tick people to find a common free time.': 'Sæt flueben ved personer for at finde et fælles ledigt tidspunkt.',

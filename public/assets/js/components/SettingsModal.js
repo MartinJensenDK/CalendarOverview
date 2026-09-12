@@ -32,7 +32,10 @@ export default {
         <label class="field"><span>{{ t('Working hours') }}</span>
           <span class="row"><input class="input" type="time" :value="store.prefs.work_start" @change="set({ work_start: $event.target.value })"><span class="muted">–</span><input class="input" type="time" :value="store.prefs.work_end" @change="set({ work_end: $event.target.value })"></span></label>
       </div>
-      <label class="switch block" style="margin-bottom:10px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
+      <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_weekends" @change="set({ show_weekends: $event.target.checked })"><span class="track"></span>{{ t('Show weekends') }}</label>
+      <div class="field-label">{{ t('Month calendar') }}</div>
+      <label class="field"><span>{{ t('Months shown') }}</span>
+        <select class="select" style="max-width:200px" :value="store.prefs.mini_months" @change="set({ mini_months: Number($event.target.value) })"><option :value="1">{{ t('1 month') }}</option><option :value="2">{{ t('2 months') }}</option></select></label>
       <label class="switch block" style="margin-bottom:14px"><input type="checkbox" :checked="store.prefs.show_week_numbers" @change="set({ show_week_numbers: $event.target.checked })"><span class="track"></span>{{ t('Show week numbers') }}</label>
       <div class="field-label">{{ t('Demo data') }}</div>
       <label class="switch block" style="align-items:flex-start"><input type="checkbox" :checked="store.prefs.demo_enabled" @change="set({ demo_enabled: $event.target.checked })"><span class="track" style="margin-top:2px"></span><span>{{ t('Demo data') }}<br><small class="muted">{{ t('Show 150 fictional people with generated calendars. Handy for trying the app before your colleagues are in a group.') }}</small></span></label>
