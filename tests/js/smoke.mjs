@@ -65,7 +65,8 @@ globalThis.fetch = async (url, opts = {}) => {
   else if (path === '/api/availability') { await new Promise((r) => setTimeout(r, 40)); body = availability; } // slow enough to see the skeleton
   else if (path === '/api/settings/reset') body = { preferences: { ...defaultPrefs }, menu: null };
   else if (path === '/api/settings') body = { preferences: { ...me.preferences, ...JSON.parse(opts.body) }, menu: null };
-  else if (path === '/api/directory/users') body = { users: [member('x1', 'Xenia Search', 'Analyst')] };
+  else if (path === '/api/directory/users') { const q = (new URLSearchParams(url.split('?')[1] || '').get('q') || '').toLowerCase(); body = { users: [member('x1', 'Xenia Search', 'Analyst'), member('p1', 'Peter Peer', 'Engineer'), member('o1', 'Otto Other', 'Account Manager')].filter((u) => u.name.toLowerCase().includes(q)) }; }
+  else if (/^\/api\/groups\/\d+$/.test(path)) body = { menu: me.menu };
   else if (path === '/api/groups/reorder') body = { menu: [...me.menu].reverse() };
   else if (path === '/api/groups') body = { menu: me.menu };
   else if (path === '/api/color-rules') body = { color_rules: me.color_rules };
@@ -132,6 +133,29 @@ assert(!w.document.querySelector('.modal'), 'modal closes via close action');
 openModal('group', { group: me.menu[1] }); await tick();
 assert(html().includes('Edit group') && html().includes('Mona Manager'), 'edit group modal shows managers');
 closeModal(); await tick();
+
+// A person may belong to several manual groups: add Peter (already in My team) to Sales, then Otto (already in Sales) to a new group.
+{ openModal('group', { group: me.menu[1] }); await tick();
+  const typeAndPick = async (name) => {
+    const inp = w.document.querySelector('.modal .picker input'); inp.value = name; inp.dispatchEvent(new w.Event('input', { bubbles: true })); await tick(260);
+    const opt = [...w.document.querySelectorAll('.modal .picker .opt')].find((o) => o.textContent.includes(name));
+    assert(opt, `picker offers ${name} even though they are in another group`);
+    opt.dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true, cancelable: true })); await tick();
+  };
+  await typeAndPick('Peter Peer');
+  assert([...w.document.querySelectorAll('.modal .chips .chip')].some((c) => c.textContent.includes('Peter Peer')), 'picked person appears as a chip');
+  let before = calls.length; let sent = null; const origFetch = globalThis.fetch;
+  globalThis.fetch = async (url, opts = {}) => { if (opts.method === 'PUT' && url === '/api/groups/7') sent = JSON.parse(opts.body); return origFetch(url, opts); };
+  w.document.querySelector('.modal .btn.primary').click(); await tick(80);
+  globalThis.fetch = origFetch;
+  assert(sent && sent.members.includes('o1') && sent.members.includes('p1') && !w.document.querySelector('.modal'), 'saving sends both members and closes the modal');
+  openModal('group'); await tick();
+  w.document.querySelector('.modal input.input').value = 'Second'; w.document.querySelector('.modal input.input').dispatchEvent(new w.Event('input', { bubbles: true })); await tick();
+  await typeAndPick('Otto Other');
+  sent = null; globalThis.fetch = async (url, opts = {}) => { if (opts.method === 'POST' && url === '/api/groups') sent = JSON.parse(opts.body); return origFetch(url, opts); };
+  w.document.querySelector('.modal .btn.primary').click(); await tick(80);
+  globalThis.fetch = origFetch;
+  assert(sent && sent.name === 'Second' && sent.members.includes('o1'), 'a person already in one group can be put in a new group too'); }
 
 openModal('rules'); await tick();
 assert(html().includes('Colour rules') && html().includes('Vacation'), 'rules modal lists rules');
