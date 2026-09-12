@@ -83,7 +83,6 @@ export default {
     function moveTip(e) { if (store.tooltip) { store.tooltip.x = e.clientX; store.tooltip.y = e.clientY; } }
     function hideTip() { store.tooltip = null; }
 
-    const countText = computed(() => (store.overview && store.overview.total ? t('{n} people', { n: store.overview.total }) : ''));
     function errorText(code) {
       if (code === 'no_mailbox') return t('No mailbox');
       if (code === 'consent_required' || code === 'ErrorAccessDenied') return t('Consent needed');
@@ -106,7 +105,7 @@ export default {
       else setSelection([...store.selected, ...ids]);
     }
 
-    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, countText, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
+    return { store, t, days, users, bandStyle, today, nowPct, blocksFor, isWeekend, weekday, dayLabel, showTip, moveTip, hideTip, savePrefs, loadOverview, errorText, selectUser, openModal, weekBadge, isSelected, toggleSelect, allState, allBox, toggleAll };
   },
   template: `
     <section class="main">
@@ -148,9 +147,6 @@ export default {
             </div>
           </template>
         </div>
-      </div>
-      <div class="pager" v-if="countText">
-        <span>{{ countText }}</span>
       </div>
     </section>`,
 };

@@ -285,7 +285,7 @@ class ApiTest extends TestCase
         $this->assertStringContainsString('assets/js/app.js', $html);
         $this->assertStringContainsString('"locale":"da"', $html);
         $this->assertStringContainsString('type="importmap"', $html);
-        $this->assertStringContainsString('MiniCalendar.js?v=1.1.0', $html);
+        $this->assertStringContainsString('MiniCalendar.js?v='.config('calendar.version'), $html);
     }
 
     public function test_directory_search_and_managers(): void

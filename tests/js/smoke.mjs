@@ -86,7 +86,7 @@ assert(store.ready, 'store ready after loadMe');
 assert(html().includes('Calendar overview'), 'headline rendered');
 assert(html().includes('My team') && html().includes('Sales') && html().includes('Board'), 'menu groups rendered');
 assert(w.document.querySelectorAll('.grid .name').length === 3, 'three user rows rendered');
-assert(w.document.querySelector('.pager') && w.document.querySelector('.pager').textContent.includes('3 people') && !w.document.querySelector('.pager .pages'), 'footer shows the total count and no page buttons');
+assert(!w.document.querySelector('.pager'), 'no footer bar under the grid');
 assert(w.document.querySelectorAll('.grid .h').length === 8, 'corner + 7 day headers');
 const blocks = w.document.querySelectorAll('.grid .blk');
 assert(blocks.length === 3, `three event blocks rendered (got ${blocks.length})`);
