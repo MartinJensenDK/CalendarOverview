@@ -189,6 +189,7 @@ const da = {
   '6 months': '6 måneder',
   'Always start on a Monday': 'Start altid på en mandag',
   'Show hour grid': 'Vis timegitter',
+  'Show day grid': 'Vis dagsgitter',
   'Click to select': 'Klik for at vælge',
   'Find free time': 'Find ledig tid',
   'Month calendar': 'Månedskalender',

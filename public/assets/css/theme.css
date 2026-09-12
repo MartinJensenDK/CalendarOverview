@@ -331,9 +331,12 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .vac { min-width: 640px; --vac-name-w: 200px; }
 .vac-head, .vac-row { display: grid; grid-template-columns: var(--vac-name-w) 1fr; border-bottom: 1px solid var(--line); }
 .vac-head { position: sticky; top: 0; background: var(--surface); z-index: 2; font-size: 12px; }
-.vac-head .vac-track { height: 28px; }
+.vac-head .vac-track { height: 44px; background: var(--surface); }
+.vac-daynum { position: absolute; bottom: 0; height: 18px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 10px; color: var(--muted); white-space: nowrap; pointer-events: none; }
+.vac-daynum.today { color: var(--today); font-weight: 700; }
+.vac.grid .vac-row .vac-track { background-image: linear-gradient(90deg, var(--line) 0 1px, transparent 1px); background-size: var(--vac-step) 100%; background-position: var(--vac-off) 0; }
 .vac-head .vac-name { display: flex; align-items: center; padding: 0 10px; font-size: 12px; }
-.vac-month { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding-left: 6px; border-left: 1px solid var(--line); font-family: var(--font-display); font-weight: 600; text-transform: capitalize; white-space: nowrap; overflow: hidden; }
+.vac-month { position: absolute; top: 0; height: 26px; display: flex; align-items: center; padding-left: 6px; border-left: 1px solid var(--line); font-family: var(--font-display); font-weight: 600; text-transform: capitalize; white-space: nowrap; overflow: hidden; }
 .vac-row:last-child { border-bottom: 0; }
 .vac-row.me .vac-name { box-shadow: inset 3px 0 0 var(--accent); }
 .vac-name { display: flex; align-items: center; gap: 10px; padding: 6px 10px; position: sticky; left: 0; background: var(--surface); z-index: 1; border-right: 1px solid var(--line); min-width: 0; }

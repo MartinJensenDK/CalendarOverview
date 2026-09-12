@@ -6,7 +6,7 @@ import { closeModal, savePrefs } from '../actions.js';
 import { todayYmd, addDays, parseYmd, isWeekend, dayLabel, weekday, ymd } from '../util/date.js';
 import PersonLookupModal from './PersonLookupModal.js';
 
-const { ref, computed, onMounted, watch } = Vue;
+const { ref, computed, onMounted, onBeforeUnmount, watch } = Vue;
 
 const SPANS = [31, 92, 183, 366];
 
@@ -91,6 +91,37 @@ export default {
     });
     const todayLeft = computed(() => (today >= from.value && today < end.value) ? pct(today) : null);
 
+    // Day numbers and grid lines thin out as the range grows; based on the measured track width.
+    const headTrack = ref(null);
+    const trackW = ref(820);
+    let ro = null;
+    onMounted(() => {
+      if (typeof ResizeObserver === 'undefined') return;
+      ro = new ResizeObserver((entries) => { const w = entries[0] && entries[0].contentRect.width; if (w) trackW.value = w; });
+      watch(headTrack, (el, old) => { if (old) ro.unobserve(old); if (el) ro.observe(el); }, { immediate: true });
+    });
+    onBeforeUnmount(() => { if (ro) ro.disconnect(); });
+    const pxPerDay = computed(() => trackW.value / total.value);
+    const dayNumbers = computed(() => {
+      const px = pxPerDay.value;
+      const step = px >= 16 ? 1 : px >= 6 ? 5 : px >= 2.5 ? 15 : 0;
+      const out = [];
+      if (!step) return out;
+      for (let d = from.value; d < end.value; d = addDays(d, 1)) {
+        const n = parseYmd(d).getDate();
+        if (step === 1 || n === 1 || (step === 5 && n % 5 === 0 && n < 30) || (step === 15 && n === 15)) out.push({ key: d, n, left: pct(d), width: 100 / total.value, today: d === today });
+      }
+      return out;
+    });
+    // Grid: one line per day when there is room, otherwise one per week starting on Mondays.
+    const gridStyle = computed(() => {
+      const px = pxPerDay.value;
+      const perDay = px >= 6;
+      let offset = 0;
+      if (!perDay) { let d = from.value; while (parseYmd(d).getDay() !== 1) d = addDays(d, 1); offset = dayDiff(from.value, d) * px; }
+      return { '--vac-step': `${(perDay ? 1 : 7) * px}px`, '--vac-off': `${offset}px` };
+    });
+
     const rows = computed(() => {
       if (!data.value) return [];
       const needle = q.value.trim().toLowerCase();
@@ -112,7 +143,7 @@ export default {
     const onVacationToday = computed(() => (data.value ? data.value.users.filter((u) => u.periods.some((p) => p.from <= today && p.to >= today)) : []));
     const barColor = computed(() => (store.rules.find((r) => /vacation|ferie/i.test(r.name || '') && r.enabled !== false) || {}).color || '#e5484d');
 
-    return { store, t, lookupPerson, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
+    return { store, t, lookupPerson, headTrack, dayNumbers, gridStyle, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
   },
   template: `
     <modal :title="t('Vacation calendar')" width="1040px" @close="closeModal">
@@ -149,11 +180,12 @@ export default {
           <div class="vac-head"><div class="vac-name"></div><div class="vac-track"><span class="sk" style="width:120px;height:12px;margin:8px"></span></div></div>
           <div class="vac-row" v-for="i in 8" :key="i"><div class="vac-name"><span class="avatar sk circle"></span><span class="sk" :style="{ width: (70 + (i * 37) % 60) + 'px', height: '11px' }"></span></div><div class="vac-track"><span class="sk vac-bar" :style="{ left: ((i * 23) % 70) + '%', width: (6 + (i * 5) % 14) + '%' }"></span></div></div>
         </div>
-        <div class="vac" v-else :style="{ '--vac-bar': barColor }">
+        <div class="vac" v-else :class="{ grid: store.prefs.vacation_grid }" :style="{ '--vac-bar': barColor, ...gridStyle }">
           <div class="vac-head">
             <div class="vac-name muted">{{ t('{n} people', { n: rows.length }) }}</div>
-            <div class="vac-track">
+            <div class="vac-track" ref="headTrack">
               <span v-for="m in months" :key="m.key" class="vac-month" :style="{ left: m.left + '%', width: m.width + '%' }">{{ m.label }}</span>
+              <span v-for="d in dayNumbers" :key="d.key" class="vac-daynum" :class="{ today: d.today }" :style="{ left: d.left + '%', width: d.width + '%' }">{{ d.n }}</span>
             </div>
           </div>
           <div class="vac-empty muted" v-if="!rows.length">{{ groupKeys.length ? t('No vacation in this period.') : t('Choose at least one group to show.') }}</div>

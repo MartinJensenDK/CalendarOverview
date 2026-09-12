@@ -17,7 +17,7 @@ class Preferences
     public const DAY_OPTIONS = [1, 3, 5, 7, 10, 14, 21, 31];
 
     /** Keys shown on the Settings page; only these are touched by "Reset all settings". */
-    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'show_week_numbers_overview', 'start_monday', 'show_hour_grid', 'find_time_enabled', 'vacation_enabled', 'demo_enabled'];
+    public const SETTINGS_PAGE = ['theme', 'locale', 'row_height', 'days', 'show_weekends', 'mini_months', 'show_week_numbers', 'show_week_numbers_overview', 'start_monday', 'show_hour_grid', 'find_time_enabled', 'vacation_enabled', 'vacation_grid', 'demo_enabled'];
 
     public static function defaults(): array
     {
@@ -44,6 +44,7 @@ class Preferences
             'vacation_days' => 92,
             'vacation_collapsed' => false,
             'vacation_groups' => null, // null = the groups shown in the overview
+            'vacation_grid' => true,
             'heatmap_duration' => 30,
             'heatmap_work_only' => true,
             'heatmap_show_weekends' => true,
@@ -86,6 +87,7 @@ class Preferences
             'vacation_collapsed' => ['sometimes', 'boolean'],
             'vacation_groups' => ['sometimes', 'nullable', 'array', 'max:200'],
             'vacation_groups.*' => ['string', 'max:32'],
+            'vacation_grid' => ['sometimes', 'boolean'],
             'heatmap_duration' => ['sometimes', 'integer', 'in:30,60,90,120'],
             'heatmap_work_only' => ['sometimes', 'boolean'],
             'heatmap_show_weekends' => ['sometimes', 'boolean'],
