@@ -261,7 +261,11 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   { const before = calls.length; w.document.querySelector('.menu-section.vacation .expand').click(); await tick(60);
     assert(store.prefs.vacation_collapsed === true && calls.slice(before).some((c) => c === 'PUT /api/settings') && !w.document.querySelector('.menu-section.vacation .btn.warm') && w.document.querySelector('.menu-section.vacation h2'), 'double chevron collapses the section to its heading and remembers it');
     w.document.querySelector('.menu-section.vacation .expand').click(); await tick(60);
-    assert(store.prefs.vacation_collapsed === false && w.document.querySelector('.menu-section.vacation .btn.warm'), 'expands again'); }
+    assert(store.prefs.vacation_collapsed === false && w.document.querySelector('.menu-section.vacation .btn.warm'), 'expands again');
+    w.document.querySelector('.menu-section.vacation h2').click(); await tick(60);
+    assert(store.prefs.vacation_collapsed === true, 'clicking the heading collapses too');
+    w.document.querySelector('.menu-section.vacation h2').click(); await tick(60);
+    assert(store.prefs.vacation_collapsed === false, 'clicking the heading expands again'); }
   store.prefs.vacation_enabled = false; await tick();
   assert(!w.document.querySelector('.menu-section.vacation'), 'vacation section hidden when disabled');
   store.prefs.vacation_enabled = true; await tick(); }

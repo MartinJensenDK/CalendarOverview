@@ -293,6 +293,8 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .findtime-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
 .findtime-head .muted { font-size: 12px; font-family: var(--font-mono); }
 .findtime-head .expand { width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted); border-radius: 6px; cursor: pointer; display: grid; place-items: center; margin-right: -4px; }
+.findtime-head.clickable { cursor: pointer; user-select: none; border-radius: 6px; }
+.findtime-head.clickable:hover h2 { color: var(--ink); }
 .findtime-head .expand:hover { background: var(--surface-2); color: var(--ink); }
 .menu-section.collapsed { padding-bottom: 6px; }
 .findtime-body { min-height: 28px; display: flex; align-items: center; margin-bottom: 8px; }
