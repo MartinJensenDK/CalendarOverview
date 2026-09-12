@@ -42,6 +42,7 @@ class Preferences
             'vacation_enabled' => true,
             'vacation_days' => 92,
             'vacation_collapsed' => false,
+            'vacation_groups' => null, // null = the groups shown in the overview
             'heatmap_duration' => 30,
             'heatmap_work_only' => true,
             'heatmap_show_weekends' => true,
@@ -81,6 +82,8 @@ class Preferences
             'vacation_enabled' => ['sometimes', 'boolean'],
             'vacation_days' => ['sometimes', 'integer', 'in:31,92,183,366'],
             'vacation_collapsed' => ['sometimes', 'boolean'],
+            'vacation_groups' => ['sometimes', 'nullable', 'array', 'max:200'],
+            'vacation_groups.*' => ['string', 'max:32'],
             'heatmap_duration' => ['sometimes', 'integer', 'in:30,60,90,120'],
             'heatmap_work_only' => ['sometimes', 'boolean'],
             'heatmap_show_weekends' => ['sometimes', 'boolean'],

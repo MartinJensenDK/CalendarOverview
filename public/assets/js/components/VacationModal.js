@@ -1,4 +1,4 @@
-// Vacation calendar: a timeline of who is away when, for everyone in the overview.
+// Vacation calendar: a timeline of who is away when, for the people in the overview or in chosen groups.
 import { api } from '../api.js';
 import { store, toast } from '../store.js';
 import { t } from '../i18n.js';
@@ -22,6 +22,21 @@ export default {
     const MAX_DAYS = 366;
     function spanDays() { return dayDiff(from.value, to.value) + 1; }
     const q = ref('');
+    // Which menu entries (My team, groups, Demo team) feed the timeline. Until the user picks, it follows the overview.
+    const entries = computed(() => store.menu.map((e) => ({ key: String(e.id), label: e.kind === 'builtin' ? (e.type === 'demo' ? t('Demo team') : t('My team')) : e.name, count: (e.members || []).length, visible: !!e.visible })));
+    const custom = computed(() => Array.isArray(store.prefs.vacation_groups));
+    const groupKeys = ref(custom.value ? store.prefs.vacation_groups.map(String) : entries.value.filter((e) => e.visible).map((e) => e.key));
+    const isOn = (key) => groupKeys.value.includes(key);
+    function toggleGroup(key) {
+      groupKeys.value = isOn(key) ? groupKeys.value.filter((k) => k !== key) : [...groupKeys.value, key];
+      savePrefs({ vacation_groups: groupKeys.value }).catch(() => {});
+      load();
+    }
+    function resetGroups() {
+      groupKeys.value = entries.value.filter((e) => e.visible).map((e) => e.key);
+      savePrefs({ vacation_groups: null }).catch(() => {});
+      load();
+    }
     const data = ref(null);
     const loading = ref(false);
     const today = todayYmd();
@@ -29,7 +44,7 @@ export default {
     async function load() {
       loading.value = true;
       try {
-        data.value = await api.get('/api/vacations', { from: from.value, to: to.value, tz: store.tz });
+        data.value = await api.get('/api/vacations', { from: from.value, to: to.value, tz: store.tz, groups: custom.value ? groupKeys.value : undefined });
       } catch (e) {
         toast(e.message || t('Something went wrong'), 'danger');
       } finally { loading.value = false; }
@@ -94,7 +109,7 @@ export default {
     const onVacationToday = computed(() => (data.value ? data.value.users.filter((u) => u.periods.some((p) => p.from <= today && p.to >= today)) : []));
     const barColor = computed(() => (store.rules.find((r) => /vacation|ferie/i.test(r.name || '') && r.enabled !== false) || {}).color || '#e5484d');
 
-    return { store, t, from, to, span, SPANS, q, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
+    return { store, t, from, to, span, SPANS, q, entries, custom, groupKeys, isOn, toggleGroup, resetGroups, data, loading, rows, months, weekends, todayLeft, onVacationToday, barColor, shift, goToday, usePreset, setFrom, setTo, isPreset, rangeInvalid, MAX_DAYS, closeModal, dayLabel, weekday, today };
   },
   template: `
     <modal :title="t('Vacation calendar')" width="1040px" @close="closeModal">
@@ -112,6 +127,12 @@ export default {
         <span class="muted" style="font-size:12px;color:var(--danger)" v-if="rangeInvalid">{{ t('Choose an end date after the start, at most {n} days later.', { n: MAX_DAYS }) }}</span>
         <span class="grow"></span>
         <input class="input" v-model="q" :placeholder="t('Filter people')" style="max-width:220px">
+      </div>
+
+      <div class="vac-groups" role="group" :aria-label="t('Groups')">
+        <span class="field-label">{{ t('Groups') }}</span>
+        <button type="button" v-for="e in entries" :key="e.key" class="vac-group" :aria-pressed="isOn(e.key) ? 'true' : 'false'" @click="toggleGroup(e.key)">{{ e.label }} <span class="n">{{ e.count }}</span></button>
+        <button type="button" class="vac-reset" v-if="custom" @click="resetGroups">{{ t('Same as the overview') }}</button>
       </div>
 
       <div class="vac-today" v-if="data">
@@ -132,7 +153,7 @@ export default {
               <span v-for="m in months" :key="m.key" class="vac-month" :style="{ left: m.left + '%', width: m.width + '%' }">{{ m.label }}</span>
             </div>
           </div>
-          <div class="vac-empty muted" v-if="!rows.length">{{ t('No vacation in this period.') }}</div>
+          <div class="vac-empty muted" v-if="!rows.length">{{ groupKeys.length ? t('No vacation in this period.') : t('Choose at least one group to show.') }}</div>
           <div v-for="u in rows" :key="u.id" class="vac-row" :class="{ me: u.is_me }">
             <div class="vac-name"><img class="avatar" :src="u.photo_url" alt=""><span class="txt"><b>{{ u.name }}</b><small>{{ u.title || u.email }}</small></span></div>
             <div class="vac-track">

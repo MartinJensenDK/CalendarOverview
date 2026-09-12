@@ -404,6 +404,21 @@ class ApiTest extends TestCase
         $this->assertSame(date('Y-m-01'), $this->actingAs($user)->getJson('/api/vacations')->assertOk()->json('from'));
     }
 
+    public function test_vacation_calendar_can_follow_chosen_groups(): void
+    {
+        $user = Fixtures::user();
+        $this->actingAs($user)->putJson('/api/settings', ['demo_enabled' => true])->assertOk();
+        $only = fn (string $q) => $this->actingAs($user)->getJson('/api/vacations?from=2026-09-14&to=2026-12-13'.$q)->assertOk()->json();
+        $count = fn (array $d) => count($d['users']) + $d['without'];
+        $this->assertSame(151, $count($only('')));
+        $this->assertSame(150, $count($only('&groups[]=demo_team')));
+        $this->assertSame(1, $count($only('&groups[]=my_team'))); // just me: no manager in the fixture
+        $this->assertSame(0, $count($only('&groups[]=nope')));
+        $this->assertSame(151, $count($only('&groups[]=my_team&groups[]=demo_team')));
+        $this->actingAs($user)->putJson('/api/settings', ['vacation_groups' => ['my_team', '3']])->assertOk()->assertJsonPath('preferences.vacation_groups', ['my_team', '3']);
+        $this->actingAs($user)->putJson('/api/settings', ['vacation_groups' => null])->assertOk()->assertJsonPath('preferences.vacation_groups', null);
+    }
+
     public function test_demo_people_leave_the_lookup_when_demo_is_off_or_hidden(): void
     {
         $user = Fixtures::user();

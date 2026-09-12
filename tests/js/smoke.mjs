@@ -268,6 +268,15 @@ assert(t('{n} days', { n: 3 }) === '3 dage', 't() interpolation');
   const bars = w.document.querySelectorAll('.vac-row .vac-bar');
   assert(w.document.querySelectorAll('.vac-row').length === 1 && bars.length === 1 && bars[0].title.includes('Anna Andersen') && bars[0].title.includes(t('{n} days', { n: 2 })), 'timeline shows one person with a 2-day vacation bar');
   assert(w.document.querySelectorAll('.vac-month').length >= 3 && html().includes(t('{n} people without vacation in this period', { n: 2 })), 'month header and footer count rendered');
+  { const gb = [...w.document.querySelectorAll('.vac-groups .vac-group')]; const byName = (n) => gb.find((b) => b.textContent.includes(n));
+    assert(gb.length === 3 && byName('My team').getAttribute('aria-pressed') === 'true' && byName('Sales').getAttribute('aria-pressed') === 'true' && byName('Board').getAttribute('aria-pressed') === 'false' && !w.document.querySelector('.vac-reset'), 'group chips follow the overview visibility until changed');
+    let before = calls.length; byName('Board').click(); await tick(120);
+    let last = calls.slice(-1)[0];
+    assert(calls.slice(before).some((c) => c === 'PUT /api/settings') && last.includes('/api/vacations?') && ['my_team', '7', '8'].every((k) => last.includes('groups%5B%5D=' + k)) && byName('Board').getAttribute('aria-pressed') === 'true' && w.document.querySelector('.vac-reset'), 'toggling a group saves the choice and reloads with groups[]');
+    byName('My team').click(); await tick(120); last = calls.slice(-1)[0];
+    assert(last.includes('groups%5B%5D=7') && last.includes('groups%5B%5D=8') && !last.includes('my_team') && JSON.stringify(store.prefs.vacation_groups.slice().sort()) === '["7","8"]', 'a group can be removed again and the choice is remembered');
+    before = calls.length; w.document.querySelector('.vac-reset').click(); await tick(120);
+    assert(!w.document.querySelector('.vac-reset') && store.prefs.vacation_groups === null && calls.slice(before).some((c) => c.includes('/api/vacations?') && !c.includes('groups')) && byName('My team').getAttribute('aria-pressed') === 'true' && byName('Board').getAttribute('aria-pressed') === 'false', 'reset follows the overview again'); }
   { const dates = w.document.querySelectorAll('.vac-toolbar input[type=date]'); const before = calls.length;
     dates[1].value = '2026-10-15'; dates[1].dispatchEvent(new w.Event('change', { bubbles: true })); await tick(120);
     assert(dates.length === 2 && calls.slice(before).some((c) => c.includes('/api/vacations?from=2026-09-01&to=2026-10-15')), 'start and end dates are editable and reload the timeline'); }

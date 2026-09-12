@@ -11,7 +11,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/** Vacation periods for everyone in the overview, for the vacation calendar. */
+/** Vacation periods for the people in the overview, or in chosen groups, for the vacation calendar. */
 class VacationController extends Controller
 {
     public function index(Request $request, GroupResolver $resolver, ScheduleService $schedules): JsonResponse
@@ -22,6 +22,8 @@ class VacationController extends Controller
             'days' => ['nullable', 'integer', 'min:1', 'max:'.config('calendar.max_days')],
             'tz' => ['nullable', 'string', 'timezone:all'],
             'refresh' => ['nullable', 'boolean'],
+            'groups' => ['nullable', 'array', 'max:200'],
+            'groups.*' => ['string', 'max:32'],
         ]);
         $tz = $data['tz'] ?? 'UTC';
         // Explicit start and end dates win; otherwise the current month plus the chosen span.
@@ -30,7 +32,8 @@ class VacationController extends Controller
         abort_if($from->diffInDays($to) > config('calendar.max_days'), 422, 'Range too long');
 
         $user = $request->user();
-        $users = $resolver->visibleUsers($user)->values();
+        // A chosen set of menu entries wins; otherwise the same people as the overview.
+        $users = array_key_exists('groups', $data) ? $resolver->usersForKeys($user, $data['groups'] ?? []) : $resolver->visibleUsers($user)->values();
         $result = $schedules->itemsFor($user, $users, $from, $to, $tz, (bool) ($data['refresh'] ?? false));
 
         $rows = $users->map(fn (DirectoryUser $u) => $u->toSummary() + [

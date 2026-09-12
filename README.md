@@ -7,7 +7,7 @@ A modern, self-hosted web app that shows your colleagues' Microsoft 365 calendar
 - **Colour rules.** "Red if the subject contains Vacation", "orange when out of office", regex supported, first match wins.
 - **Find a time.** Select people, open the availability heatmap, pick a slot and open a pre-filled meeting in Outlook.
 - **Working hours from Microsoft 365.** Each person's working hours come from Graph and can differ per day: colleagues' from their mailbox pattern (`getSchedule`), your own from Outlook's *Work hours and location* plan. They shape the day strip in the overview and what counts as free in *Find a time*. Nothing to configure in the app.
-- **Vacation calendar.** A timeline of who is away when, for everyone in the overview, with presets from one month to a year and a list of who is on vacation today. Vacation is read from whole-day out-of-office items and items called vacation/ferie/holiday.
+- **Vacation calendar.** A timeline of who is away when, for everyone in the overview or for any mix of your groups (My team, your own groups, the demo team) chosen with one click, with presets from one month to a year and a list of who is on vacation today. Vacation is read from whole-day out-of-office items and items called vacation/ferie/holiday.
 - **Your settings follow you.** Theme, language (English/Danish), row height, days shown, groups and rules are stored on the server.
 - **Demo data.** Flip a switch to explore the app with 150 fictional people.
 - **Zero build step.** PHP (Laravel) + Vue 3 loaded as plain ES modules, fonts and scripts self-hosted. No Node, no npm, no CDN calls.

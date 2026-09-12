@@ -124,6 +124,32 @@ class GroupResolver
             ->values();
     }
 
+    /**
+     * Members of the chosen menu entries (my_team, group ids, demo_team) in menu order, without duplicates.
+     * Unknown keys are ignored; the demo team needs demo data switched on.
+     *
+     * @param  list<string>  $keys
+     */
+    public function usersForKeys(User $actor, array $keys): Collection
+    {
+        $keys = array_map('strval', $keys);
+        $all = collect();
+        foreach ($this->orderedEntries($actor) as $entry) {
+            if (! in_array($entry['key'], $keys, true)) {
+                continue;
+            }
+            $all = $all->concat(match ($entry['kind']) {
+                'my_team' => $this->myTeam($actor),
+                'group' => $this->membersOf($actor, $entry['group']),
+                default => $this->demoTeam(),
+            });
+        }
+
+        return $all->unique('id')
+            ->unique(fn (DirectoryUser $u) => filled($u->mail) ? strtolower($u->mail) : 'id:'.$u->id)
+            ->values();
+    }
+
     /** Structure for the side menu. */
     public function menu(User $actor): array
     {
