@@ -64,6 +64,15 @@ export default {
       } finally { loading.value = false; }
     }
     onMounted(load);
+
+    // Skeleton for the first load: the same day columns the real grid will have, 16 slot rows,
+    // and three suggestion-shaped placeholders. Later reloads keep the old grid, dimmed.
+    const skDays = computed(() => {
+      const out = [];
+      for (let d = form.from, i = 0; d < form.to && i < 14; d = addDays(d, 1), i++) if (form.showWeekends || !isWeekend(d)) out.push(d);
+      return out.length ? out : [form.from];
+    });
+    const SK_SLOTS = Array.from({ length: 16 }, (_, i) => i);
     watch(() => [form.from, form.to], () => {
       if (form.to <= form.from) return;
       const span = Math.round((parseYmd(form.to) - parseYmd(form.from)) / 86400000);
@@ -221,7 +230,7 @@ export default {
       return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
     });
 
-    return { store, t, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, locIcon, locLabel, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
+    return { store, t, skDays, SK_SLOTS, ids, addingMore, addPerson, clearSel, isSuggestionActive, form, data, loading, days, slots, users, cell, isSel, down, enter, up, tip, hover, unhover, detail, locIcon, locLabel, outlookUrl, closeModal, isWeekend, weekday, dayLabel, minutesToHhmm, preset, suggestions, useSuggestion, MAX_DAYS };
   },
   template: `
     <modal :title="t('Find a time')" width="900px" @close="closeModal">
@@ -244,7 +253,11 @@ export default {
         <div style="flex:1;max-width:360px"><user-picker endpoint="/api/directory/users" :placeholder="t('Add a person')" :exclude="ids" @pick="addPerson"></user-picker></div>
         <button type="button" class="btn ghost sm" @click="addingMore = false">{{ t('Cancel') }}</button>
       </div>
-      <div class="suggest" v-if="data">
+      <div class="suggest" v-if="!data" aria-hidden="true">
+        <div class="field-label">{{ t('Next 3 times when most people can') }}</div>
+        <div class="row wrap"><span v-for="i in 3" :key="i" class="sk" style="width:150px;height:28px;border-radius:8px"></span></div>
+      </div>
+      <div class="suggest" v-else>
         <div class="field-label">{{ t('Next 3 times when most people can') }}</div>
         <div class="row wrap" v-if="suggestions.length">
           <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: isSuggestionActive(s), partial: s.free < s.total }" :aria-pressed="isSuggestionActive(s)" :title="isSuggestionActive(s) ? t('Click again to deselect') : ''" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
@@ -262,8 +275,16 @@ export default {
           <a class="btn primary" :href="outlookUrl" target="_blank" rel="noopener"><icon name="external"></icon>{{ t('Open in Outlook') }}</a>
         </div>
       </div>
-      <div class="heat-wrap" @mouseup="up" @mouseleave="up(); unhover()">
-        <div class="heat" :style="{ '--hdays': days.length }" v-if="data">
+      <div class="heat-wrap" :class="{ reloading: loading && data }" @mouseup="up" @mouseleave="up(); unhover()">
+        <div class="heat skeleton" :style="{ '--hdays': skDays.length }" v-if="!data" aria-hidden="true">
+          <div class="hh"></div>
+          <div v-for="d in skDays" :key="d" class="hh" :class="{ weekend: isWeekend(d) }"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span></div>
+          <template v-for="m in SK_SLOTS" :key="m">
+            <div class="ht"><span class="sk" style="width:30px;height:9px" v-if="m % 2 === 0"></span></div>
+            <div v-for="d in skDays" :key="d + m" class="hc sk" :class="{ hour: m % 2 === 0 }"></div>
+          </template>
+        </div>
+        <div class="heat" :style="{ '--hdays': days.length }" v-else>
           <div class="hh"></div>
           <div v-for="d in days" :key="d" class="hh" :class="{ weekend: isWeekend(d) }"><span class="dow">{{ weekday(d) }}</span><span class="date">{{ dayLabel(d) }}</span></div>
           <template v-for="m in slots" :key="m">
@@ -271,7 +292,6 @@ export default {
             <div v-for="d in days" :key="d + m" v-memo="[cell(d, m), isSel(d, m)]" class="hc" :class="{ hour: m % 60 === 0, weekend: isWeekend(d), sel: isSel(d, m) }" :style="{ background: cell(d, m).background }" @mousedown.prevent="down(d, m)" @mouseenter="enter(d, m); hover($event, d, m)" @mousemove="hover($event, d, m)"></div>
           </template>
         </div>
-        <div v-else style="padding:40px;text-align:center" class="muted">…</div>
       </div>
       <heat-tip :state="tip"></heat-tip>
       <div class="heat-legend"><span>{{ t('nobody free') }}</span><span class="bar"></span><span>{{ t('everyone free') }}</span></div>

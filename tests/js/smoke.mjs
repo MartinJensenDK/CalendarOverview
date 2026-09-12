@@ -61,7 +61,7 @@ globalThis.fetch = async (url, opts = {}) => {
   let body = {};
   if (path === '/api/me') body = me;
   else if (path === '/api/overview') body = overview;
-  else if (path === '/api/availability') body = availability;
+  else if (path === '/api/availability') { await new Promise((r) => setTimeout(r, 40)); body = availability; } // slow enough to see the skeleton
   else if (path === '/api/settings/reset') body = { preferences: { ...defaultPrefs }, menu: null };
   else if (path === '/api/settings') body = { preferences: { ...me.preferences, ...JSON.parse(opts.body) }, menu: null };
   else if (path === '/api/directory/users') body = { users: [member('x1', 'Xenia Search', 'Analyst')] };
@@ -184,7 +184,10 @@ assert(store.selected.length === 0, 'corner checkbox clears the selection');
 toggleSelect('me'); await tick();
 assert(allBox.indeterminate === true, 'corner checkbox shows indeterminate for partial selection');
 toggleSelect('me'); await tick();
-openModal('heatmap', { ids: ['me', 'p1'] }); await tick(120);
+openModal('heatmap', { ids: ['me', 'p1'] }); await tick(5);
+assert(w.document.querySelector('.heat.skeleton') && w.document.querySelectorAll('.heat.skeleton .hc').length === 7 * 16 && w.document.querySelectorAll('.suggest .sk').length === 3, 'heatmap shows a skeleton grid and suggestion placeholders while loading');
+await tick(120);
+assert(!w.document.querySelector('.heat.skeleton'), 'heatmap skeleton is replaced by data');
 const cells = w.document.querySelectorAll('.heat .hc');
 assert(cells.length === 7 * 16, `heatmap range spans everyone's hours 08–16: 7 days x 16 slots (got ${cells.length})`);
 cells[4].dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: 100, clientY: 100 })); await tick();

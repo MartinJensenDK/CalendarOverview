@@ -480,6 +480,10 @@ label.field > span, .field-label { display: block; font-size: 12px; font-weight:
 .heat .hc.weekend { background-image: repeating-linear-gradient(135deg, rgba(0, 0, 0, .10) 0 5px, transparent 5px 6px); }
 .heat .hc.sel { box-shadow: inset 0 0 0 2px var(--ink); z-index: 1; }
 .heat .hc:hover { filter: brightness(.96); }
+.heat.skeleton .hc { cursor: default; border-radius: 0; border-color: var(--surface); }
+.heat.skeleton .hc.sk::after { animation-duration: 1.8s; }
+.heat.skeleton .ht { justify-content: flex-end; }
+.heat-wrap.reloading { opacity: .55; transition: opacity .2s; pointer-events: none; }
 .suggest { margin: 0 0 12px; }
 .suggest-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .suggest-btn .suggest-count { font-family: var(--font-mono); font-size: 11px; color: var(--ok); margin-left: 4px; }
