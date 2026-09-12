@@ -90,7 +90,10 @@ class GroupResolver
             $all = $all->concat($this->demoTeam());
         }
 
-        return $all->unique('id')->values();
+        // One row per person: by directory id, and by mailbox for accounts that share an address.
+        return $all->unique('id')
+            ->unique(fn (DirectoryUser $u) => filled($u->mail) ? strtolower($u->mail) : 'id:'.$u->id)
+            ->values();
     }
 
     /** Structure for the side menu. */

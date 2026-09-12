@@ -91,6 +91,20 @@ class ApiTest extends TestCase
         $this->assertTrue($data['users'][0]['is_me']);
     }
 
+    public function test_user_in_several_groups_appears_once(): void
+    {
+        $user = Fixtures::user();
+        Fixtures::team();
+        $this->actingAs($user)->postJson('/api/groups', ['name' => 'A', 'type' => 'manual', 'members' => ['peer-0001', 'other-0001']])->assertCreated();
+        $this->actingAs($user)->postJson('/api/groups', ['name' => 'B', 'type' => 'manual', 'members' => ['peer-0001', 'me-0001'], 'managers' => ['mgr-0001']])->assertCreated();
+
+        $data = $this->actingAs($user)->getJson('/api/overview?from=2026-09-14&days=1')->assertOk()->json();
+        $ids = array_column($data['users'], 'id');
+        $this->assertSame($ids, array_values(array_unique($ids)));
+        $this->assertSame(4, $data['total']);
+        $this->assertSame('me-0001', $ids[0]);
+    }
+
     public function test_demo_schedule_is_deterministic(): void
     {
         $user = Fixtures::user();
