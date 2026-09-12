@@ -126,7 +126,12 @@ export default {
     const hov = ref(null);
     function hover(e, day, m) {
       const free = freeCount(day, m, m + form.slot);
-      hov.value = { x: e.clientX, y: e.clientY, label: `${weekday(day, 'short')} ${dayLabel(day)} · ${minutesToHhmm(m)}–${minutesToHhmm(m + form.slot)}`, text: t('{free} of {total} free', { free, total: users.value.length }) };
+      const total = users.value.length;
+      let meeting = null;
+      if (form.duration > form.slot && m + form.duration <= range.value.end) {
+        meeting = t('{free} of {total} free for the whole meeting ({time})', { free: freeCount(day, m, m + form.duration), total, time: `${minutesToHhmm(m)}–${minutesToHhmm(m + form.duration)}` });
+      }
+      hov.value = { x: e.clientX, y: e.clientY, label: `${weekday(day, 'short')} ${dayLabel(day)} · ${minutesToHhmm(m)}–${minutesToHhmm(m + form.slot)}`, text: t('{free} of {total} free', { free, total }), meeting };
     }
     function unhover() { hov.value = null; }
     const hovStyle = computed(() => hov.value ? { left: `${Math.min(hov.value.x + 14, window.innerWidth - 220)}px`, top: `${hov.value.y + 18}px` } : {});
@@ -229,7 +234,7 @@ export default {
         </div>
         <div v-else style="padding:40px;text-align:center" class="muted">…</div>
       </div>
-      <div class="tooltip" v-if="hov" :style="hovStyle"><span class="time">{{ hov.label }}</span><span class="sub">{{ hov.text }}</span></div>
+      <div class="tooltip" v-if="hov" :style="hovStyle"><span class="time">{{ hov.label }}</span><span class="sub">{{ hov.text }}</span><span class="loc" v-if="hov.meeting">{{ hov.meeting }}</span></div>
       <div class="heat-legend"><span>{{ t('nobody free') }}</span><span class="bar"></span><span>{{ t('everyone free') }}</span></div>
       <template #foot>
         <span class="grow"></span>
