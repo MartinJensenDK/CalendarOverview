@@ -197,7 +197,7 @@ const da = {
   'Find free time': 'Find ledig tid',
   'Month calendar': 'Månedskalender',
   'Meeting length': 'Mødelængde',
-  'Next 3 times when most people can': 'Næste 3 tidspunkter hvor flest kan',
+  'Next 4 times when most people can': 'Næste 4 tidspunkter hvor flest kan',
   'No common free time in this period.': 'Ingen fælles ledig tid i perioden.',
   'Up to {n} days at a time': 'Højst {n} dage ad gangen',
   '1 week': '1 uge',

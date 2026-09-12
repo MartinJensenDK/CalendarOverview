@@ -258,8 +258,8 @@ pickerInput.dispatchEvent(new w.Event('focus')); await tick(250);
 w.document.querySelector('.modal .picker .opt').dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true })); await tick(120);
 assert(store.selected.includes('x1') && calls.some((c) => c.includes('/api/availability') && c.includes('x1')), 'picked person is added to the search');
 const sugg = w.document.querySelectorAll('.suggest-btn');
-assert(sugg.length === 3 && /\d+ of \d+ free/.test(sugg[0].textContent), `three suggested times with attendance shown (got ${sugg.length}: ${sugg[0] && sugg[0].textContent})`);
-{ const counts = [...sugg].map((b) => Number(/(\d+) of/.exec(b.querySelector('.suggest-count').textContent)[1])); assert(counts[0] >= counts[1] && counts[1] >= counts[2], 'suggestions are ordered by attendance'); }
+assert(sugg.length === 4 && /\d+ of \d+ free/.test(sugg[0].textContent), `four suggested times with attendance shown (got ${sugg.length}: ${sugg[0] && sugg[0].textContent})`);
+{ const counts = [...sugg].map((b) => Number(/(\d+) of/.exec(b.querySelector('.suggest-count').textContent)[1])); assert(counts[0] >= counts[1] && counts[1] >= counts[2] && counts[2] >= counts[3], 'suggestions are ordered by attendance'); }
 sugg[1].click(); await tick();
 assert(sugg[1].className.includes('active') && html().includes('Open in Outlook'), 'choosing a suggestion selects it in the heatmap');
 sugg[1].click(); await tick();

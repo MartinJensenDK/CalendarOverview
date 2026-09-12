@@ -199,7 +199,7 @@ export default {
       for (const w of ranked) {
         if (out.some((o) => o.day === w.day && w.start < o.end && w.end > o.start)) continue;
         out.push({ ...w, total, label: `${weekday(w.day, 'short')} ${dayLabel(w.day)} · ${minutesToHhmm(w.start)}–${minutesToHhmm(w.end)}` });
-        if (out.length >= 3) break;
+        if (out.length >= 4) break;
       }
       return out;
     });
@@ -266,11 +266,11 @@ export default {
         <button type="button" class="btn ghost sm" @click="addingMore = false">{{ t('Cancel') }}</button>
       </div>
       <div class="suggest" v-if="!data" aria-hidden="true">
-        <div class="field-label">{{ t('Next 3 times when most people can') }}</div>
+        <div class="field-label">{{ t('Next 4 times when most people can') }}</div>
         <div class="row wrap"><span v-for="i in 3" :key="i" class="sk" style="width:150px;height:28px;border-radius:8px"></span></div>
       </div>
       <div class="suggest" v-else>
-        <div class="field-label">{{ t('Next 3 times when most people can') }}</div>
+        <div class="field-label">{{ t('Next 4 times when most people can') }}</div>
         <div class="row wrap" v-if="suggestions.length">
           <button type="button" v-for="s in suggestions" :key="s.day + s.start" class="btn sm suggest-btn" :class="{ active: isSuggestionActive(s), partial: s.free < s.total }" :aria-pressed="isSuggestionActive(s)" :title="isSuggestionActive(s) ? t('Click again to deselect') : ''" @click="useSuggestion(s)"><icon name="clock" :size="14"></icon>{{ s.label }}<span class="suggest-count">{{ t('{free} of {total} free', { free: s.free, total: s.total }) }}</span></button>
         </div>
