@@ -42,17 +42,18 @@ export default {
       syncing.value = true;
       try { await syncDirectory(); } catch (e) { /* toast shown by api */ } finally { syncing.value = false; }
     }
-    // The icon's hover box carries what the old menu row said: the action, the directory size and
-    // an "Updated …" line in the same shape as the status at the top of the page. It is a function so
-    // the relative time is fresh every time the box opens.
+    // The status at the top of the page: one computed, shown in the top bar and repeated word for
+    // word in the sync icon's hover box so the two never differ.
+    const status = computed(() => (store.loading || refreshing.value ? t('Refreshing…') : (updated.value ? t('Updated {time}', { time: updated.value }) : '')));
+    // The hover box carries what the old menu row said (directory size and last sync) plus the status line.
     const syncTip = () => ({
       title: t('Sync directory now'),
-      lines: [t('Directory: {n} people', { n: store.directory.user_count })],
-      status: syncing.value ? t('Refreshing…') : (store.directory.synced_at ? t('Updated {time}', { time: relativeTime(store.directory.synced_at) }) : t('Never synced')),
+      lines: [t('Directory: {n} people, synced {time}', { n: store.directory.user_count, time: store.directory.synced_at ? new Date(store.directory.synced_at).toLocaleString() : t('never') })],
+      status: status.value,
     });
     function onDate(e) { if (e.target.value) setFrom(e.target.value); }
 
-    return { store, t, range, week, updated, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, syncing, syncTip, logout, onDate, isDark, toggleTheme };
+    return { store, t, range, week, updated, status, refreshing, refresh, profileOpen, rootEl, shiftDays, goToday, pick, toggleMenu, open, sync, syncing, syncTip, logout, onDate, isDark, toggleTheme };
   },
   template: `
     <header class="topbar">
@@ -76,7 +77,7 @@ export default {
 
       <span class="grow"></span>
 
-      <span class="sync-state" :class="{ busy: store.loading || refreshing }"><span class="dot"></span>{{ store.loading || refreshing ? t('Refreshing…') : (updated ? t('Updated {time}', { time: updated }) : '') }}</span>
+      <span class="sync-state" :class="{ busy: store.loading || refreshing }"><span class="dot"></span>{{ status }}</span>
       <button type="button" class="btn icon" v-tip="t('Refresh from Microsoft 365')" @click="refresh" :disabled="refreshing"><icon name="refresh"></icon></button>
       <div class="search" style="position:relative">
         <input class="input" type="search" style="width:200px;padding-left:30px" :placeholder="t('Search people')" v-model="store.search">

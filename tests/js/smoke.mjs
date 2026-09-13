@@ -312,11 +312,12 @@ assert(answer === false, 'confirm dialog closes on backdrop click');
     assert(!sync.hasAttribute('title') && !w.document.querySelector('[title]:not([title=""])'), 'no native title tooltips left anywhere: every info box uses the shared card');
     { const txt = await tipText(sync); const box = w.document.querySelector('.tip');
       assert(box && box.classList.contains('tip') && box.querySelector('.tip-title').textContent === 'Sync directory now' && /Directory: \d+ people/.test(txt), 'sync icon hover box (same card as the free/busy lists) shows the action and the directory size');
-      assert(box.querySelector('.sync-state .dot') && /Updated (this minute|now|\d+ minutes? ago|never)/i.test(box.querySelector('.sync-state').textContent) || /Never synced/.test(txt), `hover box has the "Updated …" status line with the dot like the top bar (${box.querySelector('.sync-state') && box.querySelector('.sync-state').textContent})`); }
+      const top = w.document.querySelector('.topbar .sync-state').textContent; const st = box.querySelector('.sync-state');
+      assert(st && st.querySelector('.dot') && st.textContent === top && /^Updated /.test(top), `status line in the hover box is word for word the one at the top of the page ("${top}")`); }
     const before = calls.length;
     sync.click(); await tick(60);
     assert(calls.slice(before).some((c) => c === 'POST /api/sync/directory') && w.document.querySelector('.topbar .menu'), 'clicking the icon syncs and keeps the menu open');
-    { const txt = await tipText(head.querySelector('.sync-dir')); assert(txt.includes('4 people') && /Updated this minute|Updated now/.test(txt), `hover box updates after the sync (${txt})`); }
+    { const txt = await tipText(head.querySelector('.sync-dir')); assert(txt.includes('4 people') && txt.includes(w.document.querySelector('.topbar .sync-state').textContent), `hover box updates after the sync (${txt})`); }
   }
   assert(store.prefs.theme === 'system' || store.prefs.theme === 'light', 'theme still system/light before clicking');
   toggle.click(); await tick();
