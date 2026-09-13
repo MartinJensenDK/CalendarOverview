@@ -179,7 +179,20 @@ assert(html().includes('Days to show') && !html().includes('Rows per page'), 'se
   assert(visible().join() === 'settings-panel-vacation' && tabs[4].getAttribute('aria-selected') === 'true' && w.document.querySelector('#settings-panel-vacation input[type=checkbox]'), 'vacation tab shows only its panel');
   tabs[1].click(); await tick();
   assert(visible().join() === 'settings-panel-find' && w.document.querySelector('#settings-panel-find select'), 'find free time tab shows its defaults');
-  closeModal(); await tick(); openModal('settings'); await tick();
+  { // The tab's section on the page is framed in red and cut out of the dim/blur layer (jsdom has no layout, so give the section a rect)
+    const sec = w.document.querySelector('.sidebar .findtime');
+    sec.getBoundingClientRect = () => ({ left: 10, top: 400, width: 240, height: 120, right: 250, bottom: 520 });
+    tabs[4].click(); await tick(); tabs[1].click(); await tick(300);
+    const frame = w.document.querySelector('.backdrop .spotlight'); const bd = w.document.querySelector('.backdrop');
+    assert(frame && frame.style.left === '6px' && frame.style.top === '396px' && frame.style.width === '248px' && frame.style.height === '128px', 'find free time tab frames the "Find free time" section in the menu');
+    assert(bd.classList.contains('spotlit') && /^polygon\(0 0, 100% 0, 100% 100%, 0 100%, 0 396px, 6px 396px, 6px 524px, 254px 524px, 254px 396px, 6px 396px, 0 396px\)$/.test(bd.style.getPropertyValue('--hole')), 'the dim/blur layer has a hole exactly at the frame');
+    assert(frame.nextElementSibling === w.document.querySelector('.modal'), 'frame sits under the window, never over it');
+    tabs[0].click(); await tick(300);
+    assert(!w.document.querySelector('.backdrop .spotlight') && !bd.classList.contains('spotlit'), 'site settings tab frames nothing');
+    tabs[1].click(); await tick(300); }
+  closeModal(); await tick();
+  assert(store.spotlight === null, 'closing settings removes the spotlight');
+  openModal('settings'); await tick();
   assert(visible().join() === 'settings-panel-find', 'the last tab is remembered while the app is open');
   w.document.querySelector('.settings-tabs [role=tab]').click(); await tick();
 }

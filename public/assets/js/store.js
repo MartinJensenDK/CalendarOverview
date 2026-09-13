@@ -5,6 +5,7 @@ const boot = window.__APP__ || {};
 
 export const store = reactive({
   settingsTab: 'site',
+  spotlight: null,      // { x, y, w, h } viewport rect kept sharp and framed while a modal explains that part of the page
   ready: false,
   me: null,
   prefs: { theme: boot.theme || 'system', locale: boot.locale || 'en', days: 7, row_height: 'md', show_weekends: true, heatmap_slot: 30, demo_enabled: false, my_team_visible: true, demo_visible: true, menu_collapsed: !!boot.menuCollapsed, mini_months: 1, show_week_numbers: false, show_week_numbers_overview: false, start_monday: false, show_hour_grid: true, find_time_collapsed: false, find_time_enabled: true, vacation_enabled: true, vacation_days: 92, vacation_collapsed: false, heatmap_duration: 30, heatmap_work_only: true, heatmap_show_weekends: true, heatmap_days: 7, menu_order: [] },

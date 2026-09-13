@@ -4,7 +4,7 @@ import { closeModal, savePrefs, resetSettings } from '../actions.js';
 import { hoursFor } from '../util/hours.js';
 import { weekday, dayLabel, minutesToHhmm, todayYmd } from '../util/date.js';
 
-const { computed, ref } = Vue;
+const { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } = Vue;
 
 export default {
   name: 'SettingsModal',
@@ -20,6 +20,22 @@ export default {
     ];
     const tab = ref(store.settingsTab || 'site');
     function pickTab(key) { tab.value = key; store.settingsTab = key; }
+    // Each tab (except the site tab) controls one part of the page; that part stays sharp behind the
+    // dimmed backdrop and gets a red frame, so it is obvious what is being adjusted.
+    const SECTION = { find: '.sidebar .findtime', overview: '.main .grid-wrap', mini: '.sidebar .minical', vacation: '.sidebar .menu-section.vacation' };
+    function measure() {
+      const sel = SECTION[tab.value];
+      const el = sel && document.querySelector(sel);
+      const r = el && el.getBoundingClientRect();
+      const pad = 4;
+      store.spotlight = r && r.width > 0 && r.height > 0 ? { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2 } : null;
+    }
+    let measureTimer = null;
+    function remeasure() { nextTick(measure); clearTimeout(measureTimer); measureTimer = setTimeout(measure, 260); } // again after layout transitions
+    watch(tab, remeasure, { immediate: true });
+    watch(() => store.prefs, remeasure, { deep: true });
+    onMounted(() => { window.addEventListener('resize', measure); remeasure(); });
+    onBeforeUnmount(() => { window.removeEventListener('resize', measure); clearTimeout(measureTimer); store.spotlight = null; });
     function onTabKey(e) {
       const i = TABS.findIndex((x) => x.key === tab.value);
       const next = e.key === 'ArrowRight' ? (i + 1) % TABS.length : e.key === 'ArrowLeft' ? (i - 1 + TABS.length) % TABS.length : -1;
